@@ -1,0 +1,10 @@
+# robots.txt for podlablv.com
+
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://podlablv.com/sitemap.xml
+
+# Disallow admin/private paths (if any)
+# Disallow: /admin/

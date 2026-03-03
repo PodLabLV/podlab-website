@@ -1,0 +1,215 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: 'Inter Tight', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  /* DARK Newspaper palette */
+  --paper-dark: #0a0a0a;
+  --paper-charcoal: #141414;
+  --paper-gray: #1a1a1a;
+  --ink-white: #fafafa;
+  --ink-gray: #a0a0a0;
+  --accent-green: #39FF14;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--paper-dark);
+  color: var(--ink-white);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: relative;
+}
+
+/* Aged newspaper texture overlay - DARK VERSION */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.08;
+  z-index: 9999;
+  background-image: 
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='4.2' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' fill='%23ffffff'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* Subtle creases and wear marks */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.02;
+  z-index: 9998;
+  background-image: 
+    linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.03) 50%, transparent 100%),
+    radial-gradient(ellipse at 15% 25%, rgba(0, 0, 0, 0.1) 0%, transparent 40%),
+    radial-gradient(ellipse at 85% 75%, rgba(0, 0, 0, 0.08) 0%, transparent 40%);
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus States - Neon green glow */
+*:focus-visible {
+  outline: 2px solid var(--accent-green);
+  outline-offset: 2px;
+  box-shadow: 0 0 12px rgba(57, 255, 20, 0.4);
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Image optimization */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Neon accent glow - premium version */
+@keyframes neon-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 5px rgba(57, 255, 20, 0.5),
+      0 0 10px rgba(57, 255, 20, 0.3),
+      0 0 20px rgba(57, 255, 20, 0.2);
+  }
+  50% {
+    box-shadow: 
+      0 0 10px rgba(57, 255, 20, 0.7),
+      0 0 20px rgba(57, 255, 20, 0.4),
+      0 0 30px rgba(57, 255, 20, 0.3);
+  }
+}
+
+.accent-glow {
+  animation: neon-pulse 3s ease-in-out infinite;
+}
+
+/* Premium transitions for all interactive elements */
+a, button {
+  transition: all 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Text rendering for crisp readability on dark */
+p, h1, h2, h3, h4, h5, h6 {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle text glow for headlines - ink bleed on dark paper */
+h1, h2 {
+  text-shadow: 0 0 20px rgba(250, 250, 250, 0.1);
+}
+
+/* Link hover - neon ink spread */
+a:hover {
+  text-shadow: 0 0 12px rgba(57, 255, 20, 0.5);
+}
+
+/* Fade-in animation for sections */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Stagger delays for elements */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+
+/* Premium button hover effects */
+button:hover, .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(57, 255, 20, 0.3);
+}
+
+button:active, .btn:active {
+  transform: translateY(0);
+}
+
+/* Shimmer effect utility class */
+@keyframes shimmer {
+  0% { transform: translateX(-200%); }
+  100% { transform: translateX(200%); }
+}
+
+.shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  animation: shimmer 3s infinite;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Border glow on hover */
+.border-glow {
+  transition: all 350ms ease-out;
+}
+
+.border-glow:hover {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
+}
+
+/* Smooth scale on hover */
+.scale-hover {
+  transition: transform 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scale-hover:hover {
+  transform: scale(1.02);
+}
