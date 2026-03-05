@@ -45,6 +45,9 @@ export default function Navigation() {
           <Link href="/blog" className="text-text-secondary hover:text-accent transition">
             Blog
           </Link>
+          <Link href="/login" className="text-text-secondary hover:text-accent transition font-semibold">
+            Client Login
+          </Link>
           <Link href="/about" className="group flex items-center gap-3">
             <Image 
               src="/about/hiram-hero.png"
@@ -103,6 +106,9 @@ export default function Navigation() {
             </Link>
             <Link href="/blog" className="text-text-secondary hover:text-accent transition">
               Blog
+            </Link>
+            <Link href="/login" className="text-text-secondary hover:text-accent transition font-semibold">
+              Client Login
             </Link>
             <a
               href="https://calendly.com/podlablv/strategy-call"
