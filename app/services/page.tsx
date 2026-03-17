@@ -39,7 +39,7 @@ export default function ServicesPage() {
               Stop being the product. Build <span className="text-accent font-bold">infrastructure that works 24/7</span> — without adding more to your plate.
             </p>
             <Link
-              href="/bottleneck-assessment"
+              href="/assessment/start"
               className="group inline-block px-8 py-4 md:px-16 md:py-6 bg-accent text-black text-xl font-black rounded-xl hover:bg-accent-hover transition-all hover:-translate-y-2 hover:scale-105 hover:shadow-[0_20px_60px_rgba(42,221,27,0.6)] active:scale-95 relative overflow-hidden uppercase tracking-wider"
             >
               <span className="relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">Take Bottleneck Assessment →</span>
@@ -114,26 +114,6 @@ export default function ServicesPage() {
           </div>
         </section>
 
-        {/* Assessment CTA */}
-        <section className="py-24 px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-black mb-6">
-              Not Sure <span className="text-accent drop-shadow-[0_0_20px_rgba(42,221,27,0.4)]">Where to Start?</span>
-            </h2>
-            <p className="text-xl text-text-secondary mb-12 leading-relaxed">
-              Take our <span className="text-white font-semibold">5-minute Founder Bottleneck Assessment</span> to discover exactly which Lab you need first.
-            </p>
-            <Link
-              href="/assessment"
-              className="group inline-block px-8 py-4 md:px-16 md:py-6 bg-accent text-black text-xl font-black rounded-xl hover:bg-accent-hover transition-all hover:-translate-y-2 hover:scale-105 hover:shadow-[0_20px_60px_rgba(42,221,27,0.6)] active:scale-95 relative overflow-hidden uppercase tracking-wider"
-            >
-              <span className="relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">Take Assessment →</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-              <div className="absolute inset-0 bg-gradient-to-r from-accent-hover to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </Link>
-          </div>
-        </section>
-
         {/* Labs Detail */}
         <section className="py-24 px-6">
           <div className="max-w-5xl mx-auto space-y-20">
@@ -146,7 +126,7 @@ export default function ServicesPage() {
                     alt={lab.name}
                     width={720}
                     height={240}
-                    className="h-96 w-auto object-contain"
+                    className="h-20 w-auto object-contain"
                   />
                   <div>
                     <div className="text-xs font-semibold text-accent uppercase tracking-wider mb-1">Phase {index + 1} of 5</div>
@@ -296,6 +276,26 @@ export default function ServicesPage() {
                 Plus: ExpansionLab retainer ($5K+/month) for ongoing growth
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* Assessment CTA */}
+        <section className="py-24 px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-4xl md:text-5xl font-black mb-6">
+              Not Sure <span className="text-accent drop-shadow-[0_0_20px_rgba(42,221,27,0.4)]">Where to Start?</span>
+            </h2>
+            <p className="text-xl text-text-secondary mb-12 leading-relaxed">
+              Take our <span className="text-white font-semibold">5-minute Founder Bottleneck Assessment</span> to discover exactly which Lab you need first.
+            </p>
+            <Link
+              href="/assessment/start"
+              className="group inline-block px-8 py-4 md:px-16 md:py-6 bg-accent text-black text-xl font-black rounded-xl hover:bg-accent-hover transition-all hover:-translate-y-2 hover:scale-105 hover:shadow-[0_20px_60px_rgba(42,221,27,0.6)] active:scale-95 relative overflow-hidden uppercase tracking-wider"
+            >
+              <span className="relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">Take Assessment →</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-accent-hover to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </Link>
           </div>
         </section>
 
