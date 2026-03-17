@@ -59,13 +59,21 @@ export default function AffiliatePage() {
                 </div>
               ))}
             </div>
-            <a
-              href="#apply"
-              className="group inline-block px-12 py-5 bg-accent text-black text-lg font-bold rounded-lg hover:bg-accent-hover transition-all hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(42,221,27,0.4)] relative overflow-hidden"
-            >
-              <span className="relative z-10">Apply to Join →</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-            </a>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <a
+                href="/affiliate/apply"
+                className="group inline-block px-12 py-5 bg-accent text-black text-lg font-bold rounded-lg hover:bg-accent-hover transition-all hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(42,221,27,0.4)] relative overflow-hidden"
+              >
+                <span className="relative z-10">Apply to Join →</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+              </a>
+              <Link
+                href="/affiliate/dashboard"
+                className="inline-block px-10 py-5 border border-white/20 text-white text-lg font-bold rounded-lg hover:border-accent hover:text-accent transition-all hover:-translate-y-1"
+              >
+                Beaker Dashboard →
+              </Link>
+            </div>
           </div>
         </section>
 
@@ -223,15 +231,23 @@ export default function AffiliatePage() {
             <p className="text-xl text-text-secondary mb-12">
               If you know $1M+ founders stuck as the bottleneck, and you want to earn while helping them scale, apply now.
             </p>
-            <a
-              href="mailto:tiptopdawson@podlablv.com?subject=PodLab%20Beaker%20Application"
-              className="group inline-block px-12 py-5 bg-accent text-black text-lg font-bold rounded-lg hover:bg-accent-hover transition-all hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(42,221,27,0.4)] relative overflow-hidden"
-            >
-              <span className="relative z-10">Apply to Join →</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-            </a>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <a
+                href="/affiliate/apply"
+                className="group inline-block px-12 py-5 bg-accent text-black text-lg font-bold rounded-lg hover:bg-accent-hover transition-all hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(42,221,27,0.4)] relative overflow-hidden"
+              >
+                <span className="relative z-10">Apply to Join →</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+              </a>
+              <Link
+                href="/affiliate/dashboard"
+                className="inline-block px-10 py-5 border border-white/20 text-white text-lg font-bold rounded-lg hover:border-accent hover:text-accent transition-all hover:-translate-y-1"
+              >
+                Beaker Dashboard →
+              </Link>
+            </div>
             <p className="mt-6 text-sm text-text-secondary">
-              Application takes 3 minutes. Approval within 1-3 business days.
+              Already a Beaker? <Link href="/affiliate/dashboard" className="text-accent hover:underline">Go to your dashboard</Link>. New? Application takes 3 minutes.
             </p>
           </div>
         </section>
