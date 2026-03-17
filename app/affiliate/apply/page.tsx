@@ -25,8 +25,8 @@ const PAYOUT_PLACEHOLDERS: Record<string, string> = {
 };
 
 const STATS = [
-  { value: '20%', label: 'Recurring Commission' },
-  { value: '90-Day', label: 'Cookie Window' },
+  { value: '20%', label: 'First-Sale Commission' },
+  { value: '10%', label: 'Recurring Commission' },
   { value: '$1.5K–$10K', label: 'Per Referral' },
 ];
 

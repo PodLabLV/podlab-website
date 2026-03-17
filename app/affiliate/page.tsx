@@ -7,15 +7,15 @@ import HomePageWrapper from '@/components/HomePageWrapper';
 
 export const metadata: Metadata = {
   title: 'Beaker Affiliate Program | Earn While Helping Founders Scale',
-  description: 'Earn 20% recurring commission helping $1M–$8M founders break through the bottleneck. Join the PodLab Beaker affiliate program.',
+  description: 'Earn 20% on your first referral, then 10% recurring — helping $1M–$8M founders break through the bottleneck. Join the PodLab Beaker affiliate program.',
   openGraph: {
     title: 'PodLab Beaker | Affiliate Program',
-    description: 'Earn 20% recurring commission helping founders scale.',
+    description: 'Earn 20% on your first referral, then 10% recurring. Help founders scale.',
     url: 'https://podlablv.com/affiliate',
   },
   twitter: {
     title: 'PodLab Beaker | Affiliate Program',
-    description: 'Earn 20% recurring commission helping founders scale.',
+    description: 'Earn 20% on your first referral, then 10% recurring. Help founders scale.',
   },
 };
 
