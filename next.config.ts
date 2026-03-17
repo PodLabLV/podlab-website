@@ -9,6 +9,20 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/bottleneck-assessment',
+        destination: '/assessment',
+        permanent: true,
+      },
+      {
+        source: '/bottleneck-assessment/start',
+        destination: '/assessment/start',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

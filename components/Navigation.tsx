@@ -48,23 +48,12 @@ export default function Navigation() {
           <Link href="/login" className="text-text-secondary hover:text-accent transition font-semibold">
             Client Login
           </Link>
-          <Link href="/about" className="group flex items-center gap-3">
-            <Image 
-              src="/about/hiram-hero.png"
-              alt="Hiram Andino"
-              width={40}
-              height={40}
-              className="rounded-full border-2 border-border group-hover:border-accent transition"
-            />
-          </Link>
-          <a
-            href="https://calendly.com/podlablv/strategy-call"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/assessment/start"
             className="px-6 py-2.5 bg-accent text-black font-semibold rounded-lg hover:bg-accent-hover transition"
           >
-            Schedule Clarity
-          </a>
+            Calculate Bottleneck
+          </Link>
         </div>
 
         {/* Mobile Menu Button */}
@@ -110,14 +99,12 @@ export default function Navigation() {
             <Link href="/login" className="text-text-secondary hover:text-accent transition font-semibold">
               Client Login
             </Link>
-            <a
-              href="https://calendly.com/podlablv/strategy-call"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/assessment/start"
               className="px-6 py-2.5 bg-accent text-black font-semibold rounded-lg hover:bg-accent-hover transition text-center"
             >
-              Schedule Clarity
-            </a>
+              Calculate Bottleneck
+            </Link>
           </div>
         </div>
       )}

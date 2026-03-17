@@ -1,9 +1,17 @@
 import type { Metadata } from 'next';
+import { Inter, Michroma } from 'next/font/google';
 import './globals.css';
 
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const michroma = Michroma({ weight: '400', subsets: ['latin'], variable: '--font-michroma' });
+
 export const metadata: Metadata = {
-  title: 'PodLab - Record Once, Sell Forever',
-  description: 'Duplicate yourself into strategic 4K video assets that sell 24/7. For $1M–$8M founders stuck as the bottleneck.',
+  metadataBase: new URL('https://podlablv.com'),
+  title: {
+    default: 'PodLab | Record Once. Sell Forever.',
+    template: '%s | PodLab',
+  },
+  description: 'Duplicate yourself into strategic 4K video assets that sell 24/7. For $1M–$8M founders stuck as the bottleneck. Your content studio & growth lab.',
   keywords: 'founder duplication, video marketing, business growth, content studio, sales automation',
   authors: [{ name: 'PodLab LV' }],
   openGraph: {
@@ -12,7 +20,7 @@ export const metadata: Metadata = {
     url: 'https://podlablv.com',
     siteName: 'PodLab',
     title: 'PodLab - Record Once, Sell Forever',
-    description: 'Duplicate yourself into strategic 4K video assets that sell 24/7. For $1M–$8M founders stuck as the bottleneck.',
+    description: 'Duplicate yourself into strategic 4K video assets that sell 24/7. For $1M–$8M founders stuck as the bottleneck. Your content studio & growth lab.',
     images: [
       {
         url: '/og-image.png',
@@ -25,7 +33,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'PodLab - Record Once, Sell Forever',
-    description: 'Duplicate yourself into strategic 4K video assets that sell 24/7. For $1M–$8M founders stuck as the bottleneck.',
+    description: 'Duplicate yourself into strategic 4K video assets that sell 24/7. For $1M–$8M founders stuck as the bottleneck. Your content studio & growth lab.',
     images: ['/og-image.png'],
   },
   robots: {
@@ -41,7 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={`${inter.variable} ${michroma.variable}`}>{children}</body>
     </html>
   );
 }

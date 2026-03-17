@@ -35,7 +35,7 @@
 - **Source:** Austin Reinders CEO testimonial interview
 - **Display:** 9:16 vertical aspect ratio
 - **Poster:** Austin's headshot
-- **Info:** $750K → $4.72M transformation
+- **Info:** $3.1M → $4.72M transformation
 
 #### Client Montage
 - **File:** `/public/videos/client-montage.mp4` (134MB)
