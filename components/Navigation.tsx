@@ -75,32 +75,33 @@ export default function Navigation() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-bg-secondary border-b border-border">
           <div className="px-6 py-4 flex flex-col gap-4">
-            <Link href="/services" className="text-text-secondary hover:text-accent transition">
+            <Link href="/services" onClick={() => setMobileMenuOpen(false)} className="text-text-secondary hover:text-accent transition">
               Services
             </Link>
-            <Link href="/assessment" className="text-text-secondary hover:text-accent transition font-semibold">
+            <Link href="/assessment" onClick={() => setMobileMenuOpen(false)} className="text-text-secondary hover:text-accent transition font-semibold">
               Assessment
             </Link>
-            <Link href="/case-studies" className="text-text-secondary hover:text-accent transition">
+            <Link href="/case-studies" onClick={() => setMobileMenuOpen(false)} className="text-text-secondary hover:text-accent transition">
               Case Studies
             </Link>
-            <Link href="/about" className="text-text-secondary hover:text-accent transition">
+            <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="text-text-secondary hover:text-accent transition">
               About
             </Link>
-            <Link href="/how-it-started" className="text-text-secondary hover:text-accent transition">
+            <Link href="/how-it-started" onClick={() => setMobileMenuOpen(false)} className="text-text-secondary hover:text-accent transition">
               Podcast
             </Link>
-            <Link href="/affiliate" className="text-text-secondary hover:text-accent transition">
+            <Link href="/affiliate" onClick={() => setMobileMenuOpen(false)} className="text-text-secondary hover:text-accent transition">
               Beaker
             </Link>
-            <Link href="/blog" className="text-text-secondary hover:text-accent transition">
+            <Link href="/blog" onClick={() => setMobileMenuOpen(false)} className="text-text-secondary hover:text-accent transition">
               Blog
             </Link>
-            <Link href="/login" className="text-text-secondary hover:text-accent transition font-semibold">
+            <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="text-text-secondary hover:text-accent transition font-semibold">
               Client Login
             </Link>
             <Link
               href="/assessment/start"
+              onClick={() => setMobileMenuOpen(false)}
               className="px-6 py-2.5 bg-accent text-black font-semibold rounded-lg hover:bg-accent-hover transition text-center"
             >
               Calculate Bottleneck

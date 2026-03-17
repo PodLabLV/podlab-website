@@ -21,8 +21,36 @@ export default function ImageWithHover({
   priority = false,
 }: ImageWithHoverProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
+  // Detect touch device on mount
+  useEffect(() => {
+    const touch =
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      window.matchMedia('(pointer: coarse)').matches;
+    setIsTouchDevice(touch);
+  }, []);
+
+  // Intersection Observer: reveal color on scroll for touch devices
+  useEffect(() => {
+    if (!isTouchDevice) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [isTouchDevice]);
+
   // Check if we're inside a parent with class="group"
   // If so, watch for group-hover state
   useEffect(() => {
@@ -54,13 +82,15 @@ export default function ImageWithHover({
     colorSrc = src;
   } else {
     // Pattern: name.ext → name-B&W.ext and name.ext (team photos)
-    // Check if we're using the color version or base version
     const extension = src.substring(src.lastIndexOf('.'));
     const basePath = src.substring(0, src.lastIndexOf('.'));
     
     bwSrc = `${basePath}-B&W${extension}`;
     colorSrc = src;
   }
+
+  // Show color when hovered (desktop) OR in viewport (mobile/touch)
+  const showColor = isHovered || (isTouchDevice && isInView);
 
   return (
     <div 
@@ -79,14 +109,14 @@ export default function ImageWithHover({
         priority={priority}
       />
       
-      {/* Color Image (reveal on hover) - PREMIUM TRANSITION */}
+      {/* Color Image (reveal on hover/scroll) - PREMIUM TRANSITION */}
       <Image
         src={colorSrc}
         alt={alt}
         width={width}
         height={height}
         className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[350ms] ease-out"
-        style={{ opacity: isHovered ? 1 : 0 }}
+        style={{ opacity: showColor ? 1 : 0 }}
         priority={priority}
       />
     </div>
