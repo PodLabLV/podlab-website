@@ -34,9 +34,8 @@ export default function ImageWithHover({
     setIsTouchDevice(touch);
   }, []);
 
-  // Intersection Observer: reveal color on scroll for touch devices
+  // Intersection Observer: reveal color on scroll for ALL devices
   useEffect(() => {
-    if (!isTouchDevice) return;
     const container = containerRef.current;
     if (!container) return;
 
@@ -44,12 +43,12 @@ export default function ImageWithHover({
       ([entry]) => {
         setIsInView(entry.isIntersecting);
       },
-      { threshold: 0.5 }
+      { threshold: 0.3 }
     );
 
     observer.observe(container);
     return () => observer.disconnect();
-  }, [isTouchDevice]);
+  }, []);
 
   // Check if we're inside a parent with class="group"
   // If so, watch for group-hover state
@@ -89,8 +88,8 @@ export default function ImageWithHover({
     colorSrc = src;
   }
 
-  // Show color when hovered (desktop) OR in viewport (mobile/touch)
-  const showColor = isHovered || (isTouchDevice && isInView);
+  // Show color when hovered OR in viewport (scroll-triggered for all devices)
+  const showColor = isHovered || isInView;
 
   return (
     <div 
