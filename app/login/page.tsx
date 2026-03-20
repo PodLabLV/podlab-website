@@ -24,12 +24,21 @@ export default function LoginPage() {
     if (emailInput) emailInput.focus();
   }, []);
 
-  // Check if already logged in
+  // Check if already logged in (only redirect if session is valid)
   useEffect(() => {
     const supabase = getSupabaseBrowser();
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        window.location.href = '/portal';
+      if (session?.access_token && session?.user) {
+        // Verify the session is actually valid before redirecting
+        supabase.auth.getUser(session.access_token).then(({ data: { user }, error }) => {
+          if (user && !error) {
+            const redirectTo = new URLSearchParams(window.location.search).get('redirect') || '/portal';
+            window.location.href = redirectTo;
+          } else {
+            // Invalid/stale session — clear it
+            supabase.auth.signOut();
+          }
+        });
       }
     });
   }, []);
