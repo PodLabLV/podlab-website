@@ -1,22 +1,23 @@
 import Navigation from '@/components/Navigation';
 import HomePageWrapper from '@/components/HomePageWrapper';
+import LabNavigation from '@/components/LabNavigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, PlayCircle, Check, Film, MessageSquare, Users, RefreshCw, Target } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'VideoSalesLab | PodLab',
+  title: 'VideoSalesLab — Duplicate Yourself on Camera',
   description: 'Five core sales videos that educate, persuade, and close while you sleep.',
   openGraph: {
-    title: 'VideoSalesLab | PodLab',
+    title: 'VideoSalesLab — Duplicate Yourself on Camera',
     description: 'Five core sales videos that educate, persuade, and close while you sleep.',
     url: '/labs/video-sales',
     images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: 'PodLab VideoSalesLab' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'VideoSalesLab | PodLab',
+    title: 'VideoSalesLab — Duplicate Yourself on Camera',
     description: 'Five core sales videos that educate, persuade, and close while you sleep.',
     images: ['/opengraph-image.png'],
     creator: '@podlab',
@@ -63,11 +64,14 @@ export default function VideoSalesLabPage() {
     <HomePageWrapper>
       <div className="min-h-screen">
         <Navigation />
+        <div className="pt-20">
+          <LabNavigation currentLab="VideoSalesLab" />
+        </div>
 
         {/* Hero Section */}
-        <section className="relative pt-32 pb-16 px-6">
+        <section className="relative pt-8 pb-16 px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4">VideoSalesLab</h1>
+            <h1 className="text-xl sm:text-2xl md:text-5xl lg:text-7xl font-bold mb-4">VideoSalesLab</h1>
             <p className="text-2xl md:text-3xl text-accent font-bold mb-4">
               Duplicate Yourself in One Recording Session
             </p>
@@ -81,7 +85,7 @@ export default function VideoSalesLabPage() {
             </p>
             <div className="mb-12">
               <a
-                href="https://calendly.com/podlablv/new-meeting"
+                href="https://calendly.com/podlablv/strategy-call"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"
@@ -110,9 +114,9 @@ export default function VideoSalesLabPage() {
         {/* Who It's For Section */}
         <section className="py-20 px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="glass-card p-8 md:p-12">
+            <div className="glass-card p-5 sm:p-8 md:p-12">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">Who It's For</p>
-              <h2 className="text-4xl font-bold mb-6">Perfect for founders ready to scale without burning out</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">Perfect for founders ready to scale without burning out</h2>
               <ul className="space-y-4">
                 {whoItsFor.map((item, index) => (
                   <li key={index} className="flex items-start gap-3">
@@ -130,20 +134,20 @@ export default function VideoSalesLabPage() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">The 5 Essential Videos</p>
-              <h2 className="text-4xl md:text-5xl font-bold">Every video you need to sell</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold">Every video you need to sell</h2>
             </div>
 
             <div className="space-y-6">
               {videos.map((video, index) => {
                 const Icon = video.icon;
                 return (
-                  <div key={index} className="glass-card p-6 flex items-start gap-6">
-                    <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-                      <Icon className="w-7 h-7 text-accent" />
+                  <div key={index} className="glass-card p-4 sm:p-6 flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-accent" />
                     </div>
-                    <div>
-                      <h3 className="text-2xl font-bold mb-2">{video.title}</h3>
-                      <p className="text-text-secondary leading-relaxed text-lg">{video.description}</p>
+                    <div className="min-w-0">
+                      <h3 className="text-xl sm:text-2xl font-bold mb-2">{video.title}</h3>
+                      <p className="text-text-secondary leading-relaxed text-base sm:text-lg">{video.description}</p>
                     </div>
                   </div>
                 );
@@ -155,9 +159,9 @@ export default function VideoSalesLabPage() {
         {/* Deliverables Section */}
         <section className="py-20 px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="glass-card p-8 md:p-12">
+            <div className="glass-card p-5 sm:p-8 md:p-12">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">What You Get</p>
-              <h2 className="text-4xl font-bold mb-6">Complete video suite + repurposing strategy</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">Complete video suite + repurposing strategy</h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <Check className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
@@ -195,9 +199,9 @@ export default function VideoSalesLabPage() {
         {/* Outcome Section */}
         <section className="py-20 px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="glass-card p-8 md:p-12">
+            <div className="glass-card p-5 sm:p-8 md:p-12">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">The Outcome</p>
-              <h2 className="text-4xl font-bold mb-6">Video suite that pre-sells prospects 24/7</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">Video suite that pre-sells prospects 24/7</h2>
               <p className="text-xl text-text-secondary leading-relaxed">
                 Your videos will work around the clock to educate, build trust, and move prospects toward booking. 
                 You'll spend less time on discovery calls and more time closing qualified leads who already understand 
@@ -210,7 +214,7 @@ export default function VideoSalesLabPage() {
         {/* Pricing Section */}
         <section className="py-20 px-6">
           <div className="max-w-3xl mx-auto">
-            <div className="glass-card p-8 md:p-12 text-center border-2 border-accent">
+            <div className="glass-card p-5 sm:p-8 md:p-12 text-center border-2 border-accent">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/10 rounded-full text-accent text-sm font-medium mb-6">
                 <PlayCircle className="w-4 h-4" />
                 Complete Package
@@ -219,7 +223,7 @@ export default function VideoSalesLabPage() {
               <div className="mb-2">
                 <span className="text-sm text-text-secondary line-through">Perceived Value: $25,000+</span>
               </div>
-              <p className="text-5xl font-bold text-accent mb-6">$10,000</p>
+              <p className="text-4xl md:text-5xl font-bold text-accent mb-6">$10,000</p>
               <p className="text-text-secondary max-w-md mx-auto mb-8">
                 5 professional video assets that work for you 24/7. Filmed in one day.
               </p>
@@ -246,7 +250,7 @@ export default function VideoSalesLabPage() {
                 </li>
               </ul>
               <a
-                href="https://calendly.com/podlablv/new-meeting"
+                href="https://calendly.com/podlablv/strategy-call"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"
@@ -261,12 +265,12 @@ export default function VideoSalesLabPage() {
         {/* CTA Section */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto text-center glass-card p-6 md:p-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to create videos that sell?</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-6">Ready to create videos that sell?</h2>
             <p className="text-xl text-text-secondary max-w-2xl mx-auto mb-10">
               One day of filming. Five evergreen assets. Let's build your video sales machine.
             </p>
             <a
-              href="https://calendly.com/podlablv/new-meeting"
+              href="https://calendly.com/podlablv/strategy-call"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"

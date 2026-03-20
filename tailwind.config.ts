@@ -17,20 +17,20 @@ const config: Config = {
         // Text colors (white ink on dark paper)
         text: {
           primary: "#fafafa", // bright white
-          secondary: "#a0a0a0", // medium gray
-          tertiary: "#6b6b6b", // darker gray
+          secondary: "#c0c0c0", // medium gray — brightened for readability on dark/glow
+          tertiary: "#b0b0b0", // readable on dark backgrounds
         },
         
         // Accent (neon green for CTAs)
-        accent: "#39FF14",
-        "accent-hover": "#2ee00f",
+        accent: "#2ADD1B",
+        "accent-hover": "#85FF78",
         
         // Borders (subtle lines)
         border: "#2a2a2a",
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Inter Tight', 'system-ui', 'sans-serif'],
+        display: ['var(--font-michroma)', 'Michroma', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       spacing: {
@@ -56,8 +56,8 @@ const config: Config = {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         'neon-pulse': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(57, 255, 20, 0.4)' },
-          '50%': { boxShadow: '0 0 40px rgba(57, 255, 20, 0.8)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(42, 221, 27, 0.4)' },
+          '50%': { boxShadow: '0 0 40px rgba(42, 221, 27, 0.8)' },
         },
       },
     },

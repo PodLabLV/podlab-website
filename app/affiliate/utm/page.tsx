@@ -159,7 +159,7 @@ export default function BeakerUtmPage() {
             </p>
             <h1 className="text-5xl md:text-7xl font-black mb-6 leading-[0.95] tracking-tight">
               Your{' '}
-              <span className="text-accent drop-shadow-[0_0_25px_rgba(57,255,20,0.5)]">
+              <span className="text-accent drop-shadow-[0_0_25px_rgba(42,221,27,0.5)]">
                 Beaker Links
               </span>
             </h1>
@@ -187,7 +187,7 @@ export default function BeakerUtmPage() {
                 className="w-full bg-bg-tertiary border border-border rounded-lg px-4 py-3 text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/30 transition font-mono text-lg"
               />
               {beakerId && sanitizedId !== beakerId.trim() && (
-                <p className="text-text-tertiary text-xs mt-2 font-mono">
+                <p className="text-text-secondary text-xs mt-2 font-mono">
                   Formatted as: <span className="text-accent">{sanitizedId}</span>
                 </p>
               )}
@@ -232,7 +232,7 @@ export default function BeakerUtmPage() {
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-text-primary font-semibold text-sm mb-1">{link.label}</p>
-                      <p className="text-text-tertiary text-xs font-mono truncate">{link.url}</p>
+                      <p className="text-text-secondary text-xs font-mono truncate">{link.url}</p>
                     </div>
                     <CopyButton text={link.url} />
                   </div>
@@ -262,7 +262,7 @@ export default function BeakerUtmPage() {
                     </p>
                   )}
                   {customUtmUrl && (
-                    <p className="text-text-tertiary text-xs font-mono mt-3 break-all">
+                    <p className="text-text-secondary text-xs font-mono mt-3 break-all">
                       {customUtmUrl}
                     </p>
                   )}

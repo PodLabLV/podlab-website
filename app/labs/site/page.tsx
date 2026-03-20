@@ -1,22 +1,23 @@
 import Navigation from '@/components/Navigation';
 import HomePageWrapper from '@/components/HomePageWrapper';
+import LabNavigation from '@/components/LabNavigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Globe, Check, Smartphone, Zap, Search, BarChart3 } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'SiteLab | PodLab',
+  title: 'SiteLab — High-Converting Websites',
   description: 'Conversion-focused website design built to turn visitors into leads and clients.',
   openGraph: {
-    title: 'SiteLab | PodLab',
+    title: 'SiteLab — High-Converting Websites',
     description: 'Conversion-focused website design built to turn visitors into leads and clients.',
     url: '/labs/site',
     images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: 'PodLab SiteLab' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SiteLab | PodLab',
+    title: 'SiteLab — High-Converting Websites',
     description: 'Conversion-focused website design built to turn visitors into leads and clients.',
     images: ['/opengraph-image.png'],
     creator: '@podlab',
@@ -62,11 +63,14 @@ export default function SiteLabPage() {
     <HomePageWrapper>
       <div className="min-h-screen">
         <Navigation />
+        <div className="pt-20">
+          <LabNavigation currentLab="SiteLab" />
+        </div>
 
         {/* Hero Section */}
-        <section className="relative pt-32 pb-16 px-6">
+        <section className="relative pt-8 pb-16 px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4">SiteLab</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-bold mb-4">SiteLab</h1>
             <p className="text-2xl md:text-3xl text-accent font-bold mb-4">
               Your Website Becomes Your Best Salesperson
             </p>
@@ -80,7 +84,7 @@ export default function SiteLabPage() {
             </p>
             <div className="mb-12">
               <a
-                href="https://calendly.com/podlablv/new-meeting"
+                href="https://calendly.com/podlablv/strategy-call"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"
@@ -109,9 +113,9 @@ export default function SiteLabPage() {
         {/* Who It's For Section */}
         <section className="py-20 px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="glass-card p-8 md:p-12">
+            <div className="glass-card p-5 sm:p-8 md:p-12">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">Who It's For</p>
-              <h2 className="text-4xl font-bold mb-6">Perfect for founders who need a site that actually converts</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">Perfect for founders who need a site that actually converts</h2>
               <ul className="space-y-4">
                 {whoItsFor.map((item, index) => (
                   <li key={index} className="flex items-start gap-3">
@@ -129,7 +133,7 @@ export default function SiteLabPage() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">Built to Convert</p>
-              <h2 className="text-4xl md:text-5xl font-bold">More than a pretty website</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold">More than a pretty website</h2>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-8">
@@ -160,9 +164,9 @@ export default function SiteLabPage() {
         {/* Outcome Section */}
         <section className="py-20 px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="glass-card p-8 md:p-12">
+            <div className="glass-card p-5 sm:p-8 md:p-12">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">The Outcome</p>
-              <h2 className="text-4xl font-bold mb-6">Website that sells 24/7 without founder involvement</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">Website that sells 24/7 without founder involvement</h2>
               <p className="text-xl text-text-secondary leading-relaxed">
                 Your website will work around the clock to educate prospects, build trust, and drive qualified bookings. 
                 Visitors will understand what you do, why you're different, and how to work with you—all before they ever 
@@ -175,7 +179,7 @@ export default function SiteLabPage() {
         {/* Pricing Section */}
         <section className="py-20 px-6">
           <div className="max-w-3xl mx-auto">
-            <div className="glass-card p-8 md:p-12 text-center border-2 border-accent">
+            <div className="glass-card p-5 sm:p-8 md:p-12 text-center border-2 border-accent">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/10 rounded-full text-accent text-sm font-medium mb-6">
                 <Globe className="w-4 h-4" />
                 Complete Package
@@ -184,7 +188,7 @@ export default function SiteLabPage() {
               <div className="mb-2">
                 <span className="text-sm text-text-secondary line-through">Perceived Value: $15,000+</span>
               </div>
-              <p className="text-5xl font-bold text-accent mb-6">$3,500+</p>
+              <p className="text-4xl md:text-5xl font-bold text-accent mb-6">$3,500+</p>
               <p className="text-text-secondary max-w-md mx-auto mb-8">
                 A custom website built to convert visitors into clients, 24/7.
               </p>
@@ -211,7 +215,7 @@ export default function SiteLabPage() {
                 </li>
               </ul>
               <a
-                href="https://calendly.com/podlablv/new-meeting"
+                href="https://calendly.com/podlablv/strategy-call"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"
@@ -226,12 +230,12 @@ export default function SiteLabPage() {
         {/* CTA Section */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto text-center glass-card p-6 md:p-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready for a website that actually works?</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-6">Ready for a website that actually works?</h2>
             <p className="text-xl text-text-secondary max-w-2xl mx-auto mb-10">
               Let's build a site that converts visitors while you sleep.
             </p>
             <a
-              href="https://calendly.com/podlablv/new-meeting"
+              href="https://calendly.com/podlablv/strategy-call"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"

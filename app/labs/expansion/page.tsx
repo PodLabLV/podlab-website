@@ -1,22 +1,23 @@
 import Navigation from '@/components/Navigation';
 import HomePageWrapper from '@/components/HomePageWrapper';
+import LabNavigation from '@/components/LabNavigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, TrendingUp, Check, BarChart3, Target, Megaphone, Users } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'ExpansionLab | PodLab',
+  title: 'ExpansionLab — Ongoing Growth Engine',
   description: 'Fractional CMO support, campaign management, and growth strategy for scaling founders.',
   openGraph: {
-    title: 'ExpansionLab | PodLab',
+    title: 'ExpansionLab — Ongoing Growth Engine',
     description: 'Fractional CMO support, campaign management, and growth strategy for scaling founders.',
     url: '/labs/expansion',
     images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: 'PodLab ExpansionLab' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ExpansionLab | PodLab',
+    title: 'ExpansionLab — Ongoing Growth Engine',
     description: 'Fractional CMO support, campaign management, and growth strategy for scaling founders.',
     images: ['/opengraph-image.png'],
     creator: '@podlab',
@@ -58,11 +59,14 @@ export default function ExpansionLabPage() {
     <HomePageWrapper>
       <div className="min-h-screen">
         <Navigation />
+        <div className="pt-20">
+          <LabNavigation currentLab="ExpansionLab" />
+        </div>
 
         {/* Hero Section */}
-        <section className="relative pt-32 pb-16 px-6">
+        <section className="relative pt-8 pb-16 px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4">ExpansionLab</h1>
+            <h1 className="text-xl sm:text-2xl md:text-5xl lg:text-7xl font-bold mb-4">ExpansionLab</h1>
             <p className="text-2xl md:text-3xl text-accent font-bold mb-4">
               Predictable Growth Without Founder Dependency
             </p>
@@ -76,7 +80,7 @@ export default function ExpansionLabPage() {
             </p>
             <div className="mb-12">
               <a
-                href="https://calendly.com/podlablv/new-meeting"
+                href="https://calendly.com/podlablv/strategy-call"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"
@@ -105,9 +109,9 @@ export default function ExpansionLabPage() {
         {/* Who It's For Section */}
         <section className="py-20 px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="glass-card p-8 md:p-12">
+            <div className="glass-card p-5 sm:p-8 md:p-12">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">Who It's For</p>
-              <h2 className="text-4xl font-bold mb-6">Perfect for founders ready to scale systematically</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">Perfect for founders ready to scale systematically</h2>
               <ul className="space-y-4">
                 {whoItsFor.map((item, index) => (
                   <li key={index} className="flex items-start gap-3">
@@ -125,7 +129,7 @@ export default function ExpansionLabPage() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">What We Do</p>
-              <h2 className="text-4xl md:text-5xl font-bold">Executive-level marketing support</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold">Executive-level marketing support</h2>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-8">
@@ -148,9 +152,9 @@ export default function ExpansionLabPage() {
         {/* Deliverables Section */}
         <section className="py-20 px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="glass-card p-8 md:p-12">
+            <div className="glass-card p-5 sm:p-8 md:p-12">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">What You Get</p>
-              <h2 className="text-4xl font-bold mb-6">Ongoing growth engine</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">Ongoing growth engine</h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <Check className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
@@ -188,9 +192,9 @@ export default function ExpansionLabPage() {
         {/* Outcome Section */}
         <section className="py-20 px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="glass-card p-8 md:p-12">
+            <div className="glass-card p-5 sm:p-8 md:p-12">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">The Outcome</p>
-              <h2 className="text-4xl font-bold mb-6">Predictable, scalable growth on autopilot</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">Predictable, scalable growth on autopilot</h2>
               <p className="text-xl text-text-secondary leading-relaxed">
                 You'll have a dedicated growth team executing campaigns, creating content, and optimizing performance 
                 every month. No more wondering where your next lead will come from. No more managing multiple vendors. 
@@ -203,13 +207,13 @@ export default function ExpansionLabPage() {
         {/* Pricing Section */}
         <section className="py-20 px-6">
           <div className="max-w-3xl mx-auto">
-            <div className="glass-card p-8 md:p-12 text-center border-2 border-accent">
+            <div className="glass-card p-5 sm:p-8 md:p-12 text-center border-2 border-accent">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/10 rounded-full text-accent text-sm font-medium mb-6">
                 <TrendingUp className="w-4 h-4" />
                 Monthly Retainer
               </div>
               <h3 className="text-3xl font-bold mb-4">ExpansionLab</h3>
-              <p className="text-5xl font-bold text-accent mb-2">$5,000+</p>
+              <p className="text-4xl md:text-5xl font-bold text-accent mb-2">$5,000+</p>
               <p className="text-sm text-text-secondary mb-6">/month</p>
               <p className="text-text-secondary max-w-md mx-auto mb-8">
                 Fractional CMO services and campaign management. Pricing scales with your ad spend and needs.
@@ -233,7 +237,7 @@ export default function ExpansionLabPage() {
                 </li>
               </ul>
               <a
-                href="https://calendly.com/podlablv/new-meeting"
+                href="https://calendly.com/podlablv/strategy-call"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"
@@ -248,12 +252,12 @@ export default function ExpansionLabPage() {
         {/* CTA Section */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto text-center glass-card p-6 md:p-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to scale?</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-6">Ready to scale?</h2>
             <p className="text-xl text-text-secondary max-w-2xl mx-auto mb-10">
               Let's talk about your growth goals and build a plan to get there.
             </p>
             <a
-              href="https://calendly.com/podlablv/new-meeting"
+              href="https://calendly.com/podlablv/strategy-call"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"

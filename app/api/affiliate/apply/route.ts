@@ -1,5 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
 import { createClient } from '@supabase/supabase-js';
+import { notifyTeam, buildEmailHtml } from '@/lib/notifications';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -8,7 +10,16 @@ function getSupabase() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
-export async function POST(request: Request) {
+export async function OPTIONS(request: NextRequest) {
+  return handleCors(request) || NextResponse.json({}, { headers: corsHeaders(request) })
+}
+
+export async function POST(request: NextRequest) {
+  const { limited } = rateLimit(request, { maxRequests: 5, windowMs: 60_000 })
+  if (limited) {
+    return NextResponse.json({ error: 'Too many requests.' }, { status: 429 })
+  }
+
   try {
     const body = await request.json();
 
@@ -100,6 +111,29 @@ export async function POST(request: Request) {
         { status: 500 },
       );
     }
+
+    // Send notifications (non-blocking)
+    const fullName = `${firstName} ${lastName}`;
+    const notifFields: Record<string, string> = {
+      Name: fullName,
+      Email: email,
+      ...(company ? { Company: company } : {}),
+      'Business Type': businessType,
+      'Audience Size': audienceSize,
+      'How They Connect': howConnect,
+      'Why Joining': whyJoin,
+      'Payout Method': payoutMethod,
+      'Beaker ID': beakerId,
+    };
+
+    notifyTeam({
+      title: '🤝 New Beaker Application',
+      fields: notifFields,
+      emailSubject: `🤝 Beaker Application: ${fullName}`,
+      emailHtml: buildEmailHtml('🤝 New Beaker Application', notifFields),
+      slackColor: '#9b59b6',
+      supabaseUrl: 'https://supabase.com/dashboard/project/tncipuxobcbkwkmpcevt/editor',
+    }).catch((err) => console.error('Notification error:', err));
 
     return NextResponse.json({ success: true, beakerId });
   } catch (err) {

@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
 import { createClient } from '@supabase/supabase-js';
+import { notifyTeam, buildEmailHtml } from '@/lib/notifications';
+
+export async function OPTIONS(request: NextRequest) {
+  return handleCors(request) || NextResponse.json({}, { headers: corsHeaders(request) })
+}
 
 export async function POST(request: NextRequest) {
+  const { limited } = rateLimit(request, { maxRequests: 5, windowMs: 60_000 })
+  if (limited) {
+    return NextResponse.json({ error: 'Too many requests.' }, { status: 429 })
+  }
+
   try {
     const body = await request.json();
 
@@ -75,6 +86,28 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Send notifications (non-blocking)
+    const fullName = `${body.firstName} ${body.lastName}`;
+    const notifFields: Record<string, string> = {
+      Name: fullName,
+      Email: body.email,
+      Company: body.companyName,
+      Title: body.title,
+      'Revenue Range': body.revenueRange,
+      Industry: body.industry,
+      'Episode Topic': body.episodeTopic,
+      'Podcast Experience': body.podcastExperience,
+    };
+
+    notifyTeam({
+      title: '🎙️ New Podcast Application',
+      fields: notifFields,
+      emailSubject: `🎙️ Podcast Application: ${fullName} from ${body.companyName}`,
+      emailHtml: buildEmailHtml('🎙️ New Podcast Application', notifFields),
+      slackColor: '#3498db',
+      supabaseUrl: 'https://supabase.com/dashboard/project/tncipuxobcbkwkmpcevt/editor',
+    }).catch((err) => console.error('Notification error:', err));
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -28,10 +28,10 @@ export function UnicornBackground({
         title="Background animation"
         allow="autoplay"
       />
-      {/* Cover watermark — bottom-right */}
-      <div style={{ position: "absolute", bottom: 0, right: 0, width: "200px", height: "50px", background: "#000000", zIndex: 2 }} />
-      {/* Cover watermark — bottom-left (in case) */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, width: "200px", height: "50px", background: "#000000", zIndex: 2 }} />
+      {/* Cover watermark — bottom strip */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "60px", background: "#000000", zIndex: 2 }} />
+      {/* Cover left-edge tab/widget */}
+      <div style={{ position: "absolute", top: 0, left: 0, width: "60px", height: "100%", background: "linear-gradient(to right, #000000 60%, transparent 100%)", zIndex: 2 }} />
     </div>
   )
 }

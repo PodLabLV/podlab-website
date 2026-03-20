@@ -60,7 +60,7 @@ const labs = [
 
 export default function LabsSection() {
   return (
-    <section className="relative py-24 px-6 overflow-hidden bg-bg-secondary">
+    <section className="relative py-24 px-4 sm:px-6 overflow-hidden bg-bg-secondary">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 opacity-20">
         <img 
@@ -72,13 +72,13 @@ export default function LabsSection() {
       <div className="absolute inset-0 bg-gradient-to-b from-bg-secondary/60 via-bg-secondary/70 to-bg-secondary/60"></div>
       
       <div className="relative z-10 max-w-6xl mx-auto">
-        <h2 className="text-3xl md:text-5xl font-bold mb-4 text-center">The 5-Phase Growth System</h2>
+        <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4 text-center">The 5-Phase Growth System</h2>
         <p className="text-xl text-text-secondary mb-12 text-center">
           One system. Five phases. Complete founder duplication.
         </p>
 
         {/* Flask Icons Row */}
-        <div className="flex justify-center items-end gap-6 md:gap-10 mb-16">
+        <div className="flex flex-wrap justify-center items-end gap-4 sm:gap-6 md:gap-10 mb-16">
           {labs.map((lab, index) => {
             const isCenter = index === 2;
             return (
@@ -117,15 +117,15 @@ export default function LabsSection() {
             return (
               <Link key={lab.name} href={lab.slug} className="block">
                 <TiltCard tiltAmount={12} glareEnabled={true} gyroscopeEnabled={true} className="h-full">
-                  <div className="group relative bg-bg-tertiary border border-border rounded-xl p-8 hover:border-accent hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)] transition-all duration-350 cursor-pointer">
+                  <div className="group relative bg-bg-tertiary border border-border rounded-xl p-4 sm:p-6 md:p-8 hover:border-accent hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)] transition-all duration-350 cursor-pointer">
                     {/* Green glow on hover */}
                     <div className="absolute inset-0 bg-[#2ADD1B]/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl pointer-events-none z-10" />
                     
-                    <div className="flex items-start gap-6 relative z-20">
+                    <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-6 relative z-20">
                       <div className="flex-shrink-0 relative">
                         {/* Icon container with green glow */}
-                        <div className="relative w-20 h-20 flex items-center justify-center bg-[#2ADD1B]/10 rounded-xl border border-[#2ADD1B]/30 group-hover:border-[#2ADD1B] transition-all duration-350">
-                          <Icon className="w-10 h-10 text-[#2ADD1B]" />
+                        <div className="relative w-16 h-16 md:w-20 md:h-20 flex items-center justify-center bg-[#2ADD1B]/10 rounded-xl border border-[#2ADD1B]/30 group-hover:border-[#2ADD1B] transition-all duration-350">
+                          <Icon className="w-8 h-8 md:w-10 md:h-10 text-[#2ADD1B]" />
                         </div>
                         <ImageWithHover
                           src={lab.icon}
@@ -135,14 +135,14 @@ export default function LabsSection() {
                           className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-350"
                         />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="text-sm text-accent font-semibold mb-2 uppercase tracking-wider">PHASE {index + 1}</div>
-                        <h3 className="text-3xl font-bold mb-2 group-hover:text-accent transition-colors">{lab.name}</h3>
-                        <p className="text-accent font-semibold mb-4">{lab.tagline}</p>
+                        <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 group-hover:text-accent transition-colors">{lab.name}</h3>
+                        <p className="text-accent font-semibold mb-4 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{lab.tagline}</p>
                         <p className="text-text-secondary mb-4 leading-relaxed">{lab.description}</p>
-                        <div className="flex items-center justify-between mt-6 pt-4 border-t border-border group-hover:border-accent transition-colors">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-6 pt-4 border-t border-border group-hover:border-accent transition-colors gap-2">
                           <span className="text-2xl font-bold text-accent">{lab.price}</span>
-                          <span className="text-sm text-text-tertiary group-hover:text-accent transition-colors">{lab.outcome} →</span>
+                          <span className="text-sm text-text-secondary group-hover:text-accent transition-colors">{lab.outcome} →</span>
                         </div>
                       </div>
                     </div>

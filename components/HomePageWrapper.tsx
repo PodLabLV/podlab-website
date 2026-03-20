@@ -18,7 +18,7 @@ export default function HomePageWrapper({ children }: { children: React.ReactNod
   return (
     <div className="relative min-h-screen bg-[#0a0a0a]">
       <div 
-        className="fixed inset-0 pointer-events-none z-0 bg-[#0a0a0a]" 
+        className="fixed inset-0 pointer-events-none z-0 bg-[#0a0a0a] opacity-50 md:opacity-100" 
         style={{ width: '100vw', height: '100vh', left: 0, top: 0 }}
       >
         {isClient && <UnicornBackground projectId="GUfyMQB5CKHPivFz7drf" />}

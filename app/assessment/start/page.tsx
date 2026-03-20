@@ -587,6 +587,11 @@ export default function AssessmentPage() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [company, setCompany] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
 
   const handleStart = () => {
     setStarted(true);
@@ -632,7 +637,20 @@ export default function AssessmentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError('');
+    setPasswordError('');
     setSubmitting(true);
+
+    // Validate password
+    if (password && password.length < 8) {
+      setPasswordError('Password must be at least 8 characters.');
+      setSubmitting(false);
+      return;
+    }
+    if (password && password !== confirmPassword) {
+      setPasswordError('Passwords do not match.');
+      setSubmitting(false);
+      return;
+    }
 
     const categoryScores = calculateCategoryScores();
     const totalScore = calculateTotalScore();
@@ -650,6 +668,7 @@ export default function AssessmentPage() {
       email,
       phone: phone || undefined,
       company: company || undefined,
+      password: password || undefined,
       answers: answersMap,
       categoryScores,
       totalScore,
@@ -663,9 +682,14 @@ export default function AssessmentPage() {
         body: JSON.stringify(payload),
       });
 
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Failed to submit assessment');
+      }
+
+      if (data.assessmentId) {
+        setAssessmentId(data.assessmentId);
       }
 
       setShowEmailCapture(false);
@@ -703,7 +727,7 @@ export default function AssessmentPage() {
           </div>
 
           <div className="relative z-10 max-w-6xl mx-auto text-center">
-            <h1 className="text-4xl md:text-7xl lg:text-9xl font-black mb-8 leading-[0.95] tracking-tight">
+            <h1 className="text-3xl md:text-5xl lg:text-7xl font-black mb-8 leading-[0.95] tracking-tight">
               <span className="inline-block">The</span>{" "}
               <span className="bg-gradient-to-r from-white via-accent to-white bg-clip-text text-transparent bg-[length:200%_100%] animate-[gradient_4s_ease-in-out_infinite]">Founder</span><br />
               <span className="text-accent drop-shadow-[0_0_30px_rgba(42,221,27,0.5)]">Bottleneck</span>{" "}
@@ -727,7 +751,7 @@ export default function AssessmentPage() {
               <div className="absolute inset-0 bg-gradient-to-r from-accent-hover to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </button>
 
-            <p className="text-sm text-text-tertiary mt-8">Free • Results in 5 minutes • Personalized roadmap included</p>
+            <p className="text-sm text-text-secondary mt-8">Free • Results in 5 minutes • Personalized roadmap included</p>
           </div>
         </section>
       </div>
@@ -747,7 +771,7 @@ export default function AssessmentPage() {
             {/* Progress — complete */}
             <div className="mb-12">
               <div className="flex justify-between items-center mb-4">
-                <div className="text-sm text-text-tertiary">Almost there</div>
+                <div className="text-sm text-text-secondary">Almost there</div>
                 <div className="text-sm text-accent font-bold">Your results are ready</div>
               </div>
               <div className="w-full h-2 bg-bg-tertiary rounded-full overflow-hidden">
@@ -816,7 +840,7 @@ export default function AssessmentPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label htmlFor="phone" className="block text-sm font-medium text-text-secondary mb-2">
-                      Phone <span className="text-text-tertiary text-xs">(optional)</span>
+                      Phone <span className="text-text-secondary text-xs">(optional)</span>
                     </label>
                     <input
                       id="phone"
@@ -829,7 +853,7 @@ export default function AssessmentPage() {
                   </div>
                   <div>
                     <label htmlFor="company" className="block text-sm font-medium text-text-secondary mb-2">
-                      Company <span className="text-text-tertiary text-xs">(optional)</span>
+                      Company <span className="text-text-secondary text-xs">(optional)</span>
                     </label>
                     <input
                       id="company"
@@ -840,6 +864,66 @@ export default function AssessmentPage() {
                       placeholder="Your company"
                     />
                   </div>
+                </div>
+
+                {/* Password — Create Account */}
+                <div className="mt-6 pt-6 border-t border-border">
+                  <p className="text-sm font-semibold text-accent mb-1">Create your PodLab account to save your results</p>
+                  <p className="text-xs text-text-secondary mb-4">You&apos;ll be able to log in anytime to view your score, track progress, and access deliverables.</p>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="password" className="block text-sm font-medium text-text-secondary mb-2">
+                        Password <span className="text-red-400">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          required
+                          minLength={8}
+                          value={password}
+                          onChange={(e) => { setPassword(e.target.value); setPasswordError(''); }}
+                          className="w-full px-4 py-3 pr-12 bg-bg-secondary border-2 border-border rounded-xl text-white placeholder-text-tertiary focus:outline-none focus:border-accent transition-colors"
+                          placeholder="Min. 8 characters"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute inset-y-0 right-0 pr-4 flex items-center text-text-secondary hover:text-accent transition-colors"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                          ) : (
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="confirmPassword" className="block text-sm font-medium text-text-secondary mb-2">
+                        Confirm Password <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        id="confirmPassword"
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        minLength={8}
+                        value={confirmPassword}
+                        onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }}
+                        className="w-full px-4 py-3 bg-bg-secondary border-2 border-border rounded-xl text-white placeholder-text-tertiary focus:outline-none focus:border-accent transition-colors"
+                        placeholder="Confirm your password"
+                      />
+                    </div>
+                  </div>
+
+                  {passwordError && (
+                    <div className="mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+                      {passwordError}
+                    </div>
+                  )}
                 </div>
 
                 {submitError && (
@@ -854,13 +938,13 @@ export default function AssessmentPage() {
                   className="w-full group px-12 py-5 bg-accent text-black text-lg font-black rounded-xl hover:bg-accent-hover transition-all hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(42,221,27,0.5)] active:scale-[0.98] relative overflow-hidden uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
-                    {submitting ? 'Unlocking...' : 'Unlock My Results →'}
+                    {submitting ? 'Creating Account & Unlocking...' : 'Unlock My Results →'}
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
                   <div className="absolute inset-0 bg-gradient-to-r from-accent-hover to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </button>
 
-                <p className="text-xs text-text-tertiary text-center mt-3">
+                <p className="text-xs text-text-secondary text-center mt-3">
                   We&apos;ll send your results summary to your email. No spam, ever.
                 </p>
               </form>
@@ -921,7 +1005,7 @@ export default function AssessmentPage() {
           <div className="max-w-4xl mx-auto">
             {/* Score Header */}
             <div className="text-center mb-16">
-              <h2 className="text-5xl md:text-6xl font-black mb-6">
+              <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6">
                 Your <span className="text-accent drop-shadow-[0_0_25px_rgba(42,221,27,0.5)]">Bottleneck Score</span>
               </h2>
 
@@ -930,7 +1014,7 @@ export default function AssessmentPage() {
               </div>
 
               <div className="mb-2">
-                <span className="text-sm text-text-tertiary">out of 100</span>
+                <span className="text-sm text-text-secondary">out of 100</span>
               </div>
 
               <div className={`inline-block px-8 py-4 rounded-xl border-2 ${getZoneBorderClass(zone)} ${getZoneBgClass(zone)} mb-8`}>
@@ -1000,7 +1084,7 @@ export default function AssessmentPage() {
                               <p className="text-sm text-text-secondary mb-3">{win.description}</p>
                               <div className="flex flex-wrap gap-4 text-xs">
                                 <span className="text-accent font-medium">Impact: {win.impact}</span>
-                                <span className="text-text-tertiary">⏱ {win.time}</span>
+                                <span className="text-text-secondary">⏱ {win.time}</span>
                               </div>
                             </div>
                           </div>
@@ -1030,7 +1114,7 @@ export default function AssessmentPage() {
                       <div className="text-accent font-bold text-lg">{lab.price}</div>
                     </div>
                     <p className="text-sm text-text-secondary mb-2">{lab.description}</p>
-                    <p className="text-xs text-text-tertiary">{lab.reason}</p>
+                    <p className="text-xs text-text-secondary">{lab.reason}</p>
                   </div>
                 ))}
               </div>
@@ -1046,9 +1130,9 @@ export default function AssessmentPage() {
             <div className="text-center mb-16">
               <p className="text-lg text-text-secondary mb-8 max-w-2xl mx-auto">{zoneData.cta}</p>
 
-              <div className="flex flex-col sm:flex-row gap-6 justify-center">
+              <div className="flex flex-col sm:flex-row gap-6 justify-center flex-wrap">
                 <a
-                  href="https://calendly.com/podlablv/new-meeting"
+                  href="https://calendly.com/podlablv/strategy-call"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group px-8 py-4 md:px-16 md:py-6 bg-accent text-black text-xl font-black rounded-xl hover:bg-accent-hover transition-all hover:-translate-y-2 hover:scale-105 hover:shadow-[0_20px_60px_rgba(42,221,27,0.6)] active:scale-95 relative overflow-hidden uppercase tracking-wider"
@@ -1057,6 +1141,15 @@ export default function AssessmentPage() {
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
                   <div className="absolute inset-0 bg-gradient-to-r from-accent-hover to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </a>
+
+                {assessmentId && (
+                  <a
+                    href="/portal"
+                    className="px-12 py-6 border-2 border-accent text-accent text-lg font-bold rounded-xl hover:bg-accent/10 transition-all text-center"
+                  >
+                    View in Portal →
+                  </a>
+                )}
 
                 <button
                   onClick={() => {
@@ -1114,7 +1207,7 @@ export default function AssessmentPage() {
           {/* Progress */}
           <div className="mb-12">
             <div className="flex justify-between items-center mb-4">
-              <div className="text-sm text-text-tertiary">
+              <div className="text-sm text-text-secondary">
                 Question {currentQuestion + 1} of {questions.length}
               </div>
               <div className="text-sm text-accent font-bold">
@@ -1136,7 +1229,7 @@ export default function AssessmentPage() {
             </h2>
 
             {/* Subtext */}
-            <p className="text-base text-text-tertiary mb-10 italic">
+            <p className="text-base text-text-secondary mb-10 italic">
               {question.subtext}
             </p>
 
@@ -1167,7 +1260,7 @@ export default function AssessmentPage() {
               ← Previous
             </button>
 
-            <div className="text-sm text-text-tertiary">
+            <div className="text-sm text-text-secondary">
               {answers.filter(a => a > 0).length} / {questions.length} answered
             </div>
           </div>

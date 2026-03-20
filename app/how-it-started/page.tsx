@@ -9,12 +9,13 @@ export const metadata: Metadata = {
   title: 'How It Started',
   description: 'The stories behind the founders we work with. Real conversations about how they built their businesses.',
   openGraph: {
-    title: 'How It Started | PodLab',
+    title: 'How It Started — The Podcast',
     description: 'The stories behind the founders we work with. Real conversations about how they built their businesses.',
     url: 'https://podlablv.com/how-it-started',
+    images: [{ url: '/api/og?title=How%20It%20Started&subtitle=The%20Podcast%20for%20Real%20Founders', width: 1200, height: 630 }],
   },
   twitter: {
-    title: 'How It Started | PodLab',
+    title: 'How It Started — The Podcast',
     description: 'The stories behind the founders we work with. Real conversations about how they built their businesses.',
   },
 };
@@ -37,7 +38,7 @@ export default function PodcastPage() {
                 className="opacity-90 group-hover:opacity-100 transition-opacity"
               />
             </div>
-            <h1 className="text-4xl md:text-7xl lg:text-8xl font-black mb-8 leading-[0.95] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-black mb-8 leading-[0.95] tracking-tight">
               <span className="bg-gradient-to-r from-white via-accent to-white bg-clip-text text-transparent bg-[length:200%_100%] animate-[gradient_4s_ease-in-out_infinite]">Real</span> Founders.<br />
               Real Stories.<br />
               <span className="text-accent drop-shadow-[0_0_25px_rgba(42,221,27,0.5)]">No Fluff.</span>
@@ -84,7 +85,7 @@ export default function PodcastPage() {
         {/* What This Is */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-4xl font-bold mb-6">Not Another Business Podcast</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">Not Another Business Podcast</h2>
             <div className="glass-card p-8 md:p-12">
               <div className="prose prose-invert max-w-none text-lg space-y-6">
                 <p className="text-text-secondary">
@@ -121,7 +122,7 @@ export default function PodcastPage() {
         {/* Host */}
         <section className="py-24 px-6">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-12">Hosted by Hiram Andino</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-12">Hosted by Hiram Andino</h2>
             
             <div className="grid md:grid-cols-2 gap-12 items-start mb-16">
               <div className="group">
@@ -134,7 +135,7 @@ export default function PodcastPage() {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <p className="text-sm text-text-tertiary text-center mt-3">Combat Army Veteran - Afghanistan Deployment</p>
+                <p className="text-sm text-text-secondary text-center mt-3">Combat Army Veteran - Afghanistan Deployment</p>
               </div>
               <div className="group">
                 <div className="overflow-hidden rounded-xl border border-border group-hover:border-accent transition-all duration-350 h-[350px] md:h-[600px]">
@@ -146,7 +147,7 @@ export default function PodcastPage() {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <p className="text-sm text-text-tertiary text-center mt-3">Early Days - Building PodLab</p>
+                <p className="text-sm text-text-secondary text-center mt-3">Early Days - Building PodLab</p>
               </div>
             </div>
 
@@ -164,7 +165,7 @@ export default function PodcastPage() {
         {/* The Journey - Timeline */}
         <section className="py-24 px-6">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-4">The Journey</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">The Journey</h2>
             <p className="text-xl text-text-secondary text-center mb-16">
               From humble beginnings to helping $1M+ founders duplicate themselves
             </p>
@@ -220,7 +221,7 @@ export default function PodcastPage() {
         {/* Listen */}
         <section id="listen" className="py-24 px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl font-bold mb-12">Listen to How It Started</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-12">Listen to How It Started</h2>
             <div className="grid md:grid-cols-3 gap-8">
               {platforms.map((platform) => (
                 <a
@@ -242,7 +243,7 @@ export default function PodcastPage() {
         {/* Be a Guest */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-5xl font-bold mb-6">Want to Share Your Story?</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-6">Want to Share Your Story?</h2>
             <p className="text-xl text-text-secondary mb-12">
               If you're a $1M+ founder with a story worth telling, we want to hear it.
             </p>

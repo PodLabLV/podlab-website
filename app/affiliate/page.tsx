@@ -44,7 +44,7 @@ export default function AffiliatePage() {
           </div>
           
           <div className="relative z-10 max-w-6xl mx-auto text-center">
-            <h1 className="text-4xl md:text-7xl lg:text-8xl font-black mb-8 leading-[0.95] tracking-tight">
+            <h1 className="text-3xl md:text-5xl lg:text-7xl font-black mb-8 leading-[0.95] tracking-tight">
               <span className="bg-gradient-to-r from-white via-accent to-white bg-clip-text text-transparent bg-[length:200%_100%] animate-[gradient_4s_ease-in-out_infinite]">Earn</span> While Helping<br />
               Founders <span className="text-accent drop-shadow-[0_0_25px_rgba(42,221,27,0.5)]">Scale</span>
             </h1>
@@ -98,7 +98,7 @@ export default function AffiliatePage() {
         {/* How It Works */}
         <section className="py-24 px-6">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-12">Simple. Transparent. Founder-Friendly.</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-12">Simple. Transparent. Founder-Friendly.</h2>
             <div className="grid md:grid-cols-3 gap-12">
               {steps.map((step, index) => (
                 <div key={step.title} className="glass-card group p-8 hover:border-accent hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(42,221,27,0.2)] transition-all duration-350 cursor-pointer">
@@ -114,7 +114,7 @@ export default function AffiliatePage() {
         {/* Commission Structure */}
         <section className="py-24 px-6">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-12">What You Earn</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-12">What You Earn</h2>
             <div className="glass-card p-8 md:p-12">
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -169,7 +169,7 @@ export default function AffiliatePage() {
         {/* Rules */}
         <section className="py-24 px-6">
           <div className="glass-card max-w-4xl mx-auto p-8 md:p-12">
-            <h2 className="text-4xl font-bold mb-12">What You CAN'T Do</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-12">What You CAN'T Do</h2>
             <div className="grid md:grid-cols-2 gap-6">
               {rules.map((rule) => (
                 <div key={rule} className="flex items-start gap-3">
@@ -187,7 +187,7 @@ export default function AffiliatePage() {
         {/* Ambassadors */}
         <section className="py-24 px-6">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-4">Meet Our Ambassadors</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">Meet Our Ambassadors</h2>
             <p className="text-xl text-text-secondary text-center mb-16">
               Early partners helping founders scale without founder dependency
             </p>
@@ -242,7 +242,7 @@ export default function AffiliatePage() {
         {/* Apply */}
         <section id="apply" className="py-24 px-6">
           <div className="glass-card max-w-4xl mx-auto text-center p-8 md:p-12">
-            <h2 className="text-5xl font-bold mb-6">Ready to Join PodLab Beaker?</h2>
+            <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to Join PodLab Beaker?</h2>
             <p className="text-xl text-text-secondary mb-12">
               If you know $1M+ founders stuck as the bottleneck, and you want to earn while helping them scale, apply now.
             </p>

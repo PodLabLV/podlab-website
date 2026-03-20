@@ -52,13 +52,13 @@ export default function PodsSection() {
       
       <div className="relative z-10 max-w-7xl mx-auto">
         <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6">
+          <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6">
             The <span className="text-accent">Pods</span>
           </h2>
           <p className="text-2xl text-text-secondary mb-4">
             Five cinematic sets. One production day. Zero compromises.
           </p>
-          <p className="text-lg text-text-tertiary">
+          <p className="text-lg text-text-secondary">
             Our $150K state-of-the-art Las Vegas studio | Professional lighting, 4K cameras, broadcast audio
           </p>
         </div>

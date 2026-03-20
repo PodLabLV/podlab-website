@@ -9,12 +9,13 @@ export const metadata: Metadata = {
   title: 'About | Built by a Founder, For Founders',
   description: 'Meet Hiram Andino. Combat vet. Former corporate director. Failed once. Rebuilt with systems. Now helping $1M–$8M founders break through the bottleneck.',
   openGraph: {
-    title: 'About | Built by a Founder, For Founders | PodLab',
+    title: 'About — Built by a Founder, For Founders',
     description: 'Meet Hiram Andino. Combat vet turned founder duplication expert.',
     url: 'https://podlablv.com/about',
+    images: [{ url: '/api/og?title=About%20PodLab&subtitle=Built%20by%20a%20Founder%2C%20For%20Founders', width: 1200, height: 630 }],
   },
   twitter: {
-    title: 'About | Built by a Founder, For Founders | PodLab',
+    title: 'About — Built by a Founder, For Founders',
     description: 'Meet Hiram Andino. Combat vet turned founder duplication expert.',
   },
 };
@@ -30,15 +31,15 @@ export default function AboutPage() {
           <div className="max-w-7xl mx-auto">
             <div className="grid md:grid-cols-2 gap-16 items-center">
               <div>
-                <h1 className="text-4xl md:text-7xl lg:text-8xl font-black mb-8 leading-[0.95]">
+                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-black mb-8 leading-[0.95]">
                   Built by a <span className="bg-gradient-to-r from-white via-accent to-white bg-clip-text text-transparent bg-[length:200%_100%] animate-[gradient_4s_ease-in-out_infinite]">Founder</span>,<br />
                   <span className="text-accent drop-shadow-[0_0_25px_rgba(42,221,27,0.5)]">For Founders.</span>
                 </h1>
                 <p className="text-2xl text-text-secondary mb-16 leading-relaxed font-light">
-                  This isn't <span className="line-through text-text-tertiary">theory</span>. It's the <span className="text-white font-semibold">exact system</span> I used to break through the founder bottleneck — and now I help <span className="text-accent font-bold">$1M–$8M service-based founders</span> do the same.
+                  This isn't <span className="line-through text-text-secondary">theory</span>. It's the <span className="text-white font-semibold">exact system</span> I used to break through the founder bottleneck — and now I help <span className="text-accent font-bold">$1M–$8M service-based founders</span> do the same.
                 </p>
                 <a
-                  href="https://calendly.com/podlablv/new-meeting"
+                  href="https://calendly.com/podlablv/strategy-call"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group inline-block px-8 py-4 md:px-16 md:py-6 bg-accent text-black text-xl font-black rounded-xl hover:bg-accent-hover transition-all hover:-translate-y-2 hover:scale-105 hover:shadow-[0_20px_60px_rgba(42,221,27,0.6)] active:scale-95 relative overflow-hidden uppercase tracking-wider"
@@ -65,7 +66,7 @@ export default function AboutPage() {
         {/* Founder Story */}
         <section className="relative z-10 py-24 px-6">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-5xl font-bold mb-12">The Bottleneck That Built PodLab</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-12">The Bottleneck That Built PodLab</h2>
             
             {/* Glassy Container for Story */}
             <div className="glass-card p-8 md:p-12">
@@ -166,7 +167,7 @@ export default function AboutPage() {
             <div className="mt-12 text-center">
               <p className="text-xl text-text-primary mb-6">Want to see how it works?</p>
               <a
-                href="https://calendly.com/podlablv/new-meeting"
+                href="https://calendly.com/podlablv/strategy-call"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group inline-block px-12 py-5 bg-accent text-black text-lg font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-2 hover:shadow-[0_12px_40px_rgba(42,221,27,0.4)] transition-all relative overflow-hidden"
@@ -181,7 +182,7 @@ export default function AboutPage() {
         {/* Mission, Vision, Values */}
         <section className="py-24 px-6">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-5xl font-bold mb-16 text-center">What We Believe</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-16 text-center">What We Believe</h2>
             
             <div className="grid md:grid-cols-3 gap-12 mb-16">
               <div className="text-center">
@@ -223,7 +224,7 @@ export default function AboutPage() {
         {/* Team */}
         <section className="py-24 px-6">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-5xl font-bold mb-16 text-center">The Team</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-16 text-center">The Team</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
               {team.map((member) => (
                 <div key={member.name} className="group text-center cursor-pointer">
@@ -266,12 +267,12 @@ export default function AboutPage() {
         {/* CTA Section */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-5xl font-bold mb-6">Ready to Duplicate Yourself?</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-6">Ready to Duplicate Yourself?</h2>
             <p className="text-xl text-text-secondary mb-12">
               If you're a $1M–$8M founder ready to stop being the bottleneck, let's talk.
             </p>
             <a
-              href="https://calendly.com/podlablv/new-meeting"
+              href="https://calendly.com/podlablv/strategy-call"
               target="_blank"
               rel="noopener noreferrer"
               className="group inline-block px-12 py-5 bg-accent text-black text-lg font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-2 hover:shadow-[0_12px_40px_rgba(42,221,27,0.4)] transition-all relative overflow-hidden"

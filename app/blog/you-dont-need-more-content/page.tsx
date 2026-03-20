@@ -34,12 +34,12 @@ export default function BlogPost() {
           {/* Meta */}
           <div className="flex items-center gap-3 mb-6">
             <span className="text-xs text-accent font-semibold uppercase tracking-wider px-2 py-1 border border-accent/30 rounded">Strategy</span>
-            <span className="text-xs text-text-tertiary">March 3, 2026</span>
-            <span className="text-xs text-text-tertiary">· 8 min read</span>
+            <span className="text-xs text-text-secondary">March 3, 2026</span>
+            <span className="text-xs text-text-secondary">· 8 min read</span>
           </div>
 
           {/* Title */}
-          <h1 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
             You Don't Need More Content — You Need <span className="text-accent">Better Assets</span>
           </h1>
 
@@ -182,7 +182,7 @@ export default function BlogPost() {
               <p className="text-xl font-bold text-accent">
                 "What part of my sales process still requires me personally?"
               </p>
-              <p className="text-sm text-text-tertiary mt-2">Then build an asset to replace it.</p>
+              <p className="text-sm text-text-secondary mt-2">Then build an asset to replace it.</p>
             </div>
 
             <div className="space-y-4 my-6">
@@ -213,17 +213,17 @@ export default function BlogPost() {
               <div className="glass-card p-5 text-center">
                 <p className="text-2xl font-bold text-accent mb-1">⏱️</p>
                 <p className="font-semibold text-white text-sm">Time Saved</p>
-                <p className="text-xs text-text-tertiary mt-1">How many sales calls did this asset eliminate or shorten?</p>
+                <p className="text-xs text-text-secondary mt-1">How many sales calls did this asset eliminate or shorten?</p>
               </div>
               <div className="glass-card p-5 text-center">
                 <p className="text-2xl font-bold text-accent mb-1">📈</p>
                 <p className="font-semibold text-white text-sm">Close Rate</p>
-                <p className="text-xs text-text-tertiary mt-1">Do prospects who watch close faster or at higher rates?</p>
+                <p className="text-xs text-text-secondary mt-1">Do prospects who watch close faster or at higher rates?</p>
               </div>
               <div className="glass-card p-5 text-center">
                 <p className="text-2xl font-bold text-accent mb-1">🚀</p>
                 <p className="font-semibold text-white text-sm">Team Leverage</p>
-                <p className="text-xs text-text-tertiary mt-1">Can your team move deals forward without you?</p>
+                <p className="text-xs text-text-secondary mt-1">Can your team move deals forward without you?</p>
               </div>
             </div>
 
@@ -255,7 +255,7 @@ export default function BlogPost() {
                 Book a strategy call. We'll assess your bottleneck, map your sales process, and show you exactly which assets you need.
               </p>
               <a
-                href="https://calendly.com/podlablv/new-meeting"
+                href="https://calendly.com/podlablv/strategy-call"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block px-8 py-3 bg-accent text-black font-semibold rounded-lg hover:bg-accent-hover transition-all hover:-translate-y-1"

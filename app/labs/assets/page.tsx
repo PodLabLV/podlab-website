@@ -1,22 +1,23 @@
 import Navigation from '@/components/Navigation';
 import HomePageWrapper from '@/components/HomePageWrapper';
+import LabNavigation from '@/components/LabNavigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, MessageSquare, User, Target, Lightbulb, Check, FileText } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'AssetsLab | PodLab',
+  title: 'AssetsLab — Strategic Clarity for Founders',
   description: 'Messaging, avatar, and positioning foundations that guide your content and offers.',
   openGraph: {
-    title: 'AssetsLab | PodLab',
+    title: 'AssetsLab — Strategic Clarity for Founders',
     description: 'Messaging, avatar, and positioning foundations that guide your content and offers.',
     url: '/labs/assets',
     images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: 'PodLab AssetsLab' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AssetsLab | PodLab',
+    title: 'AssetsLab — Strategic Clarity for Founders',
     description: 'Messaging, avatar, and positioning foundations that guide your content and offers.',
     images: ['/opengraph-image.png'],
     creator: '@podlab',
@@ -87,11 +88,14 @@ export default function AssetsLabPage() {
     <HomePageWrapper>
       <div className="min-h-screen">
         <Navigation />
+        <div className="pt-20">
+          <LabNavigation currentLab="AssetsLab" />
+        </div>
 
         {/* Hero Section */}
-        <section className="relative pt-32 pb-16 px-6">
+        <section className="relative pt-8 pb-16 px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4">AssetsLab</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-bold mb-4">AssetsLab</h1>
             <p className="text-2xl md:text-3xl text-accent font-bold mb-4">
               Know Exactly Who You Are and What You Sell
             </p>
@@ -105,7 +109,7 @@ export default function AssetsLabPage() {
             </p>
             <div className="mb-12">
               <a
-                href="https://calendly.com/podlablv/new-meeting"
+                href="https://calendly.com/podlablv/strategy-call"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"
@@ -135,9 +139,9 @@ export default function AssetsLabPage() {
         {/* Problem Section */}
         <section className="py-20 px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="glass-card p-8 md:p-12">
+            <div className="glass-card p-5 sm:p-8 md:p-12">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">The Problem</p>
-              <h2 className="text-4xl font-bold mb-6">Most founders skip the foundation and wonder why nothing works</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">Most founders skip the foundation and wonder why nothing works</h2>
               <p className="text-xl text-text-secondary leading-relaxed">
                 You jump straight into creating content, building funnels, running ads—but without strategic clarity,
                 you're just making noise. Your messaging is scattered. Your positioning is unclear. Your audience doesn't
@@ -152,7 +156,7 @@ export default function AssetsLabPage() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">What You Get</p>
-              <h2 className="text-4xl md:text-5xl font-bold">Four strategic pillars</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold">Four strategic pillars</h2>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
@@ -185,7 +189,7 @@ export default function AssetsLabPage() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">The Process</p>
-              <h2 className="text-4xl md:text-5xl font-bold">How we build your assets</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold">How we build your assets</h2>
             </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
@@ -203,7 +207,7 @@ export default function AssetsLabPage() {
         {/* Pricing Section */}
         <section className="py-20 px-6">
           <div className="max-w-3xl mx-auto">
-            <div className="glass-card p-8 md:p-12 text-center border-2 border-accent">
+            <div className="glass-card p-5 sm:p-8 md:p-12 text-center border-2 border-accent">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/10 rounded-full text-accent text-sm font-medium mb-6">
                 <FileText className="w-4 h-4" />
                 Complete Package
@@ -212,7 +216,7 @@ export default function AssetsLabPage() {
               <div className="mb-2">
                 <span className="text-sm text-text-secondary line-through">Perceived Value: $5,000+</span>
               </div>
-              <p className="text-5xl font-bold text-accent mb-6">$1,500</p>
+              <p className="text-4xl md:text-5xl font-bold text-accent mb-6">$1,500</p>
               <p className="text-text-secondary max-w-md mx-auto mb-8">
                 Everything you need to build a rock-solid strategic foundation for your brand and content.
               </p>
@@ -239,7 +243,7 @@ export default function AssetsLabPage() {
                 </li>
               </ul>
               <a
-                href="https://calendly.com/podlablv/new-meeting"
+                href="https://calendly.com/podlablv/strategy-call"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"
@@ -254,12 +258,12 @@ export default function AssetsLabPage() {
         {/* CTA Section */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto text-center glass-card p-6 md:p-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to stop winging it?</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-6">Ready to stop winging it?</h2>
             <p className="text-xl text-text-secondary max-w-2xl mx-auto mb-10">
               Build the strategic foundation that makes everything else work. Start with AssetsLab.
             </p>
             <a
-              href="https://calendly.com/podlablv/new-meeting"
+              href="https://calendly.com/podlablv/strategy-call"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"

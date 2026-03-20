@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import Navigation from '@/components/Navigation';
 import HomePageWrapper from '@/components/HomePageWrapper';
 import Link from 'next/link';
@@ -61,6 +62,7 @@ const initialFormData: FormData = {
 
 export default function PodcastApplyPage() {
   const [formData, setFormData] = useState<FormData>(initialFormData);
+  const router = useRouter();
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -88,6 +90,8 @@ export default function PodcastApplyPage() {
       }
 
       setStatus('success');
+      router.push('/how-it-started/apply/success');
+      return;
     } catch (err: unknown) {
       setStatus('error');
       setErrorMessage(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -102,7 +106,7 @@ export default function PodcastApplyPage() {
         {/* Hero */}
         <section className="pt-32 pb-16 px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-7xl font-black mb-6 leading-[0.95] tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-7xl font-black mb-6 leading-[1.1] md:leading-[0.95] tracking-tight">
               Be a Guest on{' '}
               <span className="text-accent drop-shadow-[0_0_25px_rgba(42,221,27,0.5)]">
                 How It Started
@@ -114,9 +118,9 @@ export default function PodcastApplyPage() {
             </p>
             <div className="flex flex-wrap justify-center gap-6 md:gap-10">
               {[
-                { label: '50+ Episodes', icon: '🎙️' },
-                { label: '10K+ Listeners', icon: '🎧' },
-                { label: '$1M–$8M Founders', icon: '🚀' },
+                { label: 'Goal: 50 Episodes', icon: '🎙️' },
+                { label: 'Goal: 10K Listeners', icon: '🎧' },
+                { label: '$1M–$8M Founders', icon: '🎯' },
               ].map((stat) => (
                 <div key={stat.label} className="flex items-center gap-2 text-text-secondary">
                   <span className="text-2xl">{stat.icon}</span>
@@ -332,7 +336,7 @@ export default function PodcastApplyPage() {
         {/* What to Expect */}
         <section className="pb-24 px-6">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-12">What to Expect</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-12">What to Expect</h2>
             <div className="grid md:grid-cols-3 gap-8">
               {[
                 {

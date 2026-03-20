@@ -32,7 +32,7 @@ export default function HomePage() {
       {/* Hero Section — clean, Unicorn bg shows through */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div className="relative z-10 max-w-7xl mx-auto px-6 text-center py-32" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.8)' }}>
-          <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black mb-8 font-display leading-[0.95] tracking-tight">
+          <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black mb-8 font-display leading-[0.95] tracking-tight">
             <span className="inline-block hover:text-accent transition-colors duration-500">Duplicate</span>{" "}
             <span className="inline-block bg-gradient-to-r from-white via-accent to-white bg-clip-text text-transparent bg-[length:200%_100%] animate-[gradient_4s_ease-in-out_infinite]">Yourself.</span>
             <br />
@@ -48,7 +48,7 @@ export default function HomePage() {
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-20">
             <a
-              href="https://calendly.com/podlablv/new-meeting"
+              href="https://calendly.com/podlablv/strategy-call"
               target="_blank"
               rel="noopener noreferrer"
               className="group px-8 py-4 md:px-16 md:py-6 bg-accent text-black text-xl font-black rounded-xl hover:bg-accent-hover transition-all hover:-translate-y-2 hover:scale-105 hover:shadow-[0_20px_60px_rgba(42,221,27,0.6)] active:scale-95 relative overflow-hidden uppercase tracking-wider"
@@ -85,7 +85,7 @@ export default function HomePage() {
           {/* Problem Section */}
           <FadeIn direction="up">
           <div className="max-w-5xl mx-auto glass-card p-8 md:p-12">
-            <h3 className="text-3xl md:text-6xl lg:text-7xl font-black mb-12 text-center leading-tight">
+            <h3 className="text-2xl md:text-4xl lg:text-5xl font-black mb-12 text-center leading-tight">
               You Built a <span className="text-accent drop-shadow-[0_0_20px_rgba(42,221,27,0.4)]">$3M Business</span>.<br />
               But It's Really Just a <span className="text-text-secondary">High-Paying Job.</span>
             </h3>
@@ -117,7 +117,7 @@ export default function HomePage() {
 
           {/* Solution Intro */}
           <div>
-            <h2 className="text-3xl md:text-6xl lg:text-7xl font-black mb-8 text-center leading-tight">
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-black mb-8 text-center leading-tight">
               Record Once. <span className="text-accent drop-shadow-[0_0_30px_rgba(42,221,27,0.5)]">Sell Forever.</span>
             </h2>
             <p className="text-2xl md:text-3xl text-text-secondary mb-0 text-center max-w-4xl mx-auto font-light leading-relaxed">
@@ -152,15 +152,15 @@ export default function HomePage() {
                 <div className="grid md:grid-cols-3 gap-6 mb-8">
                   <div>
                     <p className="font-semibold text-text-primary mb-2">Unlike content agencies</p>
-                    <p className="text-sm text-text-tertiary">(ongoing dependency, no end in sight)</p>
+                    <p className="text-sm text-text-secondary">(ongoing dependency, no end in sight)</p>
                   </div>
                   <div>
                     <p className="font-semibold text-text-primary mb-2">Unlike business consultants</p>
-                    <p className="text-sm text-text-tertiary">(frameworks without execution)</p>
+                    <p className="text-sm text-text-secondary">(frameworks without execution)</p>
                   </div>
                   <div>
                     <p className="font-semibold text-text-primary mb-2">Unlike video production houses</p>
-                    <p className="text-sm text-text-tertiary">(pretty videos that don't convert)</p>
+                    <p className="text-sm text-text-secondary">(pretty videos that don't convert)</p>
                   </div>
                 </div>
 
@@ -343,7 +343,7 @@ export default function HomePage() {
       {/* Video Testimonials */}
       <section className="py-24 px-6">
         <div className="max-w-7xl mx-auto glass-card p-8 md:p-12">
-          <h2 className="text-5xl font-bold mb-4 text-center">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4 text-center">
             See It In <span className="text-accent">Action</span>
           </h2>
           <p className="text-xl text-text-secondary mb-16 text-center">
@@ -399,7 +399,7 @@ export default function HomePage() {
       {/* Objection Handling */}
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto glass-card p-8 md:p-12">
-          <h2 className="text-5xl font-bold mb-8">"But I'm Not Great on Camera..."</h2>
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-8">&ldquo;But I&apos;m Not Great on Camera...&rdquo;</h2>
           <div className="prose prose-invert max-w-none text-lg">
             <p className="text-text-secondary mb-6">
               We've filmed 200+ founders. Most had the same fear.
@@ -435,7 +435,7 @@ export default function HomePage() {
 
           <div className="mt-12 text-center">
             <a
-              href="https://calendly.com/podlablv/new-meeting"
+              href="https://calendly.com/podlablv/strategy-call"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block px-10 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover transition-all hover:-translate-y-1"
@@ -450,19 +450,19 @@ export default function HomePage() {
       <section className="py-32 px-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-accent/90 to-accent/60 z-0"></div>
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h2 className="text-6xl font-bold mb-6 text-black">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-6 text-black">
             Your Expertise Should Work 24/7.<br />
             Not Just When You're in the Room.
           </h2>
-          <p className="text-2xl text-black/80 font-semibold mb-8">
+          <p className="text-xl md:text-2xl text-black/80 font-semibold mb-8">
             Stop being the product. Become the builder.
           </p>
-          <p className="text-lg text-black/70 mb-12 max-w-3xl mx-auto">
+          <p className="text-base md:text-lg text-black/70 mb-12 max-w-3xl mx-auto">
             Schedule clarity. We'll show you exactly how to duplicate yourself, scale your business, and free up 10-20 hours a week — without adding more to your plate.<br /><br />
             No fluff. No hype. Just a proven system that works.
           </p>
           <a
-            href="https://calendly.com/podlablv/new-meeting"
+            href="https://calendly.com/podlablv/strategy-call"
             target="_blank"
             rel="noopener noreferrer"
             className="group inline-block px-8 py-4 md:px-16 md:py-6 bg-black text-accent text-xl font-bold rounded-lg hover:bg-black/90 hover:-translate-y-2 hover:shadow-[0_20px_60px_rgba(0,0,0,0.5)] transition-all relative overflow-hidden"

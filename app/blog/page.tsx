@@ -7,9 +7,10 @@ export const metadata: Metadata = {
   title: 'Blog | Founder Duplication Insights',
   description: 'Insights on founder duplication, content systems, and building businesses that do not depend on you. Practical strategies for $1M-$8M service founders.',
   openGraph: {
-    title: 'Blog | Founder Duplication Insights | PodLab',
+    title: 'Blog — Founder Duplication Insights',
     description: 'Insights on founder duplication, content systems, and building businesses that do not depend on you.',
     url: 'https://podlablv.com/blog',
+    images: [{ url: '/api/og?title=Blog&subtitle=Founder%20Duplication%20Insights', width: 1200, height: 630 }],
   },
 };
 
@@ -69,7 +70,7 @@ export default function BlogPage() {
       {/* Hero */}
       <section className="pt-32 pb-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-6 leading-[0.95] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-bold mb-6 leading-[0.95] tracking-tight">
             The <span className="text-accent">Blog</span>
           </h1>
           <p className="text-xl text-text-secondary font-light leading-relaxed max-w-2xl mx-auto">
@@ -94,8 +95,8 @@ export default function BlogPage() {
               <div className="p-8 md:p-10 flex flex-col justify-center">
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-xs text-accent font-semibold uppercase tracking-wider px-2 py-1 border border-accent/30 rounded">{posts[0].category}</span>
-                  <span className="text-xs text-text-tertiary">{posts[0].date}</span>
-                  <span className="text-xs text-text-tertiary">· {posts[0].readTime}</span>
+                  <span className="text-xs text-text-secondary">{posts[0].date}</span>
+                  <span className="text-xs text-text-secondary">· {posts[0].readTime}</span>
                 </div>
                 <h2 className="text-3xl md:text-4xl font-bold mb-4 group-hover:text-accent transition-colors leading-tight">
                   {posts[0].title}
@@ -132,7 +133,7 @@ export default function BlogPage() {
                   <span className="absolute top-4 left-4 text-xs text-accent font-semibold uppercase tracking-wider px-2 py-1 bg-black/60 backdrop-blur-sm border border-accent/30 rounded">{post.category}</span>
                 </div>
                 <div className="p-6 flex flex-col flex-grow">
-                  <div className="flex items-center gap-3 mb-3 text-xs text-text-tertiary">
+                  <div className="flex items-center gap-3 mb-3 text-xs text-text-secondary">
                     <span>{post.date}</span>
                     <span>· {post.readTime}</span>
                   </div>

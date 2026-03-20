@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import Image from 'next/image';
-import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { getSupabaseBrowser } from '@/lib/supabase-browser';
 
 const portalNav = [
   { href: '/portal', label: 'Dashboard', icon: '📊' },
@@ -13,9 +13,65 @@ const portalNav = [
   { href: '/portal/invoices', label: 'Invoices', icon: '💰' },
 ];
 
+interface UserInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  initials: string;
+}
+
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowser();
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace('/login');
+        return;
+      }
+
+      const meta = session.user.user_metadata || {};
+      const firstName = meta.first_name || '';
+      const lastName = meta.last_name || '';
+      const email = session.user.email || '';
+      const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || email.charAt(0).toUpperCase();
+
+      setUser({ firstName, lastName, email, initials });
+      setChecking(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        router.replace('/login');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router]);
+
+  const handleLogout = async () => {
+    const supabase = getSupabaseBrowser();
+    await supabase.auth.signOut();
+    router.replace('/');
+  };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-2 border-[#2ADD1B] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-white/40 text-sm">Loading portal...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex">
@@ -70,23 +126,30 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           })}
         </nav>
 
-        {/* Client info */}
+        {/* Client info + Logout */}
         <div className="px-4 py-4 border-t border-white/5">
-          <div className="flex items-center gap-3 px-2">
-            <div className="w-9 h-9 rounded-full bg-[#2ADD1B]/20 flex items-center justify-center text-[#2ADD1B] font-bold text-xs">
-              MS
+          {user && (
+            <div className="flex items-center gap-3 px-2">
+              <div className="w-9 h-9 rounded-full bg-[#2ADD1B]/20 flex items-center justify-center text-[#2ADD1B] font-bold text-xs">
+                {user.initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-white font-medium truncate">
+                  {user.firstName} {user.lastName}
+                </p>
+                <p className="text-xs text-white/40 truncate">{user.email}</p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-white font-medium truncate">Marcus Simonian</p>
-              <p className="text-xs text-white/40 truncate">ExpansionLab Client</p>
-            </div>
-          </div>
-          <Link
-            href="/"
-            className="mt-3 flex items-center justify-center gap-2 px-3 py-2 text-xs text-white/40 hover:text-white/60 transition rounded-lg hover:bg-white/5"
+          )}
+          <button
+            onClick={handleLogout}
+            className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 text-xs text-red-400/70 hover:text-red-400 transition rounded-lg hover:bg-red-500/10"
           >
-            ← Back to PodLab
-          </Link>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Log Out
+          </button>
         </div>
       </aside>
 

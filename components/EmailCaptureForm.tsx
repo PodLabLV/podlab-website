@@ -77,7 +77,7 @@ export default function EmailCaptureForm({ onSubmit, score }: EmailCaptureFormPr
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full group px-16 py-6 bg-accent text-black text-xl font-black rounded-xl hover:bg-accent-hover transition-all hover:-translate-y-2 hover:scale-105 hover:shadow-[0_20px_60px_rgba(57,255,20,0.6)] active:scale-95 relative overflow-hidden uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full group px-16 py-6 bg-accent text-black text-xl font-black rounded-xl hover:bg-accent-hover transition-all hover:-translate-y-2 hover:scale-105 hover:shadow-[0_20px_60px_rgba(42,221,27,0.6)] active:scale-95 relative overflow-hidden uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span className="relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
               {isSubmitting ? 'Sending...' : 'See My Results →'}
@@ -87,7 +87,7 @@ export default function EmailCaptureForm({ onSubmit, score }: EmailCaptureFormPr
           </button>
         </form>
 
-        <p className="text-sm text-text-tertiary text-center mt-6">
+        <p className="text-sm text-text-secondary text-center mt-6">
           We'll email your results immediately. No spam, ever.
         </p>
       </div>

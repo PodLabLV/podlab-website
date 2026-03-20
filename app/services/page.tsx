@@ -9,12 +9,13 @@ export const metadata: Metadata = {
   title: 'The 5-Phase Growth System',
   description: 'AssetsLab, BrandLab, SiteLab, VideoSalesLab, ExpansionLab. One system. Five phases. Complete founder duplication for $1M–$8M service-based businesses.',
   openGraph: {
-    title: 'The 5-Phase Growth System | PodLab',
+    title: 'The 5-Phase Growth System',
     description: 'Complete founder duplication system across 5 strategic phases.',
     url: 'https://podlablv.com/services',
+    images: [{ url: '/api/og?title=The%205-Phase%20Growth%20System&subtitle=Complete%20Founder%20Duplication', width: 1200, height: 630 }],
   },
   twitter: {
-    title: 'The 5-Phase Growth System | PodLab',
+    title: 'The 5-Phase Growth System',
     description: 'Complete founder duplication system across 5 strategic phases.',
   },
 };
@@ -28,15 +29,15 @@ export default function ServicesPage() {
         {/* Hero */}
         <section className="relative z-10 pt-32 pb-24 px-6">
           <div className="max-w-7xl mx-auto text-center">
-            <h1 className="text-4xl md:text-7xl lg:text-8xl font-black mb-8 leading-[0.95] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-black mb-8 leading-[1.1] md:leading-[0.95] tracking-tight">
               The <span className="inline-block bg-gradient-to-r from-white via-accent to-white bg-clip-text text-transparent bg-[length:200%_100%] animate-[gradient_4s_ease-in-out_infinite]">5-Phase</span> Growth System<br />
               <span className="text-accent drop-shadow-[0_0_25px_rgba(42,221,27,0.5)]">for $1M–$8M Founders</span>
             </h1>
-            <p className="text-2xl md:text-3xl text-text-secondary mb-6 font-light leading-relaxed">
+            <p className="text-xl md:text-2xl lg:text-3xl text-text-secondary mb-6 font-light leading-relaxed">
               One system. Five phases. <span className="text-white font-semibold">Complete founder duplication.</span>
             </p>
-            <p className="text-xl text-text-secondary mb-16 max-w-4xl mx-auto">
-              Stop being the product. Build <span className="text-accent font-bold">infrastructure that works 24/7</span> — without adding more to your plate.
+            <p className="text-lg md:text-xl text-text-secondary mb-16 max-w-4xl mx-auto px-2">
+              Stop being the product. Build <span className="text-accent font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">infrastructure that works 24/7</span> — without adding more to your plate.
             </p>
             <Link
               href="/assessment/start"
@@ -48,17 +49,17 @@ export default function ServicesPage() {
             </Link>
 
             {/* 5 Lab Icons Visual Guide */}
-            <div className="mt-20 flex justify-center gap-8 flex-wrap max-w-4xl mx-auto">
+            <div className="mt-20 grid grid-cols-2 sm:grid-cols-3 md:flex md:justify-center gap-6 md:gap-8 max-w-4xl mx-auto px-4">
               {labs.map((lab) => (
                 <Link key={lab.name} href={lab.slug} className="group flex flex-col items-center gap-3 transition-all duration-300 hover:-translate-y-2">
-                  <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-xl overflow-hidden border border-[#2ADD1B]/30 group-hover:border-[#2ADD1B] group-hover:shadow-[0_0_30px_rgba(42,221,27,0.3)] transition-all duration-300">
+                  <div className="relative w-40 h-40 md:w-28 md:h-28 rounded-xl overflow-hidden border border-[#2ADD1B]/30 group-hover:border-[#2ADD1B] group-hover:shadow-[0_0_30px_rgba(42,221,27,0.3)] transition-all duration-300">
                     <img
                       src={lab.icon}
                       alt={lab.name}
-                      className="w-full h-full object-contain p-2 opacity-70 group-hover:opacity-100 transition-opacity"
+                      className={`w-full h-full object-contain opacity-70 group-hover:opacity-100 transition-opacity ${lab.name === 'SiteLab' ? 'p-5' : 'p-3'}`}
                     />
                   </div>
-                  <p className="text-sm font-semibold text-text-secondary group-hover:text-accent transition-colors">{lab.name}</p>
+                  <p className="text-base font-semibold text-text-secondary group-hover:text-accent transition-colors">{lab.name}</p>
                 </Link>
               ))}
             </div>
@@ -68,7 +69,7 @@ export default function ServicesPage() {
         {/* System Explainer Video */}
         <section className="relative py-24 px-6">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-bold mb-8 text-center">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-8 text-center">
               How the <span className="text-accent">5-Phase System</span> Works
             </h2>
             <div className="relative aspect-video rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(42,221,27,0.3)]">
@@ -87,8 +88,8 @@ export default function ServicesPage() {
         {/* Why Most Founders Stay Stuck */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-5xl font-bold mb-8">Why Most Founders Stay Stuck</h2>
-            <div className="glass-card p-8 md:p-12">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-8">Why Most Founders Stay Stuck</h2>
+            <div className="glass-card p-5 sm:p-8 md:p-12">
               <div className="prose prose-invert max-w-none text-lg space-y-6">
                 <p className="text-text-secondary">
                   You've tried content agencies. They put you on a treadmill — ongoing production cycles, never-ending dependency, no clear finish line.
@@ -118,7 +119,7 @@ export default function ServicesPage() {
         <section className="py-24 px-6">
           <div className="max-w-5xl mx-auto space-y-20">
             {labs.map((lab, index) => (
-              <div key={lab.name} id={lab.name.toLowerCase().replace(" ", "-")} className="glass-card p-8 md:p-12">
+              <div key={lab.name} id={lab.name.toLowerCase().replace(" ", "-")} className="glass-card p-5 sm:p-8 md:p-12">
                 {/* Lab Logo + Phase */}
                 <div className="flex flex-col md:flex-row md:items-center gap-6 mb-8">
                   <Image
@@ -126,7 +127,7 @@ export default function ServicesPage() {
                     alt={lab.name}
                     width={720}
                     height={240}
-                    className="h-20 w-auto object-contain"
+                    className="h-16 md:h-20 w-auto object-contain max-w-full"
                   />
                   <div>
                     <div className="text-xs font-semibold text-accent uppercase tracking-wider mb-1">Phase {index + 1} of 5</div>
@@ -167,12 +168,12 @@ export default function ServicesPage() {
                 {/* Outcome + Pricing */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-6 border-t border-border/30">
                   <div>
-                    <div className="text-xs text-text-tertiary uppercase tracking-wider mb-1">Outcome</div>
+                    <div className="text-xs text-text-secondary uppercase tracking-wider mb-1">Outcome</div>
                     <p className="text-lg font-semibold text-white">{lab.outcome}</p>
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-right">
-                      <div className="text-sm text-text-tertiary line-through">{lab.perceivedValue}</div>
+                      <div className="text-sm text-text-secondary line-through">{lab.perceivedValue}</div>
                       <div className="text-2xl font-bold text-accent">{lab.price}</div>
                     </div>
                     <Link
@@ -191,7 +192,7 @@ export default function ServicesPage() {
         {/* Pricing Table */}
         <section className="py-24 px-6">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-5xl font-bold mb-12 text-center">The Complete Growth System</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-12 text-center">The Complete Growth System</h2>
             
             {/* Mobile: Card Layout */}
             <div className="md:hidden space-y-4 mb-8">
@@ -282,7 +283,7 @@ export default function ServicesPage() {
         {/* Assessment CTA */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-black mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-black mb-6">
               Not Sure <span className="text-accent drop-shadow-[0_0_20px_rgba(42,221,27,0.4)]">Where to Start?</span>
             </h2>
             <p className="text-xl text-text-secondary mb-12 leading-relaxed">
@@ -302,8 +303,8 @@ export default function ServicesPage() {
         {/* Why Start with AssetsLab */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-5xl font-bold mb-8">Start with Clarity. Skip the Guesswork.</h2>
-            <div className="glass-card p-8 md:p-12">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-8">Start with Clarity. Skip the Guesswork.</h2>
+            <div className="glass-card p-5 sm:p-8 md:p-12">
               <div className="prose prose-invert max-w-none text-lg space-y-6">
                 <p className="text-text-secondary">
                   Most founders want to jump straight to videos or websites. We get it — you want results fast.
@@ -329,7 +330,7 @@ export default function ServicesPage() {
             </div>
             <div className="mt-12 text-center">
               <a
-                href="https://calendly.com/podlablv/new-meeting"
+                href="https://calendly.com/podlablv/strategy-call"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group inline-block px-12 py-5 bg-accent text-black text-lg font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-2 hover:shadow-[0_12px_40px_rgba(42,221,27,0.4)] transition-all relative overflow-hidden"
@@ -344,12 +345,12 @@ export default function ServicesPage() {
         {/* Final CTA */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-5xl font-bold mb-6">Ready to Duplicate Yourself?</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-6">Ready to Duplicate Yourself?</h2>
             <p className="text-xl text-text-secondary mb-12">
               Book a 30-minute strategy call. We'll map out your path from founder-led sales to founder-duplicated growth.
             </p>
             <a
-              href="https://calendly.com/podlablv/new-meeting"
+              href="https://calendly.com/podlablv/strategy-call"
               target="_blank"
               rel="noopener noreferrer"
               className="group inline-block px-12 py-5 bg-accent text-black text-lg font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-2 hover:shadow-[0_12px_40px_rgba(42,221,27,0.4)] transition-all relative overflow-hidden"

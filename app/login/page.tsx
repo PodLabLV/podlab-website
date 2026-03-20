@@ -1,12 +1,10 @@
-// TODO: Needs portal integration — authenticates via Supabase but redirects to
-// podlab-portal.vercel.app/dashboard which may not be live. Wire up once the
-// client portal is fully deployed and routes are confirmed.
 'use client';
 
 import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Link from 'next/link';
 import HomePageWrapper from '@/components/HomePageWrapper';
+import { getSupabaseBrowser } from '@/lib/supabase-browser';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -16,6 +14,9 @@ export default function LoginPage() {
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   // Auto-focus email field on mount
   useEffect(() => {
@@ -23,16 +24,26 @@ export default function LoginPage() {
     if (emailInput) emailInput.focus();
   }, []);
 
+  // Check if already logged in
+  useEffect(() => {
+    const supabase = getSupabaseBrowser();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        window.location.href = '/portal';
+      }
+    });
+  }, []);
+
   // Handle Enter key submit
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && email && password && !loading) {
-        handleLogin(e as any);
+      if (e.key === 'Enter' && email && password && !loading && !showForgotPassword) {
+        handleLogin(e as unknown as React.FormEvent);
       }
     };
     window.addEventListener('keypress', handleKeyPress);
     return () => window.removeEventListener('keypress', handleKeyPress);
-  }, [email, password, loading]);
+  }, [email, password, loading, showForgotPassword]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,55 +51,68 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch('https://tncipuxobcbkwkmpcevt.supabase.co/auth/v1/token?grant_type=password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+      const supabase = getSupabaseBrowser();
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
-      const data = await response.json();
+      if (authError) {
+        if (authError.message?.includes('Invalid login')) {
+          setError('Invalid email or password. Please try again.');
+        } else if (authError.message?.includes('Email not confirmed')) {
+          setError('Please check your email and confirm your account first.');
+        } else {
+          setError(authError.message || 'Login failed. Please try again.');
+        }
+        return;
+      }
 
-      if (response.ok && data.access_token) {
-        // Store token
-        localStorage.setItem('supabase_token', data.access_token);
-        localStorage.setItem('supabase_user', JSON.stringify(data.user));
-        
+      if (data.session) {
         if (rememberMe) {
           localStorage.setItem('remember_email', email);
         } else {
           localStorage.removeItem('remember_email');
         }
-        
-        // Success animation
+
         setSuccess(true);
-        
-        // Redirect after animation
         setTimeout(() => {
-          window.location.href = 'https://podlab-portal.vercel.app/dashboard';
-        }, 1500);
-      } else {
-        // Better error messages
-        if (data.error === 'invalid_grant' || data.error_description?.includes('Invalid')) {
-          setError('Invalid email or password. Please try again.');
-        } else if (data.error_description?.includes('Email not confirmed')) {
-          setError('Please check your email and confirm your account first.');
-        } else if (data.error_description?.includes('not found')) {
-          setError('No account found with this email address.');
-        } else {
-          setError(data.error_description || 'Login failed. Please try again.');
-        }
+          window.location.href = '/portal';
+        }, 1200);
       }
     } catch (err) {
       setError('Connection error. Please check your internet and try again.');
       console.error('Login error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      setError('Please enter your email address first.');
+      return;
+    }
+    setResetLoading(true);
+    setError('');
+
+    try {
+      const supabase = getSupabaseBrowser();
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/login`,
+      });
+
+      if (resetError) {
+        setError(resetError.message || 'Failed to send reset email.');
+      } else {
+        setResetSent(true);
+      }
+    } catch (err) {
+      setError('Connection error. Please try again.');
+      console.error('Reset error:', err);
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -143,11 +167,11 @@ export default function LoginPage() {
                   Client <span className="text-accent">Portal</span>
                 </h1>
                 <p className="text-text-secondary text-sm">
-                  Access your projects, deliverables, and roadmap
+                  {showForgotPassword ? 'Reset your password' : 'Access your projects, deliverables, and roadmap'}
                 </p>
               </div>
 
-              {/* Error message with animation */}
+              {/* Error message */}
               {error && (
                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg animate-in slide-in-from-top duration-300">
                   <div className="flex items-start gap-3">
@@ -159,116 +183,169 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {/* Login form */}
-              <form onSubmit={handleLogin} className="space-y-5">
-                {/* Email field */}
-                <div className="space-y-2">
-                  <label htmlFor="email" className="block text-sm font-semibold text-white">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <svg className="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                      </svg>
-                    </div>
-                    <input
-                      type="email"
-                      id="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="w-full pl-12 pr-4 py-3.5 bg-black/50 border-2 border-accent/30 rounded-lg text-white focus:outline-none focus:border-accent focus:bg-black transition-all placeholder:text-text-secondary/50"
-                      placeholder="you@company.com"
-                    />
-                  </div>
+              {/* Reset sent success */}
+              {resetSent && (
+                <div className="mb-6 p-4 bg-accent/10 border border-accent/30 rounded-lg">
+                  <p className="text-accent text-sm">Password reset email sent! Check your inbox.</p>
                 </div>
+              )}
 
-                {/* Password field */}
-                <div className="space-y-2">
-                  <label htmlFor="password" className="block text-sm font-semibold text-white">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <svg className="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
+              {showForgotPassword ? (
+                /* Forgot password form */
+                <form onSubmit={handleForgotPassword} className="space-y-5">
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="block text-sm font-semibold text-white">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg className="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                        </svg>
+                      </div>
+                      <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="w-full pl-12 pr-4 py-3.5 bg-black/50 border-2 border-accent/30 rounded-lg text-white focus:outline-none focus:border-accent focus:bg-black transition-all placeholder:text-text-secondary/50"
+                        placeholder="you@company.com"
+                      />
                     </div>
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      id="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="w-full pl-12 pr-12 py-3.5 bg-black/50 border-2 border-accent/30 rounded-lg text-white focus:outline-none focus:border-accent focus:bg-black transition-all placeholder:text-text-secondary/50"
-                      placeholder="••••••••"
-                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={resetLoading || !email}
+                    className="relative w-full px-6 py-4 bg-accent text-black font-black text-lg rounded-xl hover:bg-accent-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide"
+                  >
+                    {resetLoading ? 'Sending...' : 'Send Reset Link'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setShowForgotPassword(false); setResetSent(false); setError(''); }}
+                    className="w-full text-sm text-accent hover:underline"
+                  >
+                    ← Back to login
+                  </button>
+                </form>
+              ) : (
+                /* Login form */
+                <form onSubmit={handleLogin} className="space-y-5">
+                  {/* Email field */}
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="block text-sm font-semibold text-white">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg className="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                        </svg>
+                      </div>
+                      <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="w-full pl-12 pr-4 py-3.5 bg-black/50 border-2 border-accent/30 rounded-lg text-white focus:outline-none focus:border-accent focus:bg-black transition-all placeholder:text-text-secondary/50"
+                        placeholder="you@company.com"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Password field */}
+                  <div className="space-y-2">
+                    <label htmlFor="password" className="block text-sm font-semibold text-white">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg className="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="w-full pl-12 pr-12 py-3.5 bg-black/50 border-2 border-accent/30 rounded-lg text-white focus:outline-none focus:border-accent focus:bg-black transition-all placeholder:text-text-secondary/50"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-text-secondary hover:text-accent transition-colors"
+                      >
+                        {showPassword ? (
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Remember me + Forgot password */}
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="w-4 h-4 rounded border-2 border-accent/30 bg-black/50 text-accent focus:ring-2 focus:ring-accent/50 focus:ring-offset-0 transition-all cursor-pointer"
+                      />
+                      <span className="text-sm text-text-secondary group-hover:text-white transition-colors">
+                        Remember me
+                      </span>
+                    </label>
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-text-secondary hover:text-accent transition-colors"
+                      onClick={() => { setShowForgotPassword(true); setError(''); }}
+                      className="text-sm text-accent hover:underline"
                     >
-                      {showPassword ? (
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      )}
+                      Forgot password?
                     </button>
                   </div>
-                </div>
 
-                {/* Remember me checkbox */}
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded border-2 border-accent/30 bg-black/50 text-accent focus:ring-2 focus:ring-accent/50 focus:ring-offset-0 transition-all cursor-pointer"
-                    />
-                    <span className="text-sm text-text-secondary group-hover:text-white transition-colors">
-                      Remember me
+                  {/* Submit button */}
+                  <button
+                    type="submit"
+                    disabled={loading || !email || !password}
+                    className="relative w-full px-6 py-4 bg-accent text-black font-black text-lg rounded-xl hover:bg-accent-hover transition-all hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(42,221,27,0.4)] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none uppercase tracking-wide overflow-hidden group"
+                  >
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                      {loading ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5 text-black" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span>Logging in...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Access Portal</span>
+                          <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                        </>
+                      )}
                     </span>
-                  </label>
-                  <a href="mailto:support@podlablv.com?subject=Password%20Reset%20Request" className="text-sm text-accent hover:underline">
-                    Forgot password?
-                  </a>
-                </div>
-
-                {/* Submit button */}
-                <button
-                  type="submit"
-                  disabled={loading || !email || !password}
-                  className="relative w-full px-6 py-4 bg-accent text-black font-black text-lg rounded-xl hover:bg-accent-hover transition-all hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(42,221,27,0.4)] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none uppercase tracking-wide overflow-hidden group"
-                >
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    {loading ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5 text-black" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span>Logging in...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Access Portal</span>
-                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                      </>
-                    )}
-                  </span>
-                  {/* Shine effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-                </button>
-              </form>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                  </button>
+                </form>
+              )}
 
               {/* Footer links */}
               <div className="mt-8 pt-6 border-t border-accent/10 space-y-4">
@@ -284,7 +361,7 @@ export default function LoginPage() {
                       Take Assessment
                     </Link>
                     <a 
-                      href="https://calendly.com/podlablv/new-meeting"
+                      href="https://calendly.com/podlablv/strategy-call"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-4 py-2 bg-white/5 border-2 border-white/10 text-white text-sm font-semibold rounded-lg hover:bg-white/10 hover:border-white/20 transition-all text-center"
@@ -297,7 +374,7 @@ export default function LoginPage() {
                 <div className="text-center">
                   <p className="text-xs text-text-secondary">
                     Need help?{' '}
-                    <a href="mailto:support@podlablv.com" className="text-accent hover:underline">
+                    <a href="mailto:info@podlablv.com" className="text-accent hover:underline">
                       Contact support
                     </a>
                   </p>

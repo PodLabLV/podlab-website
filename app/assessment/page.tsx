@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 import HomePageWrapper from '@/components/HomePageWrapper';
 
 export const metadata: Metadata = {
-  title: 'Founder Bottleneck Assessment | Free 5-Minute Business Growth Quiz',
+  title: 'Founder Bottleneck Assessment — Free 5-Minute Quiz',
   description: 'Discover your #1 bottleneck in 5 minutes. Free assessment for $1M-$8M service-based founders. Get your score + tactical roadmap to scale without burning out.',
   openGraph: {
     title: 'Are You the Bottleneck? Take the Free 5-Minute Assessment',
@@ -28,7 +28,7 @@ export default function BottleneckAssessmentPage() {
             </p>
 
             {/* Headline */}
-            <h1 className="text-5xl md:text-7xl font-black text-center mb-8 leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-black text-center mb-8 leading-tight">
               <span className="text-white">You're Not the Problem.</span><br />
               <span className="text-white">But You Might Be the </span>
               <span className="text-accent drop-shadow-[0_0_25px_rgba(42,221,27,0.5)]">Bottleneck.</span>
@@ -68,15 +68,15 @@ export default function BottleneckAssessmentPage() {
           <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
               <div>
-                <div className="text-5xl font-black text-accent mb-2">Free</div>
+                <div className="text-2xl sm:text-3xl md:text-5xl font-black text-accent mb-2">Free</div>
                 <div className="text-text-secondary text-sm">No Strings Attached</div>
               </div>
               <div>
-                <div className="text-5xl font-black text-accent mb-2">5 Minutes</div>
+                <div className="text-2xl sm:text-3xl md:text-5xl font-black text-accent mb-2">5 Minutes</div>
                 <div className="text-text-secondary text-sm">To Complete</div>
               </div>
               <div>
-                <div className="text-5xl font-black text-accent mb-2">100% Free</div>
+                <div className="text-2xl sm:text-3xl md:text-5xl font-black text-accent mb-2">100% Free</div>
                 <div className="text-text-secondary text-sm">No Credit Card</div>
               </div>
             </div>
@@ -86,7 +86,7 @@ export default function BottleneckAssessmentPage() {
         {/* What You'll Discover */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-black text-center mb-16">
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center mb-16">
               What You'll Discover in <span className="text-accent">5 Minutes</span>
             </h2>
 
@@ -151,7 +151,7 @@ export default function BottleneckAssessmentPage() {
         {/* Problem Agitation */}
         <section className="py-24 px-6">
           <div className="glass-card max-w-4xl mx-auto p-8 md:p-12">
-            <h2 className="text-4xl md:text-5xl font-black text-center mb-12">
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center mb-12">
               If This Sounds Familiar, <span className="text-accent">You're in the Right Place</span>
             </h2>
 
@@ -206,7 +206,7 @@ export default function BottleneckAssessmentPage() {
         {/* How It Works */}
         <section className="py-24 px-6">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-black text-center mb-16">
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center mb-16">
               How the <span className="text-accent">Assessment Works</span>
             </h2>
 
@@ -265,7 +265,7 @@ export default function BottleneckAssessmentPage() {
         {/* Final CTA */}
         <section className="py-24 px-6">
           <div className="glass-card max-w-3xl mx-auto text-center p-8 md:p-12">
-            <h2 className="text-5xl md:text-6xl font-black mb-6">
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6">
               Ready to Find Your <span className="text-accent drop-shadow-[0_0_25px_rgba(42,221,27,0.5)]">Bottleneck?</span>
             </h2>
             <p className="text-2xl text-text-secondary mb-12">
@@ -279,7 +279,7 @@ export default function BottleneckAssessmentPage() {
               Take the Free Assessment →
             </Link>
 
-            <p className="text-sm text-text-tertiary">
+            <p className="text-sm text-text-secondary">
               No credit card required. Results in your inbox instantly.
             </p>
           </div>
@@ -295,7 +295,7 @@ export default function BottleneckAssessmentPage() {
               <cite className="text-accent font-semibold not-italic">— Founder, $4M Service Business</cite>
             </blockquote>
 
-            <p className="text-center text-sm text-text-tertiary">
+            <p className="text-center text-sm text-text-secondary">
               🔒 <span className="font-semibold">Your data is private.</span> We never share or sell your information. Unsubscribe anytime.
             </p>
           </div>
@@ -304,11 +304,11 @@ export default function BottleneckAssessmentPage() {
         {/* Minimal Footer */}
         <footer className="py-8 px-6 border-t border-border">
           <div className="max-w-5xl mx-auto text-center">
-            <p className="text-sm text-text-tertiary mb-4">
+            <p className="text-sm text-text-secondary mb-4">
               © 2026 PodLab. All rights reserved.
             </p>
-            <div className="flex justify-center gap-6 text-sm text-text-tertiary">
-              <a href="https://calendly.com/podlablv/new-meeting" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">Contact</a>
+            <div className="flex justify-center gap-6 text-sm text-text-secondary">
+              <a href="https://calendly.com/podlablv/strategy-call" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">Contact</a>
               <span>•</span>
               <a href="mailto:info@podlablv.com" className="hover:text-accent transition-colors">info@podlablv.com</a>
             </div>

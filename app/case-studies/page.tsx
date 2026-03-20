@@ -7,9 +7,10 @@ export const metadata: Metadata = {
   title: 'Case Studies',
   description: 'See how PodLab helps $1M–$8M service-based founders eliminate founder dependency and scale through strategic video assets.',
   openGraph: {
-    title: 'Case Studies | PodLab',
+    title: 'Case Studies — Real Results',
     description: 'See how PodLab helps $1M–$8M service-based founders eliminate founder dependency and scale through strategic video assets.',
     url: 'https://podlablv.com/case-studies',
+    images: [{ url: '/api/og?title=Case%20Studies&subtitle=Real%20Founders.%20Real%20Results.', width: 1200, height: 630 }],
   },
 };
 
@@ -22,7 +23,7 @@ export default function CaseStudiesPage() {
       {/* Hero */}
       <section className="pt-32 pb-16 px-6">
         <div className="max-w-5xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-6 leading-[0.95] tracking-tight">
+          <h1 className="text-3xl md:text-5xl lg:text-7xl font-black mb-6 leading-[0.95] tracking-tight">
             Real Founders. <span className="text-accent">Real Results.</span>
           </h1>
           <p className="text-xl text-text-secondary font-light leading-relaxed max-w-3xl mx-auto">
@@ -37,7 +38,7 @@ export default function CaseStudiesPage() {
           {stats.map((stat) => (
             <div key={stat.label} className="glass-card p-5 text-center group hover:border-accent/30 transition-all">
               <div className="text-3xl font-bold text-accent mb-1 group-hover:scale-110 transition-transform">{stat.value}</div>
-              <div className="text-xs text-text-tertiary uppercase tracking-wider">{stat.label}</div>
+              <div className="text-xs text-text-secondary uppercase tracking-wider">{stat.label}</div>
             </div>
           ))}
         </div>
@@ -58,7 +59,7 @@ export default function CaseStudiesPage() {
               {/* Objection callout — speaks directly to the skeptic */}
               {study.objection && (
                 <div className="glass-card p-5 mb-8 border-red-500/20 bg-red-500/5">
-                  <p className="text-sm text-text-tertiary uppercase tracking-wider mb-1">Sound Familiar?</p>
+                  <p className="text-sm text-text-secondary uppercase tracking-wider mb-1">Sound Familiar?</p>
                   <p className="text-lg text-white italic">{study.objection}</p>
                 </div>
               )}
@@ -105,15 +106,15 @@ export default function CaseStudiesPage() {
               {/* ROI */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="glass-card p-4 text-center">
-                  <div className="text-xs text-text-tertiary mb-1">Investment</div>
+                  <div className="text-xs text-text-secondary mb-1">Investment</div>
                   <div className="text-lg font-bold">{study.investment}</div>
                 </div>
                 <div className="glass-card p-4 text-center">
-                  <div className="text-xs text-text-tertiary mb-1">Payback</div>
+                  <div className="text-xs text-text-secondary mb-1">Payback</div>
                   <div className="text-lg font-bold text-accent">{study.payback}</div>
                 </div>
                 <div className="glass-card p-4 text-center">
-                  <div className="text-xs text-text-tertiary mb-1">Net ROI</div>
+                  <div className="text-xs text-text-secondary mb-1">Net ROI</div>
                   <div className="text-lg font-bold text-accent">{study.roi}</div>
                 </div>
               </div>
@@ -177,12 +178,12 @@ export default function CaseStudiesPage() {
       {/* CTA */}
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto text-center glass-card p-6 md:p-12">
-          <h2 className="text-4xl font-bold mb-6">Want These Results for Your Business?</h2>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">Want These Results for Your Business?</h2>
           <p className="text-xl text-text-secondary mb-8">
             Book a strategy call. We'll assess your bottleneck, map your path, and show you exactly what's possible.
           </p>
           <a
-            href="https://calendly.com/podlablv/new-meeting"
+            href="https://calendly.com/podlablv/strategy-call"
             target="_blank"
             rel="noopener noreferrer"
             className="group inline-block px-12 py-5 bg-accent text-black text-lg font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-2 hover:shadow-[0_12px_40px_rgba(42,221,27,0.4)] transition-all"

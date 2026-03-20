@@ -1,22 +1,23 @@
 import Navigation from '@/components/Navigation';
 import HomePageWrapper from '@/components/HomePageWrapper';
+import LabNavigation from '@/components/LabNavigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Palette, Check, Type, Droplet, Layers, FileImage } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'BrandLab | PodLab',
+  title: 'BrandLab — Premium Brand Identity',
   description: 'Visual identity systems that include logo, color, typography, and brand guidelines.',
   openGraph: {
-    title: 'BrandLab | PodLab',
+    title: 'BrandLab — Premium Brand Identity',
     description: 'Visual identity systems that include logo, color, typography, and brand guidelines.',
     url: '/labs/brand',
     images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: 'PodLab BrandLab' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'BrandLab | PodLab',
+    title: 'BrandLab — Premium Brand Identity',
     description: 'Visual identity systems that include logo, color, typography, and brand guidelines.',
     images: ['/opengraph-image.png'],
     creator: '@podlab',
@@ -62,11 +63,14 @@ export default function BrandLabPage() {
     <HomePageWrapper>
       <div className="min-h-screen">
         <Navigation />
+        <div className="pt-20">
+          <LabNavigation currentLab="BrandLab" />
+        </div>
 
         {/* Hero Section */}
-        <section className="relative pt-32 pb-16 px-6">
+        <section className="relative pt-8 pb-16 px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4">BrandLab</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-bold mb-4">BrandLab</h1>
             <p className="text-2xl md:text-3xl text-accent font-bold mb-4">
               Look Like the Leader You Already Are
             </p>
@@ -80,7 +84,7 @@ export default function BrandLabPage() {
             </p>
             <div className="mb-12">
               <a
-                href="https://calendly.com/podlablv/new-meeting"
+                href="https://calendly.com/podlablv/strategy-call"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"
@@ -109,9 +113,9 @@ export default function BrandLabPage() {
         {/* Who It's For Section */}
         <section className="py-20 px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="glass-card p-8 md:p-12">
+            <div className="glass-card p-5 sm:p-8 md:p-12">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">Who It's For</p>
-              <h2 className="text-4xl font-bold mb-6">Perfect for founders ready to level up their visual presence</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">Perfect for founders ready to level up their visual presence</h2>
               <ul className="space-y-4">
                 {whoItsFor.map((item, index) => (
                   <li key={index} className="flex items-start gap-3">
@@ -129,7 +133,7 @@ export default function BrandLabPage() {
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">What You Get</p>
-              <h2 className="text-4xl md:text-5xl font-bold">Complete visual identity system</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold">Complete visual identity system</h2>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-8">
@@ -160,9 +164,9 @@ export default function BrandLabPage() {
         {/* Outcome Section */}
         <section className="py-20 px-6">
           <div className="max-w-4xl mx-auto">
-            <div className="glass-card p-8 md:p-12">
+            <div className="glass-card p-5 sm:p-8 md:p-12">
               <p className="text-sm text-accent font-semibold uppercase tracking-wide mb-4">The Outcome</p>
-              <h2 className="text-4xl font-bold mb-6">Professional brand presence that matches business quality</h2>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">Professional brand presence that matches business quality</h2>
               <p className="text-xl text-text-secondary leading-relaxed">
                 You'll have a complete brand identity that positions you as a market leader. Every touchpoint—from your 
                 website to your business cards—will reflect the quality of your work. Your team will know exactly how to 
@@ -175,7 +179,7 @@ export default function BrandLabPage() {
         {/* Pricing Section */}
         <section className="py-20 px-6">
           <div className="max-w-3xl mx-auto">
-            <div className="glass-card p-8 md:p-12 text-center border-2 border-accent">
+            <div className="glass-card p-5 sm:p-8 md:p-12 text-center border-2 border-accent">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/10 rounded-full text-accent text-sm font-medium mb-6">
                 <Palette className="w-4 h-4" />
                 Complete Package
@@ -184,7 +188,7 @@ export default function BrandLabPage() {
               <div className="mb-2">
                 <span className="text-sm text-text-secondary line-through">Perceived Value: $12,000+</span>
               </div>
-              <p className="text-5xl font-bold text-accent mb-6">$3,500</p>
+              <p className="text-4xl md:text-5xl font-bold text-accent mb-6">$3,500</p>
               <p className="text-text-secondary max-w-md mx-auto mb-8">
                 A complete visual identity that positions you as the premium choice in your market.
               </p>
@@ -207,7 +211,7 @@ export default function BrandLabPage() {
                 </li>
               </ul>
               <a
-                href="https://calendly.com/podlablv/new-meeting"
+                href="https://calendly.com/podlablv/strategy-call"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"
@@ -222,12 +226,12 @@ export default function BrandLabPage() {
         {/* CTA Section */}
         <section className="py-24 px-6">
           <div className="max-w-4xl mx-auto text-center glass-card p-6 md:p-12">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready for a brand that commands respect?</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-6">Ready for a brand that commands respect?</h2>
             <p className="text-xl text-text-secondary max-w-2xl mx-auto mb-10">
               Let's create a visual identity that makes you unforgettable.
             </p>
             <a
-              href="https://calendly.com/podlablv/new-meeting"
+              href="https://calendly.com/podlablv/strategy-call"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"

@@ -235,14 +235,14 @@ export default function BeakerApplyPage() {
         { n: 3, label: 'Welcome' },
       ].map((s, i) => (
         <span key={s.n} className="flex items-center gap-2">
-          {i > 0 && <span className="text-text-tertiary">→</span>}
+          {i > 0 && <span className="text-text-secondary">→</span>}
           <span
             className={
               step === s.n
                 ? 'text-accent font-bold'
                 : step > s.n
                   ? 'text-text-secondary'
-                  : 'text-text-tertiary'
+                  : 'text-text-secondary'
             }
           >
             {s.n}. {s.label}
@@ -419,7 +419,7 @@ export default function BeakerApplyPage() {
                 {/* submit */}
                 <button
                   onClick={goToStep2}
-                  className="w-full mt-4 py-4 rounded-xl font-bold text-lg bg-accent hover:bg-accent-hover text-black transition-all duration-200 hover:shadow-[0_0_30px_rgba(57,255,20,0.4)]"
+                  className="w-full mt-4 py-4 rounded-xl font-bold text-lg bg-accent hover:bg-accent-hover text-black transition-all duration-200 hover:shadow-[0_0_30px_rgba(42,221,27,0.4)]"
                 >
                   Continue to Agreement →
                 </button>
@@ -620,7 +620,7 @@ export default function BeakerApplyPage() {
                     <p>By: Hiram Andino</p>
                     <p>Title: CEO</p>
                     <p className="font-mono italic text-accent mt-1">Hiram Andino</p>
-                    <p className="text-xs text-text-tertiary">{todayString()}</p>
+                    <p className="text-xs text-text-secondary">{todayString()}</p>
                   </div>
 
                   <div className="mt-4">
@@ -673,7 +673,7 @@ export default function BeakerApplyPage() {
                   <button
                     onClick={submitContract}
                     disabled={submitting}
-                    className="flex-1 py-3 rounded-xl font-bold text-lg bg-accent hover:bg-accent-hover text-black transition-all duration-200 hover:shadow-[0_0_30px_rgba(57,255,20,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 py-3 rounded-xl font-bold text-lg bg-accent hover:bg-accent-hover text-black transition-all duration-200 hover:shadow-[0_0_30px_rgba(42,221,27,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submitting ? 'Submitting…' : 'Sign Agreement →'}
                   </button>
@@ -720,7 +720,7 @@ export default function BeakerApplyPage() {
                     >
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-text-primary">{link.label}</p>
-                        <p className="text-xs text-text-tertiary truncate font-mono">{link.url}</p>
+                        <p className="text-xs text-text-secondary truncate font-mono">{link.url}</p>
                       </div>
                       <button
                         onClick={() => copy(link.url, link.label)}

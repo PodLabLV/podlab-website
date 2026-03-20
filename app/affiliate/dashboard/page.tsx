@@ -363,7 +363,7 @@ export default function BeakerDashboard() {
                   <p className="text-sm text-neutral-400">Logos, colors, and approved imagery</p>
                 </GlassCard>
               </a>
-              <a href="mailto:tiptopdawson@podlablv.com" className="block group">
+              <a href="mailto:info@podlablv.com" className="block group">
                 <GlassCard className="p-6 hover:border-[#2ADD1B]/40 transition-all">
                   <div className="text-2xl mb-3">💬</div>
                   <h4 className="text-white font-semibold mb-1 group-hover:text-[#2ADD1B] transition-colors">Get Support</h4>

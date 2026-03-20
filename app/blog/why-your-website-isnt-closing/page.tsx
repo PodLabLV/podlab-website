@@ -27,11 +27,11 @@ export default function BlogPost() {
 
           <div className="flex items-center gap-3 mb-6">
             <span className="text-xs text-accent font-semibold uppercase tracking-wider px-2 py-1 border border-accent/30 rounded">Sales</span>
-            <span className="text-xs text-text-tertiary">March 24, 2026</span>
-            <span className="text-xs text-text-tertiary">· 5 min read</span>
+            <span className="text-xs text-text-secondary">March 24, 2026</span>
+            <span className="text-xs text-text-secondary">· 5 min read</span>
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
             Why Your Website Isn't <span className="text-accent">Closing</span> — And What Will
           </h1>
 
@@ -91,7 +91,7 @@ export default function BlogPost() {
             <div className="glass-card p-8 my-12 text-center border-accent/30">
               <h3 className="text-2xl font-bold text-white mb-3">Your website should sell like you do — without you.</h3>
               <p className="text-text-secondary mb-6">Let us show you what that looks like for your business.</p>
-              <a href="https://calendly.com/podlablv/new-meeting" target="_blank" rel="noopener noreferrer" className="inline-block px-8 py-3 bg-accent text-black font-semibold rounded-lg hover:bg-accent-hover transition-all hover:-translate-y-1">
+              <a href="https://calendly.com/podlablv/strategy-call" target="_blank" rel="noopener noreferrer" className="inline-block px-8 py-3 bg-accent text-black font-semibold rounded-lg hover:bg-accent-hover transition-all hover:-translate-y-1">
                 Book Your Strategy Call →
               </a>
             </div>

@@ -70,14 +70,21 @@ export default function Navigation() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border shadow-2xl">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        {/* Logo */}
+        {/* Logo — full on desktop, beaker icon on mobile */}
         <Link href="/" className="flex items-center group" onClick={closeMobile}>
           <ImageWithHover
             src="/PodLab-logo-menu.png"
             alt="PodLab"
             width={200}
             height={57}
-            className="h-14 w-auto"
+            className="h-14 w-auto hidden md:block"
+          />
+          <img
+            src="/logo-mobile.png"
+            alt="PodLab"
+            width={140}
+            height={50}
+            className="h-10 w-auto md:hidden"
           />
         </Link>
 
