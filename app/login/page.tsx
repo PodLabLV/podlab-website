@@ -24,23 +24,14 @@ export default function LoginPage() {
     if (emailInput) emailInput.focus();
   }, []);
 
-  // Check if already logged in (only redirect if session is valid)
+  // On mount: clear any stale auth state to prevent redirect loops
   useEffect(() => {
     const supabase = getSupabaseBrowser();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.access_token && session?.user) {
-        // Verify the session is actually valid before redirecting
-        supabase.auth.getUser(session.access_token).then(({ data: { user }, error }) => {
-          if (user && !error) {
-            const redirectTo = new URLSearchParams(window.location.search).get('redirect') || '/portal';
-            window.location.href = redirectTo;
-          } else {
-            // Invalid/stale session — clear it
-            supabase.auth.signOut();
-          }
-        });
-      }
-    });
+    // If we landed here with a redirect param, we're not authenticated — clear stale sessions
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('redirect')) {
+      supabase.auth.signOut().catch(() => {});
+    }
   }, []);
 
   // Handle Enter key submit
@@ -85,8 +76,10 @@ export default function LoginPage() {
         }
 
         setSuccess(true);
+        const params = new URLSearchParams(window.location.search);
+        const redirectTo = params.get('redirect') || '/portal';
         setTimeout(() => {
-          window.location.href = '/portal';
+          window.location.href = redirectTo;
         }, 1200);
       }
     } catch (err) {
