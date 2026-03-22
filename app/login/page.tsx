@@ -102,13 +102,15 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const supabase = getSupabaseBrowser();
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/login`,
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.toLowerCase().trim() }),
       });
 
-      if (resetError) {
-        setError(resetError.message || 'Failed to send reset email.');
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Failed to send reset email.');
       } else {
         setResetSent(true);
       }

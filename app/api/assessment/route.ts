@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { notifyTeam, notifyEmail, buildEmailHtml } from '@/lib/notifications'
 import { buildResultsEmailHtml } from '@/lib/results-email'
 import { sanitize } from '@/lib/sanitize'
+import { generateRoadmap } from '@/lib/roadmap-generator'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -154,7 +155,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 3. Insert into leads table
+    // 3. Auto-generate 90-Day Growth Sprint roadmap
+    try {
+      const roadmapData = generateRoadmap({
+        firstName,
+        lastName,
+        company: body.company || '',
+        totalScore,
+        zone,
+        categoryScores,
+        primaryBottleneck: sortedCats[0]?.[0] || 'Strategic Clarity',
+        secondaryBottleneck: sortedCats[1]?.[0] || 'Founder Dependency',
+        tertiaryBottleneck: sortedCats[2]?.[0] || 'Marketing Systems',
+      })
+
+      const { error: roadmapError } = await supabase
+        .from('roadmaps')
+        .insert({
+          client_id: clientId,
+          assessment_id: assessmentData.id,
+          ...roadmapData,
+        })
+
+      if (roadmapError) {
+        console.error('Roadmap generation error:', roadmapError)
+        console.warn('Roadmap insert failed but assessment was saved successfully')
+      }
+    } catch (roadmapErr) {
+      console.error('Roadmap generation error (non-blocking):', roadmapErr)
+    }
+
+    // 4. Insert into leads table
     const { error: leadError } = await supabase
       .from('leads')
       .insert({
@@ -176,7 +207,7 @@ export async function POST(request: NextRequest) {
       console.warn('Lead insert failed but assessment was saved successfully')
     }
 
-    // 4. Create Supabase Auth user (non-blocking)
+    // 5. Create Supabase Auth user (non-blocking)
     let authUserId: string | null = null
     if (body.password && body.password.length >= 8) {
       try {
@@ -226,7 +257,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 5. Send team notification (non-blocking)
+    // 6. Send team notification (non-blocking)
     const zoneColor = zone === 'Red' ? '#e74c3c' : zone === 'Yellow' ? '#f39c12' : '#2ADD1B'
     const fullName = `${firstName} ${lastName}`
     const categoryScoresStr = Object.entries(categoryScores)
@@ -251,7 +282,7 @@ export async function POST(request: NextRequest) {
       supabaseUrl: `https://supabase.com/dashboard/project/tncipuxobcbkwkmpcevt/editor`,
     }).catch((err) => console.error('Team notification error:', err))
 
-    // 6. Send results email to customer (non-blocking)
+    // 7. Send results email to customer (non-blocking)
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://podlablv.com'
 
     // Build quick wins from weakest 2 categories
