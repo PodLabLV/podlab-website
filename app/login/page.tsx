@@ -24,14 +24,16 @@ export default function LoginPage() {
     if (emailInput) emailInput.focus();
   }, []);
 
-  // On mount: clear any stale auth state to prevent redirect loops
+  // On mount: if user already has a valid session, redirect them straight to portal
   useEffect(() => {
     const supabase = getSupabaseBrowser();
-    // If we landed here with a redirect param, we're not authenticated — clear stale sessions
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('redirect')) {
-      supabase.auth.signOut().catch(() => {});
-    }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        const params = new URLSearchParams(window.location.search);
+        const redirectTo = params.get('redirect') || '/portal';
+        window.location.href = redirectTo;
+      }
+    });
   }, []);
 
   // Handle Enter key submit
