@@ -587,6 +587,7 @@ export default function AssessmentPage() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [company, setCompany] = useState('');
+  const [website, setWebsite] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -668,6 +669,7 @@ export default function AssessmentPage() {
       email,
       phone: phone || undefined,
       company: company || undefined,
+      website: website || undefined,
       password: password || undefined,
       answers: answersMap,
       categoryScores,
@@ -864,6 +866,29 @@ export default function AssessmentPage() {
                       placeholder="Your company"
                     />
                   </div>
+                </div>
+
+                {/* Website URL */}
+                <div>
+                  <label htmlFor="website" className="block text-sm font-medium text-text-secondary mb-2">
+                    Website URL <span className="text-text-secondary text-xs">(optional — we&apos;ll include a free audit)</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <svg className="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+                    </div>
+                    <input
+                      id="website"
+                      type="url"
+                      value={website}
+                      onChange={(e) => setWebsite(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 bg-bg-secondary border-2 border-border rounded-xl text-white placeholder-text-tertiary focus:outline-none focus:border-accent transition-colors"
+                      placeholder="yourcompany.com"
+                    />
+                  </div>
+                  {website && (
+                    <p className="text-xs text-accent mt-1">🔍 We&apos;ll audit your site for SEO, conversion, speed, and trust signals — included free with your results.</p>
+                  )}
                 </div>
 
                 {/* Password — Create Account */}
@@ -1163,6 +1188,7 @@ export default function AssessmentPage() {
                     setEmail('');
                     setPhone('');
                     setCompany('');
+                    setWebsite('');
                     setSubmitError('');
                   }}
                   className="px-12 py-6 border-2 border-border text-white text-lg font-bold rounded-xl hover:border-accent hover:text-accent transition-all"

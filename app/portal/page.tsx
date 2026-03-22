@@ -3,20 +3,20 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import WebsiteAudit from '@/components/WebsiteAudit';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface AssessmentData {
   id: string;
   total_score: number;
   zone: string;
   category_scores: Record<string, number>;
   created_at: string;
-  // Raw DB columns (individual scores)
   founder_dependency_score?: number;
   brand_perception_score?: number;
   marketing_systems_score?: number;
   sales_infrastructure_score?: number;
   strategic_clarity_score?: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw_responses?: any;
 }
 
@@ -318,6 +318,11 @@ export default function PortalDashboard() {
           })}
         </div>
       </div>
+
+      {/* Website Audit */}
+      {assessment.raw_responses?.websiteAudit && (
+        <WebsiteAudit audit={assessment.raw_responses.websiteAudit} />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Wins */}
