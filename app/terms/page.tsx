@@ -26,7 +26,7 @@ export default function TermsOfServicePage() {
         <section className="relative z-10 pt-32 pb-24 px-6">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-black mb-4 font-display">TERMS OF SERVICE</h1>
-            <p className="text-text-secondary mb-12">Last updated: March 19, 2026</p>
+            <p className="text-text-secondary mb-12">Last updated: April 2, 2026</p>
 
             <div className="glass-card p-8 md:p-12 space-y-10 text-text-secondary leading-relaxed">
 
@@ -184,10 +184,16 @@ export default function TermsOfServicePage() {
 
             </div>
 
-            <div className="mt-12 text-center">
+            <div className="mt-12 text-center flex flex-wrap justify-center gap-x-4 gap-y-2">
               <Link href="/" className="text-accent hover:underline">← Back to Home</Link>
-              <span className="mx-4 text-text-secondary">|</span>
-              <Link href="/privacy" className="text-accent hover:underline">Privacy Policy →</Link>
+              <span className="text-text-secondary">|</span>
+              <Link href="/privacy" className="text-accent hover:underline">Privacy Policy</Link>
+              <span className="text-text-secondary">|</span>
+              <Link href="/cookies" className="text-accent hover:underline">Cookie Policy</Link>
+              <span className="text-text-secondary">|</span>
+              <Link href="/acceptable-use" className="text-accent hover:underline">Acceptable Use</Link>
+              <span className="text-text-secondary">|</span>
+              <Link href="/refund" className="text-accent hover:underline">Refund Policy</Link>
             </div>
           </div>
         </section>

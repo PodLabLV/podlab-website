@@ -43,6 +43,11 @@ const nextConfig: NextConfig = {
         destination: '/assessment/start',
         permanent: true,
       },
+      {
+        source: '/podcast',
+        destination: '/how-it-started',
+        permanent: true,
+      },
     ];
   },
 };
