@@ -198,7 +198,7 @@ export default function PortalDashboard() {
     const supabase = getSupabaseBrowser();
     const startedAt = Date.now();
     const intervalId = setInterval(async () => {
-      if (Date.now() - startedAt > 30_000) {
+      if (Date.now() - startedAt > 60_000) {
         clearInterval(intervalId);
         return;
       }
