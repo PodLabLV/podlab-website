@@ -203,7 +203,7 @@ export default function ReportsPage() {
       {/* Recommendations */}
       <div className="bg-gradient-to-br from-[#1A1A1A] to-[#2ADD1B]/[0.03] border border-[#2ADD1B]/10 rounded-2xl p-5 sm:p-6">
         <h2 className="font-display text-sm text-[#2ADD1B] uppercase tracking-wider mb-4">
-          🔬 What We&apos;re Doing Next Month
+           What We&apos;re Doing Next Month
         </h2>
         <ul className="space-y-3">
           {recommendations.map((rec, i) => (

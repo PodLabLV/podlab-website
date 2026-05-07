@@ -442,10 +442,10 @@ export async function POST(request: NextRequest) {
     }
 
     notifyTeam({
-      title: '🎯 New Bottleneck Assessment',
+      title: ' New Bottleneck Assessment',
       fields: notifFields,
-      emailSubject: `🎯 New Assessment: ${fullName} (${zone} Zone - Score: ${totalScore})`,
-      emailHtml: buildEmailHtml('🎯 New Bottleneck Assessment', notifFields),
+      emailSubject: ` New Assessment: ${fullName} (${zone} Zone - Score: ${totalScore})`,
+      emailHtml: buildEmailHtml(' New Bottleneck Assessment', notifFields),
       slackColor: zoneColor,
       supabaseUrl: `https://supabase.com/dashboard/project/tncipuxobcbkwkmpcevt/editor`,
     }).catch((err) => console.error('Team notification error:', err))

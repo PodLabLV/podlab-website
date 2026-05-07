@@ -157,31 +157,31 @@ export default function BottleneckAssessmentPage() {
 
             <div className="space-y-4 max-w-2xl mx-auto mb-12">
               <div className="flex items-start gap-4">
-                <span className="text-accent text-2xl flex-shrink-0">☑️</span>
+                <span className="text-accent text-2xl flex-shrink-0">️</span>
                 <p className="text-lg text-text-secondary">
                   <span className="font-semibold text-white">You're closing all the deals yourself</span> (if you stop, revenue stops)
                 </p>
               </div>
               <div className="flex items-start gap-4">
-                <span className="text-accent text-2xl flex-shrink-0">☑️</span>
+                <span className="text-accent text-2xl flex-shrink-0">️</span>
                 <p className="text-lg text-text-secondary">
                   <span className="font-semibold text-white">Your brand's decent, but it's not landing</span> (perception gap costing you deals)
                 </p>
               </div>
               <div className="flex items-start gap-4">
-                <span className="text-accent text-2xl flex-shrink-0">☑️</span>
+                <span className="text-accent text-2xl flex-shrink-0">️</span>
                 <p className="text-lg text-text-secondary">
                   <span className="font-semibold text-white">Marketing is inconsistent</span> (feast or famine, no predictable pipeline)
                 </p>
               </div>
               <div className="flex items-start gap-4">
-                <span className="text-accent text-2xl flex-shrink-0">☑️</span>
+                <span className="text-accent text-2xl flex-shrink-0">️</span>
                 <p className="text-lg text-text-secondary">
                   <span className="font-semibold text-white">The busier you get, the harder growth becomes</span> (stuck at $3M-$5M ceiling)
                 </p>
               </div>
               <div className="flex items-start gap-4">
-                <span className="text-accent text-2xl flex-shrink-0">☑️</span>
+                <span className="text-accent text-2xl flex-shrink-0">️</span>
                 <p className="text-lg text-text-secondary">
                   <span className="font-semibold text-white">You're the bottleneck</span> (and if you're honest, you already know it)
                 </p>
@@ -296,7 +296,7 @@ export default function BottleneckAssessmentPage() {
             </blockquote>
 
             <p className="text-center text-sm text-text-secondary">
-              🔒 <span className="font-semibold">Your data is private.</span> We never share or sell your information. Unsubscribe anytime.
+               <span className="font-semibold">Your data is private.</span> We never share or sell your information. Unsubscribe anytime.
             </p>
           </div>
         </section>

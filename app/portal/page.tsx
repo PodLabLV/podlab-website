@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
@@ -272,7 +273,7 @@ export default function PortalDashboard() {
         </div>
 
         <div className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-8 text-center max-w-lg mx-auto">
-          <div className="text-5xl mb-4">📊</div>
+          <div className="text-5xl mb-4"></div>
           <h2 className="text-xl font-bold text-white mb-2">No Assessment Found</h2>
           <p className="text-white/50 text-sm mb-6">
             Take the Founder Bottleneck Assessment to see your score, category breakdown, and personalized roadmap.
@@ -397,7 +398,7 @@ export default function PortalDashboard() {
       {top3Moves.length > 0 && (
         <section className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
           <h2 className="font-display text-sm text-white uppercase tracking-wider mb-1">
-            🎯 Top 3 Highest-Leverage Moves
+            Top 3 Highest-Leverage Moves
           </h2>
           <p className="text-xs text-white/40 mb-5">Start these this week. Each one breaks a bottleneck immediately.</p>
           <div className="space-y-3">
@@ -427,7 +428,7 @@ export default function PortalDashboard() {
         <section className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
           <div className="flex items-baseline justify-between mb-1">
             <h2 className="font-display text-sm text-white uppercase tracking-wider">
-              📅 Your Custom 90-Day Roadmap
+              Your Custom 90-Day Roadmap
             </h2>
             {roadmap.roi_multiple ? (
               <span className="text-[10px] text-[#2ADD1B] font-bold uppercase tracking-wider">
@@ -556,9 +557,9 @@ export default function PortalDashboard() {
       {/* Quick Links */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { href: '/portal/deliverables', label: 'Deliverables', icon: '📦', desc: 'Access your assets' },
-          { href: '/portal/progress', label: 'Progress', icon: '🚀', desc: 'Track your projects' },
-          { href: `/assessment/results/${assessment.id}`, label: 'Share Results', icon: '🔗', desc: 'Public link' },
+          { href: '/portal/deliverables', label: 'Deliverables', img: '/portal/icon-deliverables.png', desc: 'Access your assets' },
+          { href: '/portal/progress', label: 'Progress', img: '/portal/icon-progress.png', desc: 'Track your projects' },
+          { href: `/assessment/results/${assessment.id}`, label: 'Share Results', img: '/portal/icon-reports.png', desc: 'Public link' },
         ].map((q) => (
           <Link
             key={q.href}
@@ -566,7 +567,7 @@ export default function PortalDashboard() {
             className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-4 hover:border-[#2ADD1B]/20 transition-all group"
           >
             <div className="flex items-center gap-3">
-              <span className="text-xl">{q.icon}</span>
+              <Image src={q.img} alt="" width={28} height={28} className="w-7 h-7 object-contain flex-shrink-0" />
               <div>
                 <p className="text-sm font-medium text-white group-hover:text-[#2ADD1B] transition-colors">
                   {q.label}

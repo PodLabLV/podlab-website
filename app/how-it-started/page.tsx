@@ -319,7 +319,7 @@ const timeline = [
 const platforms = [
   {
     name: "YouTube",
-    icon: "📺",
+    icon: "",
     description: "Watch full episodes",
     url: "https://www.youtube.com/@PodLabLV",
   },

@@ -59,10 +59,10 @@ function InviteContent() {
 
           <div className="grid sm:grid-cols-2 gap-6">
             {[
-              { icon: '🎙️', title: '30–45 Minutes', desc: 'Conversational, not an interview. Just two founders talking.' },
-              { icon: '🎬', title: 'In-Studio or Remote', desc: 'Our Las Vegas studio or Zoom — whatever works for you.' },
-              { icon: '📝', title: 'Zero Prep Needed', desc: 'No scripts, no pre-approved questions. Come as you are.' },
-              { icon: '🎁', title: 'You Own Your Content', desc: 'Full clips, highlights, and assets from your episode — yours to use.' },
+              { icon: '️', title: '30–45 Minutes', desc: 'Conversational, not an interview. Just two founders talking.' },
+              { icon: '', title: 'In-Studio or Remote', desc: 'Our Las Vegas studio or Zoom — whatever works for you.' },
+              { icon: '', title: 'Zero Prep Needed', desc: 'No scripts, no pre-approved questions. Come as you are.' },
+              { icon: '', title: 'You Own Your Content', desc: 'Full clips, highlights, and assets from your episode — yours to use.' },
             ].map((item) => (
               <div key={item.title} className="p-6 rounded-xl border border-border bg-card hover:border-accent/30 transition-colors">
                 <span className="text-2xl mb-3 block">{item.icon}</span>

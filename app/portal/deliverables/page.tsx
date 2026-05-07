@@ -37,10 +37,10 @@ const statusStyles: Record<DeliverableStatus, string> = {
 };
 
 const fileIcons: Record<string, string> = {
-  PDF: '📄',
-  MP4: '🎬',
-  ZIP: '📁',
-  DOC: '📝',
+  PDF: 'PDF',
+  MP4: 'VIDEO',
+  ZIP: 'ZIP',
+  DOC: 'DOC',
 };
 
 const labColors: Record<string, string> = {
@@ -98,7 +98,7 @@ export default function DeliverablesPage() {
 
             {/* Title */}
             <div className="mt-3 flex items-start gap-3">
-              <span className="text-2xl">{fileIcons[d.fileType] || '📄'}</span>
+              <span className="text-[10px] font-black tracking-wider text-[#2ADD1B] bg-[#2ADD1B]/10 border border-[#2ADD1B]/20 rounded px-2 py-1 self-start">{fileIcons[d.fileType] || 'FILE'}</span>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-medium text-white leading-tight">{d.title}</h3>
                 <div className="mt-1 flex items-center gap-2 text-xs text-white/30">

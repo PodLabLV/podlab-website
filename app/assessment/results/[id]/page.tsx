@@ -73,7 +73,7 @@ export default async function AssessmentResultsPage({ params }: PageProps) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-6">
         <div className="text-center max-w-md">
-          <div className="text-5xl mb-4">🔍</div>
+          <div className="text-5xl mb-4"></div>
           <h1 className="text-2xl font-bold text-white mb-2">Assessment Not Found</h1>
           <p className="text-white/50 text-sm mb-6">This assessment link may be invalid or expired.</p>
           <Link href="/assessment" className="inline-block px-8 py-4 bg-[#2ADD1B] text-black font-bold rounded-xl hover:bg-[#25c418] transition-all uppercase tracking-wider">
@@ -217,7 +217,7 @@ export default async function AssessmentResultsPage({ params }: PageProps) {
 
         {/* Quick Wins */}
         <div className="bg-[#141414] border border-white/10 rounded-2xl p-6 mb-8">
-          <h2 className="text-lg font-bold text-white mb-4 uppercase tracking-wider">🎯 Quick Wins</h2>
+          <h2 className="text-lg font-bold text-white mb-4 uppercase tracking-wider"> Quick Wins</h2>
           <div className="space-y-3">
             {weakest2.map((cat) => (
               <div key={cat} className="flex items-start gap-2">

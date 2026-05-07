@@ -31,7 +31,7 @@ export default function CostOfInactionCard({ categoryScores, bookHref }: Props) 
     <section className="bg-gradient-to-br from-[#1A0E0E] via-[#1A1A1A] to-[#1A1A1A] border-2 border-[#FF4444]/40 rounded-2xl p-6 sm:p-8">
       <div className="flex items-baseline justify-between mb-4 gap-3 flex-wrap">
         <p className="text-[10px] text-[#FF4444] font-black tracking-[0.2em] uppercase">
-          ⚠ The cost of staying where you are
+           The cost of staying where you are
         </p>
         <div className="flex items-center gap-2 text-xs">
           <span className="text-white/40">Your revenue:</span>

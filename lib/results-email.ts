@@ -118,7 +118,7 @@ export function buildResultsEmailHtml(params: ResultsEmailParams): string {
 
     <!-- Quick Wins -->
     <div style="background:#141414;border:1px solid #2a2a2a;border-radius:16px;padding:24px;margin-bottom:24px;">
-      <h2 style="margin:0 0 16px;color:#fafafa;font-size:16px;text-transform:uppercase;letter-spacing:1px;">🎯 Quick Wins</h2>
+      <h2 style="margin:0 0 16px;color:#fafafa;font-size:16px;text-transform:uppercase;letter-spacing:1px;"> Quick Wins</h2>
       <table style="width:100%;border-collapse:collapse;">
         ${quickWinRows}
       </table>

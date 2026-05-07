@@ -140,28 +140,28 @@ export default function BlogPost() {
 
             <div className="space-y-4 my-6">
               <div className="flex items-start gap-3">
-                <span className="text-accent text-xl flex-shrink-0 mt-1">✓</span>
+                <span className="text-accent text-xl flex-shrink-0 mt-1"></span>
                 <div>
                   <p className="font-semibold text-white">Shortens your sales cycle</p>
                   <p className="text-sm">Prospects show up to calls already educated, pre-sold, and ready to buy.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <span className="text-accent text-xl flex-shrink-0 mt-1">✓</span>
+                <span className="text-accent text-xl flex-shrink-0 mt-1"></span>
                 <div>
                   <p className="font-semibold text-white">Handles objections before they're asked</p>
                   <p className="text-sm">The "Why you?" and "Why now?" get answered by a 3-minute video, not a 30-minute call.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <span className="text-accent text-xl flex-shrink-0 mt-1">✓</span>
+                <span className="text-accent text-xl flex-shrink-0 mt-1"></span>
                 <div>
                   <p className="font-semibold text-white">Empowers your team</p>
                   <p className="text-sm">Your sales coordinator sends targeted assets instead of scheduling another meeting with you.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <span className="text-accent text-xl flex-shrink-0 mt-1">✓</span>
+                <span className="text-accent text-xl flex-shrink-0 mt-1"></span>
                 <div>
                   <p className="font-semibold text-white">Compounds over time</p>
                   <p className="text-sm">Works on Saturday nights, holidays, and while you're focused on everything else.</p>
@@ -216,12 +216,12 @@ export default function BlogPost() {
                 <p className="text-xs text-text-secondary mt-1">How many sales calls did this asset eliminate or shorten?</p>
               </div>
               <div className="glass-card p-5 text-center">
-                <p className="text-2xl font-bold text-accent mb-1">📈</p>
+                <p className="text-2xl font-bold text-accent mb-1"></p>
                 <p className="font-semibold text-white text-sm">Close Rate</p>
                 <p className="text-xs text-text-secondary mt-1">Do prospects who watch close faster or at higher rates?</p>
               </div>
               <div className="glass-card p-5 text-center">
-                <p className="text-2xl font-bold text-accent mb-1">🚀</p>
+                <p className="text-2xl font-bold text-accent mb-1"></p>
                 <p className="font-semibold text-white text-sm">Team Leverage</p>
                 <p className="text-xs text-text-secondary mt-1">Can your team move deals forward without you?</p>
               </div>

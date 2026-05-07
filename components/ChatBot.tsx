@@ -37,18 +37,18 @@ const CATEGORIES = [
 ] as const
 
 const QUICK_ACTIONS = [
-  { label: '🎩 What Labs do you offer?', message: 'What services or Labs does PodLab offer?' },
-  { label: '💰 Pricing', message: 'How much do your services cost?' },
-  { label: '📹 The studio', message: 'Tell me about your video studio' },
-  { label: '📅 Book a call', message: 'I want to book a strategy call' },
-  { label: '🔬 Take the assessment', message: 'I want to take the bottleneck assessment' },
+  { label: ' What Labs do you offer?', message: 'What services or Labs does PodLab offer?' },
+  { label: ' Pricing', message: 'How much do your services cost?' },
+  { label: ' The studio', message: 'Tell me about your video studio' },
+  { label: ' Book a call', message: 'I want to book a strategy call' },
+  { label: ' Take the assessment', message: 'I want to take the bottleneck assessment' },
 ]
 
 const PORTAL_QUICK_ACTIONS = [
-  { label: '🎯 Where should I start?', message: 'Looking at my score, what should I start with first?' },
-  { label: '💸 Cost vs. ROI?', message: 'Help me understand the ROI math on my situation.' },
-  { label: '🤔 Foundation Call?', message: 'What happens on the Foundation Call? Is it really not a pitch?' },
-  { label: '📅 Book my call', message: 'I want to book my Foundation Call.' },
+  { label: ' Where should I start?', message: 'Looking at my score, what should I start with first?' },
+  { label: ' Cost vs. ROI?', message: 'Help me understand the ROI math on my situation.' },
+  { label: ' Foundation Call?', message: 'What happens on the Foundation Call? Is it really not a pitch?' },
+  { label: ' Book my call', message: 'I want to book my Foundation Call.' },
 ]
 
 function linkify(text: string): string {
@@ -285,7 +285,7 @@ export default function ChatBot() {
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12" /></svg>
             </button>
             <p className="text-sm text-gray-300">
-              🎩 Good evening. Cleetus here — PodLab&apos;s resident gentleman. Shall I help you explore what we do?
+              🧪 Good evening. Cleetus here — PodLab&apos;s resident gentleman. Shall I help you explore what we do?
             </p>
             <div className="absolute -bottom-1 right-4 w-3 h-3 bg-[#1A1A1A] border-r border-b border-[#2ADD1B]/30 rotate-45" />
           </div>
@@ -305,7 +305,7 @@ export default function ChatBot() {
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           ) : (
-            <span className="text-2xl">🎩</span>
+            <span className="text-2xl">🧪</span>
           )}
         </button>
       </div>
@@ -318,7 +318,7 @@ export default function ChatBot() {
           <div className="flex items-center gap-3 px-5 py-4 pt-[max(1rem,env(safe-area-inset-top,1rem))] sm:pt-4 border-b border-[#2E2E2E] bg-[#1A1A1A]">
             <div className="relative">
               <div className="w-10 h-10 rounded-full bg-[#2ADD1B]/20 border border-[#2ADD1B]/40 flex items-center justify-center">
-                <span className="text-lg">🎩</span>
+                <span className="text-lg">🧪</span>
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#2ADD1B] rounded-full border-2 border-[#1A1A1A]" />
             </div>
@@ -344,23 +344,23 @@ export default function ChatBot() {
               <div className="space-y-4">
                 <div className="flex gap-2.5">
                   <div className="w-7 h-7 rounded-full bg-[#2ADD1B]/20 border border-[#2ADD1B]/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs">🎩</span>
+                    <span className="text-xs">🧪</span>
                   </div>
                   <div className="bg-[#1A1A1A] border border-[#2E2E2E] rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%]">
                     <p className="text-gray-300 text-sm leading-relaxed">
                       {isOnPortal && portalContext?.firstName ? (
                         <>
-                          {portalContext.firstName}, welcome. 🎩<br /><br />
+                          🧪 {portalContext.firstName}, welcome.<br /><br />
                           I&apos;ve seen your score and your roadmap. Ask me anything about what you&apos;re looking at — your weakest categories, the labs, the math, what the Foundation Call actually looks like. I&apos;ll give it to you straight.
                         </>
                       ) : isOnPortal ? (
                         <>
-                          Welcome to your portal. 🎩<br /><br />
+                          🧪 Welcome to your portal.<br /><br />
                           Ask me anything about what you&apos;re seeing — your score, the labs, the math, or what the Foundation Call actually looks like.
                         </>
                       ) : (
                         <>
-                          Good to see you. I&apos;m Cleetus — consider me your personal guide to everything PodLab. 🎩<br /><br />
+                          🧪 Good to see you. I&apos;m Cleetus — consider me your personal guide to everything PodLab.<br /><br />
                           Tell me a bit about your business and I&apos;ll point you in the right direction. Or tap a button below if you&apos;d prefer the express route.
                         </>
                       )}
@@ -390,7 +390,7 @@ export default function ChatBot() {
               <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : ''}`}>
                 {msg.role === 'assistant' && (
                   <div className="w-7 h-7 rounded-full bg-[#2ADD1B]/20 border border-[#2ADD1B]/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs">🎩</span>
+                    <span className="text-xs">🧪</span>
                   </div>
                 )}
                 <div
@@ -414,7 +414,7 @@ export default function ChatBot() {
             {isLoading && (
               <div className="flex gap-2.5">
                 <div className="w-7 h-7 rounded-full bg-[#2ADD1B]/20 border border-[#2ADD1B]/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs">🎩</span>
+                  <span className="text-xs">🧪</span>
                 </div>
                 <div className="bg-[#1A1A1A] border border-[#2E2E2E] rounded-2xl rounded-tl-md px-4 py-3">
                   <div className="flex gap-1.5">
@@ -452,7 +452,7 @@ export default function ChatBot() {
               </button>
             </div>
             <p className="text-[10px] text-gray-400 text-center mt-2">
-              Powered by Cleetus 🎩 • <a href="/privacy" className="hover:text-gray-400 transition-colors">Privacy Policy</a>
+              Powered by Cleetus 🧪 • <a href="/privacy" className="hover:text-gray-400 transition-colors">Privacy Policy</a>
             </p>
           </form>
         </div>

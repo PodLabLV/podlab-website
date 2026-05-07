@@ -58,11 +58,11 @@ export default function LabTeaserCard({ lab, variant, reason, bookHref }: Props)
         <div className="px-6 pt-5 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-black tracking-[0.2em] text-[#2ADD1B] uppercase">
-              ★ Your Priority Lab
+              🧪 Your Priority Lab
             </span>
           </div>
           <span className="text-[10px] font-bold tracking-wider text-white/40 uppercase">
-            🔒 Locked
+            Locked
           </span>
         </div>
 
@@ -302,7 +302,7 @@ function LockedLabCard({ lab, bookHref }: { lab: Lab; bookHref: string }) {
         )}
 
         <div className="absolute top-2 right-2 px-2 py-1 rounded bg-black/70 backdrop-blur-sm text-[9px] tracking-wider text-white/80 uppercase pointer-events-none">
-          🔒 Locked
+          Locked
         </div>
       </div>
 

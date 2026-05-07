@@ -54,21 +54,21 @@ export default function BlogPost() {
             <div className="space-y-4 my-8">
               <div className="glass-card p-5">
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-accent font-bold text-sm">☀️ MORNING</span>
+                  <span className="text-accent font-bold text-sm">️ MORNING</span>
                   <span className="text-xs text-text-secondary">Foundation Assets</span>
                 </div>
                 <p className="text-sm">High-leverage pieces first — your authority video and video sales letter. These do the heaviest lifting across your entire sales infrastructure.</p>
               </div>
               <div className="glass-card p-5">
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-accent font-bold text-sm">🔥 MIDDAY</span>
+                  <span className="text-accent font-bold text-sm"> MIDDAY</span>
                   <span className="text-xs text-text-secondary">Objection Killers</span>
                 </div>
                 <p className="text-sm">10-15 short-form segments, each addressing a specific objection. 2–5 minutes each. You already know the answers — now they work for you forever.</p>
               </div>
               <div className="glass-card p-5">
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-accent font-bold text-sm">🚀 AFTER</span>
+                  <span className="text-accent font-bold text-sm"> AFTER</span>
                   <span className="text-xs text-text-secondary">Labs Take Over</span>
                 </div>
                 <p className="text-sm">Our five labs handle everything from here. Within weeks, you have a full ecosystem of assets — deployed, working, and compounding.</p>

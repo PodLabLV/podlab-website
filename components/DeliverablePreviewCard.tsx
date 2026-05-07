@@ -43,7 +43,7 @@ export default function DeliverablePreviewCard({ preview, firstName, bookHref }:
       <div className="flex items-baseline justify-between gap-3 flex-wrap mb-2">
         <div>
           <p className="text-[10px] text-[#2ADD1B] font-bold tracking-[0.2em] uppercase">
-            ✨ AssetsLab — sample of week 1
+            🧪 AssetsLab — sample of week 1
           </p>
           <h2 className="font-display text-base sm:text-lg text-white uppercase tracking-wider mt-1">
             What you&apos;d be holding in 7 days
@@ -140,7 +140,7 @@ export default function DeliverablePreviewCard({ preview, firstName, bookHref }:
               </div>
               <div className="bg-[#FFB800]/5 border border-[#FFB800]/20 rounded-lg p-4">
                 <p className="text-[10px] text-[#FFB800] font-bold tracking-wider uppercase mb-1.5">
-                  ⚠ Commodity Trap to Avoid
+                   Commodity Trap to Avoid
                 </p>
                 <p className="text-sm text-white/80 leading-relaxed italic">
                   {preview!.positioning.commodityTrap}

@@ -61,9 +61,9 @@ function getImpactBadge(impact: string): { color: string; bg: string; label: str
 
 function getEffortBadge(effort: string): string {
   switch (effort) {
-    case 'quick': return '⚡ Quick Fix'
-    case 'moderate': return '🔧 Moderate Effort'
-    default: return '🏗️ Significant'
+    case 'quick': return ' Quick Fix'
+    case 'moderate': return ' Moderate Effort'
+    default: return '️ Significant'
   }
 }
 
@@ -71,7 +71,7 @@ export default function WebsiteAudit({ audit }: WebsiteAuditProps) {
   if (audit.error) {
     return (
       <div className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-red-500/20 rounded-2xl p-6">
-        <h2 className="font-display text-sm text-white uppercase tracking-wider mb-3">🌐 Website Audit</h2>
+        <h2 className="font-display text-sm text-white uppercase tracking-wider mb-3"> Website Audit</h2>
         <p className="text-red-400 text-sm">{audit.error}</p>
       </div>
     )
@@ -80,11 +80,11 @@ export default function WebsiteAudit({ audit }: WebsiteAuditProps) {
   const gradeColor = getGradeColor(audit.grade)
   const categoryOrder = ['conversion', 'seo', 'trust', 'performance', 'technical'] as const
   const categoryEmojis: Record<string, string> = {
-    seo: '🔍',
-    conversion: '🎯',
-    performance: '⚡',
-    trust: '🤝',
-    technical: '⚙️',
+    seo: '',
+    conversion: '',
+    performance: '',
+    trust: '',
+    technical: '️',
   }
 
   const auditDate = new Date(audit.auditedAt).toLocaleDateString('en-US', {
@@ -98,7 +98,7 @@ export default function WebsiteAudit({ audit }: WebsiteAuditProps) {
         style={{ borderColor: `${gradeColor}30` }}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="font-display text-sm text-white uppercase tracking-wider mb-1">🌐 Website Audit</h2>
+            <h2 className="font-display text-sm text-white uppercase tracking-wider mb-1"> Website Audit</h2>
             <a href={audit.url} target="_blank" rel="noopener noreferrer" 
                className="text-sm text-[#2ADD1B] hover:underline">{audit.url}</a>
           </div>
@@ -168,7 +168,7 @@ export default function WebsiteAudit({ audit }: WebsiteAuditProps) {
                 {cat.checks.map((check, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs">
                     <span className={check.passed ? 'text-[#2ADD1B]' : 'text-red-400'}>
-                      {check.passed ? '✓' : '✗'}
+                      {check.passed ? '' : ''}
                     </span>
                     <span className={check.passed ? 'text-white/60' : 'text-white/80'}>
                       {check.name}
@@ -190,7 +190,7 @@ export default function WebsiteAudit({ audit }: WebsiteAuditProps) {
       {audit.recommendations.length > 0 && (
         <div className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
           <h3 className="font-display text-sm text-white uppercase tracking-wider mb-4">
-            🎯 Top Recommendations
+             Top Recommendations
           </h3>
           <div className="space-y-3">
             {audit.recommendations.slice(0, 5).map((rec, i) => {

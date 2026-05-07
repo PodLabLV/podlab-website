@@ -127,10 +127,10 @@ export async function POST(request: NextRequest) {
     };
 
     notifyTeam({
-      title: '🤝 New Beaker Application',
+      title: ' New Beaker Application',
       fields: notifFields,
-      emailSubject: `🤝 Beaker Application: ${fullName}`,
-      emailHtml: buildEmailHtml('🤝 New Beaker Application', notifFields),
+      emailSubject: ` Beaker Application: ${fullName}`,
+      emailHtml: buildEmailHtml(' New Beaker Application', notifFields),
       slackColor: '#9b59b6',
       supabaseUrl: 'https://supabase.com/dashboard/project/tncipuxobcbkwkmpcevt/editor',
     }).catch((err) => console.error('Notification error:', err));

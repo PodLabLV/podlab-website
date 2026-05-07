@@ -144,7 +144,7 @@ export default function ServicesPage() {
                     <ul className="space-y-3">
                       {lab.deliverables.map((item) => (
                         <li key={item} className="flex items-start gap-2">
-                          <span className="text-accent flex-shrink-0">✓</span>
+                          <span className="text-accent flex-shrink-0"></span>
                           <span className="text-text-secondary text-sm">{item}</span>
                         </li>
                       ))}

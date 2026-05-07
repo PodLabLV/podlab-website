@@ -25,19 +25,19 @@ const LINK_CONFIGS: LinkConfig[] = [
 const SWIPE_COPIES = [
   {
     label: 'LinkedIn DM',
-    icon: '💼',
+    icon: '',
     getTemplate: (id: string) =>
       `Hey — I came across your profile and thought of something that might help. PodLab helps founders like us turn our expertise into video assets that sell 24/7, so you're not the bottleneck anymore. Worth a look: https://podlablv.com?utm_source=beaker&utm_medium=referral&utm_campaign=${id}`,
   },
   {
     label: 'Email',
-    icon: '📧',
+    icon: '',
     getTemplate: (id: string) =>
       `Subject: Quick thought on scaling without burning out\n\nHey,\n\nI've been working with PodLab — they help $1M–$8M founders duplicate themselves through strategic video assets. Record once, sell forever. No more being the bottleneck in every deal.\n\nIf you're tired of being the face AND the closer AND the educator, check them out:\nhttps://podlablv.com/assessment/start?utm_source=beaker&utm_medium=referral&utm_campaign=${id}\n\nWorth 5 minutes of your time.\n\nCheers`,
   },
   {
     label: 'Text Message',
-    icon: '💬',
+    icon: '',
     getTemplate: (id: string) =>
       `Hey! Check out PodLab — they help founders turn their expertise into video assets that close deals on autopilot. Thought of you: https://podlablv.com?utm_source=beaker&utm_medium=referral&utm_campaign=${id}`,
   },

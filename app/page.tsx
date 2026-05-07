@@ -264,19 +264,19 @@ export default function HomePage() {
                   <h4 className="text-xl font-bold mb-4 text-center text-white">What Sets PodLab Apart</h4>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="flex items-start gap-3">
-                      <span className="text-accent text-xl flex-shrink-0">✓</span>
+                      <span className="text-accent text-xl flex-shrink-0"></span>
                       <p className="text-text-secondary"><span className="text-white font-semibold">Systems over videos</span> — Build lasting infrastructure, not one-off content</p>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-accent text-xl flex-shrink-0">✓</span>
+                      <span className="text-accent text-xl flex-shrink-0"></span>
                       <p className="text-text-secondary"><span className="text-white font-semibold">Evergreen assets</span> — Homepage videos, VSLs, testimonials that work 24/7</p>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-accent text-xl flex-shrink-0">✓</span>
+                      <span className="text-accent text-xl flex-shrink-0"></span>
                       <p className="text-text-secondary"><span className="text-white font-semibold">Sales psychology</span> — Content engineered to convert, not just look pretty</p>
                     </div>
                     <div className="flex items-start gap-3">
-                      <span className="text-accent text-xl flex-shrink-0">✓</span>
+                      <span className="text-accent text-xl flex-shrink-0"></span>
                       <p className="text-text-secondary"><span className="text-white font-semibold">90-day GTM plans</span> — Strategic video integration into funnels & campaigns</p>
                     </div>
                   </div>

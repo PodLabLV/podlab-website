@@ -32,7 +32,7 @@ export default function EmailCaptureForm({ onSubmit, score }: EmailCaptureFormPr
     <div className="max-w-2xl mx-auto">
       <div className="bg-gradient-to-br from-bg-tertiary to-bg-secondary border-2 border-accent rounded-2xl p-12">
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4">📧</div>
+          <div className="text-6xl mb-4"></div>
           <h2 className="text-4xl font-black mb-4">
             Get Your <span className="text-accent">Results</span>
           </h2>

@@ -236,7 +236,7 @@ function analyzeHtml(
   const hasSocialProof = /testimonial|review|client.*said|what.*client|case.*study|success.*stor/i.test(html)
   const hasTestimonialQuotes = /[""][^""]{20,}[""].*[—–-]/i.test(html) || /"[^"]{20,}".*—/i.test(html)
   const hasLogos = /client.*logo|as.*seen|trusted.*by|partner|featured/i.test(lower)
-  const hasStarRating = /★|⭐|star.*rating|review.*score/i.test(html)
+  const hasStarRating = /||star.*rating|review.*score/i.test(html)
   const hasCaseStudy = /case.*study|success.*story|client.*result|roi|growth.*result/i.test(lower)
   const hasGuarantee = /guarantee|money.*back|risk.*free|satisfaction/i.test(lower)
 

@@ -80,10 +80,10 @@ export async function POST(request: NextRequest) {
     }
 
     notifyTeam({
-      title: '📩 New Contact Form',
+      title: ' New Contact Form',
       fields: notifFields,
-      emailSubject: `📩 Contact Form: ${name.trim()}${company?.trim() ? ` - ${company.trim()}` : ''}`,
-      emailHtml: buildEmailHtml('📩 New Contact Form Submission', notifFields),
+      emailSubject: ` Contact Form: ${name.trim()}${company?.trim() ? ` - ${company.trim()}` : ''}`,
+      emailHtml: buildEmailHtml(' New Contact Form Submission', notifFields),
       slackColor: '#e67e22',
       supabaseUrl: 'https://supabase.com/dashboard/project/tncipuxobcbkwkmpcevt/editor',
     }).catch((err) => console.error('Notification error:', err))

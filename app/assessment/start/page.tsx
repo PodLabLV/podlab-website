@@ -825,7 +825,7 @@ export default function AssessmentPage() {
 
             <div className="bg-bg-tertiary border-2 border-border rounded-2xl p-12">
               <div className="text-center mb-10">
-                <div className="text-5xl mb-4">📊</div>
+                <div className="text-5xl mb-4"></div>
                 <h2 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
                   Your results are <span className="text-accent">ready</span>.
                 </h2>
@@ -929,7 +929,7 @@ export default function AssessmentPage() {
                     />
                   </div>
                   {website && (
-                    <p className="text-xs text-accent mt-1">🔍 We&apos;ll audit your site for SEO, conversion, speed, and trust signals — included free with your results.</p>
+                    <p className="text-xs text-accent mt-1"> We&apos;ll audit your site for SEO, conversion, speed, and trust signals — included free with your results.</p>
                   )}
                 </div>
 
@@ -1125,7 +1125,7 @@ export default function AssessmentPage() {
 
             {/* Quick Wins — weakest 2 categories */}
             <div className="mb-16">
-              <h3 className="text-2xl font-bold text-white mb-2 text-center">🎯 Your Quick Wins</h3>
+              <h3 className="text-2xl font-bold text-white mb-2 text-center"> Your Quick Wins</h3>
               <p className="text-text-secondary text-center mb-8">Actionable moves for your two weakest areas — start this week.</p>
 
               {weakest2.map((cat) => {

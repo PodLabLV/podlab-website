@@ -726,7 +726,7 @@ export default function BeakerApplyPage() {
                         onClick={() => copy(link.url, link.label)}
                         className="shrink-0 text-xs px-3 py-1.5 rounded-md border border-border text-text-secondary hover:text-accent hover:border-accent transition-colors"
                       >
-                        {copied === link.label ? '✓' : 'Copy'}
+                        {copied === link.label ? '' : 'Copy'}
                       </button>
                     </div>
                   ))}
@@ -745,7 +745,7 @@ export default function BeakerApplyPage() {
                           onClick={() => copy(tmpl.text, tmpl.title)}
                           className="text-xs px-3 py-1 rounded-md border border-border text-text-secondary hover:text-accent hover:border-accent transition-colors"
                         >
-                          {copied === tmpl.title ? '✓ Copied' : 'Copy'}
+                          {copied === tmpl.title ? ' Copied' : 'Copy'}
                         </button>
                       </div>
                       <pre className="text-xs text-text-secondary whitespace-pre-wrap font-sans leading-relaxed">

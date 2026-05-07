@@ -103,9 +103,9 @@ export default function ContactPage() {
             <div className="glass-card p-8 group hover:shadow-[0_12px_40px_rgba(42,221,27,0.25)] hover:-translate-y-1 transition-all duration-350 cursor-pointer border-accent">
               <p className="font-bold text-text-primary mb-4 group-hover:text-accent transition-colors">At the end of the call, you&apos;ll have:</p>
               <ul className="space-y-2 text-text-secondary mb-6">
-                <li className="group-hover:text-text-primary transition-colors">✓ Clarity on your biggest bottleneck</li>
-                <li className="group-hover:text-text-primary transition-colors">✓ A recommended path to scale without burning out</li>
-                <li className="group-hover:text-text-primary transition-colors">✓ Transparent pricing and timelines (no surprises)</li>
+                <li className="group-hover:text-text-primary transition-colors"> Clarity on your biggest bottleneck</li>
+                <li className="group-hover:text-text-primary transition-colors"> A recommended path to scale without burning out</li>
+                <li className="group-hover:text-text-primary transition-colors"> Transparent pricing and timelines (no surprises)</li>
               </ul>
               <p className="text-lg font-semibold text-accent">No pressure. No hype. Just a clear plan.</p>
             </div>
@@ -127,7 +127,7 @@ export default function ContactPage() {
               {/* Contact Info Sidebar */}
               <div className="lg:col-span-2 space-y-6">
                 <div className="glass-card p-8 group hover:border-accent hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(42,221,27,0.15)] transition-all duration-350">
-                  <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">📧</div>
+                  <div className="text-3xl mb-4 group-hover:scale-110 transition-transform"></div>
                   <h4 className="font-semibold mb-2 group-hover:text-accent transition-colors">Email</h4>
                   <a href="mailto:info@podlablv.com" className="text-accent hover:underline block">
                     info@podlablv.com
@@ -137,7 +137,7 @@ export default function ContactPage() {
                   </p>
                 </div>
                 <div className="glass-card p-8 group hover:border-accent hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(42,221,27,0.15)] transition-all duration-350">
-                  <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">📍</div>
+                  <div className="text-3xl mb-4 group-hover:scale-110 transition-transform"></div>
                   <h4 className="font-semibold mb-2 group-hover:text-accent transition-colors">Location</h4>
                   <p className="text-text-secondary group-hover:text-text-primary transition-colors">Las Vegas, NV</p>
                   <p className="text-sm text-text-secondary mt-2 group-hover:text-text-primary transition-colors">
@@ -145,7 +145,7 @@ export default function ContactPage() {
                   </p>
                 </div>
                 <div className="glass-card p-8 group hover:border-accent hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(42,221,27,0.15)] transition-all duration-350">
-                  <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">📅</div>
+                  <div className="text-3xl mb-4 group-hover:scale-110 transition-transform"></div>
                   <h4 className="font-semibold mb-2 group-hover:text-accent transition-colors">Book a Call</h4>
                   <a
                     href="https://calendly.com/podlablv/strategy-call"
@@ -160,7 +160,7 @@ export default function ContactPage() {
                   </p>
                 </div>
                 <div className="glass-card p-8 group hover:border-accent hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(42,221,27,0.15)] transition-all duration-350">
-                  <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">🔗</div>
+                  <div className="text-3xl mb-4 group-hover:scale-110 transition-transform"></div>
                   <h4 className="font-semibold mb-2 group-hover:text-accent transition-colors">Client Portal</h4>
                   <a
                     href="https://portal.podlablv.com"

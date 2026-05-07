@@ -12,10 +12,10 @@ const BEAKER = {
 };
 
 const HERO_STATS = [
-  { label: 'Total Clicks', value: '1,247', icon: '🔗', delta: '+89 this month' },
-  { label: 'Assessments Started', value: '43', icon: '📋', delta: '+7 this month' },
-  { label: 'Calls Booked', value: '18', icon: '📞', delta: '+3 this month' },
-  { label: 'Deals Closed', value: '7', icon: '🤝', delta: '+1 this month' },
+  { label: 'Total Clicks', value: '1,247', icon: '', delta: '+89 this month' },
+  { label: 'Assessments Started', value: '43', icon: '', delta: '+7 this month' },
+  { label: 'Calls Booked', value: '18', icon: '', delta: '+3 this month' },
+  { label: 'Deals Closed', value: '7', icon: '', delta: '+1 this month' },
 ];
 
 const EARNINGS = {
@@ -61,7 +61,7 @@ const SWIPE_COPY = {
     },
     {
       title: 'Twitter/X Thread Starter',
-      content: `Most $1M-$8M founders are stuck as the bottleneck.\n\nThey know content works but can't find time to create it. @PodLabLV solves this — they duplicate YOU into strategic video assets.\n\nRecord once. Sell forever. 🧪\n\nHere's what they offer 🧵`,
+      content: `Most $1M-$8M founders are stuck as the bottleneck.\n\nThey know content works but can't find time to create it. @PodLabLV solves this — they duplicate YOU into strategic video assets.\n\nRecord once. Sell forever. 🧪\n\nHere's what they offer `,
     },
     {
       title: 'Instagram Story Script',
@@ -122,7 +122,7 @@ function CopyButton({ text }: { text: string }) {
       onClick={handleCopy}
       className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-white/10 hover:border-[#2ADD1B]/50 hover:text-[#2ADD1B] transition-all bg-white/5"
     >
-      {copied ? '✓ Copied' : 'Copy'}
+      {copied ? ' Copied' : 'Copy'}
     </button>
   );
 }
@@ -351,21 +351,21 @@ export default function BeakerDashboard() {
             <div className="grid md:grid-cols-3 gap-4 mb-8">
               <a href="/affiliate/utm" className="block group">
                 <GlassCard className="p-6 hover:border-[#2ADD1B]/40 transition-all">
-                  <div className="text-2xl mb-3">🔗</div>
+                  <div className="text-2xl mb-3"></div>
                   <h4 className="text-white font-semibold mb-1 group-hover:text-[#2ADD1B] transition-colors">UTM Link Generator</h4>
                   <p className="text-sm text-neutral-400">Create tracked links for any PodLab page</p>
                 </GlassCard>
               </a>
               <a href="#" className="block group">
                 <GlassCard className="p-6 hover:border-[#2ADD1B]/40 transition-all">
-                  <div className="text-2xl mb-3">🎨</div>
+                  <div className="text-2xl mb-3"></div>
                   <h4 className="text-white font-semibold mb-1 group-hover:text-[#2ADD1B] transition-colors">Brand Assets</h4>
                   <p className="text-sm text-neutral-400">Logos, colors, and approved imagery</p>
                 </GlassCard>
               </a>
               <a href="mailto:info@podlablv.com" className="block group">
                 <GlassCard className="p-6 hover:border-[#2ADD1B]/40 transition-all">
-                  <div className="text-2xl mb-3">💬</div>
+                  <div className="text-2xl mb-3"></div>
                   <h4 className="text-white font-semibold mb-1 group-hover:text-[#2ADD1B] transition-colors">Get Support</h4>
                   <p className="text-sm text-neutral-400">Questions? Reach out to the Beaker team</p>
                 </GlassCard>

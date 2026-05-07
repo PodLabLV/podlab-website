@@ -40,7 +40,7 @@ export default function WebsiteAiPanel({ analysis, url }: Props) {
     <section className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6 sm:p-8">
       <div className="flex items-center justify-between mb-1 gap-3 flex-wrap">
         <h2 className="font-display text-sm text-white uppercase tracking-wider">
-          🔬 What your site actually says
+           What your site actually says
         </h2>
         <span className="text-[10px] text-white/30 uppercase tracking-wider flex items-center gap-2">
           {isLoading && <span className="w-1.5 h-1.5 rounded-full bg-[#2ADD1B] animate-pulse" />}
@@ -104,7 +104,7 @@ export default function WebsiteAiPanel({ analysis, url }: Props) {
           {/* Premium Ceiling */}
           <div className="bg-[#FFB800]/5 border border-[#FFB800]/20 rounded-lg p-4">
             <div className="text-[10px] text-[#FFB800] font-bold tracking-wider uppercase mb-2">
-              💰 Pricing ceiling your site is creating
+               Pricing ceiling your site is creating
             </div>
             <p className="text-sm text-white/80 leading-relaxed italic">{analysis.premiumPriceCeiling}</p>
           </div>

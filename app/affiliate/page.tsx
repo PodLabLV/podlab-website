@@ -173,7 +173,7 @@ export default function AffiliatePage() {
             <div className="grid md:grid-cols-2 gap-6">
               {rules.map((rule) => (
                 <div key={rule} className="flex items-start gap-3">
-                  <span className="text-red-500 text-xl flex-shrink-0">✗</span>
+                  <span className="text-red-500 text-xl flex-shrink-0"></span>
                   <span className="text-text-secondary">{rule}</span>
                 </div>
               ))}

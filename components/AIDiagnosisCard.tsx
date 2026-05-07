@@ -16,7 +16,7 @@ export default function AIDiagnosisCard({ diagnoses, firstName }: Props) {
     <section className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6 sm:p-8">
       <div className="flex items-center justify-between mb-1 gap-3 flex-wrap">
         <h2 className="font-display text-sm text-white uppercase tracking-wider">
-          🧠 What your answers actually say
+           What your answers actually say
         </h2>
         <span className="text-[10px] text-white/30 uppercase tracking-wider flex items-center gap-2">
           {isLoading && (

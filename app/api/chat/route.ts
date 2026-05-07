@@ -212,10 +212,10 @@ export async function POST(request: NextRequest) {
           }
 
           notifyTeam({
-            title: '💬 Chatbot Lead Captured',
+            title: ' Chatbot Lead Captured',
             fields: notifFields,
-            emailSubject: `💬 Chatbot Lead: ${emailNorm}`,
-            emailHtml: buildEmailHtml('💬 Chatbot Lead Captured', notifFields),
+            emailSubject: ` Chatbot Lead: ${emailNorm}`,
+            emailHtml: buildEmailHtml(' Chatbot Lead Captured', notifFields),
             slackColor: '#2ADD1B',
             supabaseUrl: 'https://supabase.com/dashboard/project/tncipuxobcbkwkmpcevt/editor',
           }).catch((err) => console.error('Notification error:', err))

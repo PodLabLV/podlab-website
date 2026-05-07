@@ -48,7 +48,7 @@ export default function ContactForm() {
   if (status === 'success') {
     return (
       <div className="glass-card p-8 md:p-12 text-center">
-        <div className="text-5xl mb-6">✅</div>
+        <div className="text-5xl mb-6"></div>
         <h3 className="text-2xl font-bold mb-4 text-accent">Message Sent!</h3>
         <p className="text-text-secondary text-lg mb-8">
           We&apos;ll get back to you within 24 hours (usually faster).

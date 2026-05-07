@@ -118,9 +118,9 @@ export default function PodcastApplyPage() {
             </p>
             <div className="flex flex-wrap justify-center gap-6 md:gap-10">
               {[
-                { label: 'Goal: 50 Episodes', icon: '🎙️' },
-                { label: 'Goal: 10K Listeners', icon: '🎧' },
-                { label: '$1M–$8M Founders', icon: '🎯' },
+                { label: 'Goal: 50 Episodes', icon: '️' },
+                { label: 'Goal: 10K Listeners', icon: '' },
+                { label: '$1M–$8M Founders', icon: '' },
               ].map((stat) => (
                 <div key={stat.label} className="flex items-center gap-2 text-text-secondary">
                   <span className="text-2xl">{stat.icon}</span>
@@ -136,7 +136,7 @@ export default function PodcastApplyPage() {
           <div className="max-w-3xl mx-auto">
             {status === 'success' ? (
               <div className="glass-card p-6 md:p-12 text-center border-accent">
-                <div className="text-6xl mb-6">🎙️</div>
+                <div className="text-6xl mb-6">️</div>
                 <h2 className="text-3xl font-bold mb-4 text-accent">Application Received!</h2>
                 <p className="text-lg text-text-secondary max-w-xl mx-auto">
                   We review every application personally. If you&apos;re a fit, we&apos;ll reach out
@@ -340,19 +340,19 @@ export default function PodcastApplyPage() {
             <div className="grid md:grid-cols-3 gap-8">
               {[
                 {
-                  icon: '📞',
+                  icon: '',
                   title: 'Pre-Interview Call',
                   description:
                     '15-minute prep call to nail your story angle and talking points.',
                 },
                 {
-                  icon: '🎬',
+                  icon: '',
                   title: 'Studio Session',
                   description:
                     '60-90 minutes in our Las Vegas studio. Professional production, relaxed conversation.',
                 },
                 {
-                  icon: '📡',
+                  icon: '',
                   title: 'Distribution',
                   description:
                     'Published on YouTube + all podcast platforms. Clips for your social media included.',

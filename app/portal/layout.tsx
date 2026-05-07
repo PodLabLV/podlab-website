@@ -1,16 +1,16 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 
 const portalNav = [
-  { href: '/portal', label: 'Dashboard', icon: '📊' },
-  { href: '/portal/deliverables', label: 'Deliverables', icon: '📦' },
-  { href: '/portal/progress', label: 'Progress', icon: '🚀' },
-  { href: '/portal/reports', label: 'Reports', icon: '📈' },
-  { href: '/portal/invoices', label: 'Invoices', icon: '💰' },
+  { href: '/portal', label: 'Dashboard', icon: '/portal/icon-dashboard.png' },
+  { href: '/portal/deliverables', label: 'Deliverables', icon: '/portal/icon-deliverables.png' },
+  { href: '/portal/progress', label: 'Progress', icon: '/portal/icon-progress.png' },
+  { href: '/portal/reports', label: 'Reports', icon: '/portal/icon-reports.png' },
 ];
 
 interface UserInfo {
@@ -90,14 +90,16 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         }`}
       >
         {/* Logo area */}
-        <div className="h-20 flex items-center px-6 border-b border-white/5">
+        <div className="h-20 flex items-center px-5 border-b border-white/5">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 rounded-lg bg-[#2ADD1B] flex items-center justify-center text-black font-bold text-sm">
-              P
-            </div>
-            <span className="font-display text-white text-sm uppercase tracking-wider">
-              Client Portal
-            </span>
+            <Image
+              src="/portal/podlab-logo.png"
+              alt="PodLab"
+              width={140}
+              height={40}
+              priority
+              className="h-9 w-auto object-contain"
+            />
           </Link>
         </div>
 
@@ -119,7 +121,13 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                     : 'text-white/60 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <span className="text-lg">{item.icon}</span>
+                <Image
+                  src={item.icon}
+                  alt=""
+                  width={24}
+                  height={24}
+                  className="w-6 h-6 object-contain flex-shrink-0"
+                />
                 <span className="font-medium">{item.label}</span>
               </Link>
             );

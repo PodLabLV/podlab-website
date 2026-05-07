@@ -101,10 +101,10 @@ export async function POST(request: NextRequest) {
     };
 
     notifyTeam({
-      title: '🎙️ New Podcast Application',
+      title: '️ New Podcast Application',
       fields: notifFields,
-      emailSubject: `🎙️ Podcast Application: ${fullName} from ${body.companyName}`,
-      emailHtml: buildEmailHtml('🎙️ New Podcast Application', notifFields),
+      emailSubject: `️ Podcast Application: ${fullName} from ${body.companyName}`,
+      emailHtml: buildEmailHtml('️ New Podcast Application', notifFields),
       slackColor: '#3498db',
       supabaseUrl: 'https://supabase.com/dashboard/project/tncipuxobcbkwkmpcevt/editor',
     }).catch((err) => console.error('Notification error:', err));

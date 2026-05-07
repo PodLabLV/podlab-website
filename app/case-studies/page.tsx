@@ -91,7 +91,7 @@ export default function CaseStudiesPage() {
               <div className="grid md:grid-cols-2 gap-3 mb-8">
                 {study.results.map((result) => (
                   <div key={result} className="flex items-start gap-2">
-                    <span className="text-accent flex-shrink-0">✓</span>
+                    <span className="text-accent flex-shrink-0"></span>
                     <span className="text-sm text-text-secondary">{result}</span>
                   </div>
                 ))}
