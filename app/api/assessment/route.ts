@@ -468,10 +468,41 @@ export async function POST(request: NextRequest) {
       siteUrl,
     })
 
+    // Customer results email — softened subject (avoids "Score: 66/100" spam-pattern),
+    // adds a real reply-to + List-Unsubscribe + plaintext fallback for deliverability.
+    const customerSubject = `${firstName}, your bottleneck breakdown is ready`
+
+    const customerPlaintext = `Hi ${firstName},
+
+Thanks for completing the Founder Bottleneck Assessment.
+
+Your Score: ${totalScore}/100 (${zone} Zone)
+
+View your full results, personalized roadmap, and lab recommendations:
+${siteUrl}/assessment/results/${assessmentData.id}
+
+Ready to talk through it? Book a 30-minute Foundation Call with Hiram:
+https://calendly.com/podlablv/strategy-call
+
+— PodLab
+Las Vegas, NV
+${siteUrl}
+
+To unsubscribe, reply to this email with "unsubscribe".`
+
     notifyEmail(
       email.toLowerCase().trim(),
-      `Your Bottleneck Score: ${totalScore}/100 — ${zone} Zone`,
-      resultsEmailHtml
+      customerSubject,
+      resultsEmailHtml,
+      {
+        text: customerPlaintext,
+        replyTo: 'info@podlablv.com',
+        fromName: 'Hiram at PodLab',
+        tags: [
+          { name: 'kind', value: 'assessment_results' },
+          { name: 'zone', value: zone.toLowerCase() },
+        ],
+      }
     ).catch((err) => console.error('Customer results email error:', err))
 
     // 9. Add lead to Instantly nurture campaign via Maton gateway (non-blocking)
