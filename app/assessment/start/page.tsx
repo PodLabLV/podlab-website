@@ -697,10 +697,28 @@ export default function AssessmentPage() {
         setAssessmentId(data.assessmentId);
       }
 
-      // If they created an account, sign them in and route to portal.
-      // signInWithPassword returns { data, error } — it doesn't throw on auth failure,
-      // so we must check error explicitly. If it fails, fall through to inline results
-      // instead of pushing to /portal where they'd just bounce to /login.
+      // Magic-link flow: API returns ready-to-install session tokens for every lead
+      // (password optional). setSession() locally and route to /portal — no email
+      // round-trip, no password required. Falls back to inline results if API
+      // didn't return tokens.
+      if (data.session?.access_token && data.session?.refresh_token) {
+        try {
+          const supabase = getSupabaseBrowser();
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          });
+          if (!sessionError) {
+            router.push('/portal');
+            return;
+          }
+          console.warn('setSession failed:', sessionError.message);
+        } catch (sessionErr) {
+          console.error('setSession threw:', sessionErr);
+        }
+      }
+
+      // Fallback: password-based sign-in if magic-link tokens weren't returned
       if (password && password.length >= 8) {
         try {
           const supabase = getSupabaseBrowser();
