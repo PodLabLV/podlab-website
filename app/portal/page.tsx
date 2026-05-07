@@ -185,6 +185,36 @@ export default function PortalDashboard() {
     loadData();
   }, []);
 
+  // Poll for AI diagnosis if it hasn't arrived yet (Claude runs in background after submit).
+  // Stops polling once aiDiagnoses populates or after 30s — whichever comes first.
+  useEffect(() => {
+    if (!assessment?.id) return;
+    if (assessment.raw_responses?.aiDiagnoses) return;
+
+    const supabase = getSupabaseBrowser();
+    const startedAt = Date.now();
+    const intervalId = setInterval(async () => {
+      if (Date.now() - startedAt > 30_000) {
+        clearInterval(intervalId);
+        return;
+      }
+      const { data } = await supabase
+        .from('assessments')
+        .select('raw_responses')
+        .eq('id', assessment.id)
+        .single();
+      if (data?.raw_responses?.aiDiagnoses) {
+        setAssessment((prev) =>
+          prev
+            ? { ...prev, raw_responses: { ...prev.raw_responses, ...data.raw_responses } }
+            : prev
+        );
+        clearInterval(intervalId);
+      }
+    }, 3000);
+    return () => clearInterval(intervalId);
+  }, [assessment?.id, assessment?.raw_responses?.aiDiagnoses]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -291,13 +321,11 @@ export default function PortalDashboard() {
         bookHref={BOOK_HREF}
       />
 
-      {/* AI Diagnosis (only renders if Claude analysis exists in raw_responses) */}
-      {assessment.raw_responses?.aiDiagnoses && (
-        <AIDiagnosisCard
-          diagnoses={assessment.raw_responses.aiDiagnoses}
-          firstName={client?.first_name || ''}
-        />
-      )}
+      {/* AI Diagnosis — always slotted, shows skeleton while Claude runs in background */}
+      <AIDiagnosisCard
+        diagnoses={assessment.raw_responses?.aiDiagnoses}
+        firstName={client?.first_name || ''}
+      />
 
       {/* 5-Category Dependency Breakdown */}
       <section className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6">

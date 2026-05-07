@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
 import { createClient } from '@supabase/supabase-js'
 import { notifyTeam, notifyEmail, buildEmailHtml } from '@/lib/notifications'
@@ -205,38 +205,57 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4b. Generate Claude-powered personalized diagnosis blocks (3 weakest categories).
-    //     Synchronous so the portal renders with diagnosis already populated.
-    let aiDiagnoses: Diagnosis[] | null = null
-    try {
-      aiDiagnoses = await generateDiagnosis({
-        firstName,
-        totalScore,
-        zone,
-        categoryScores,
-        answers: answers as Record<string, number>,
-        company: body.company,
-        weakestCategories: sortedCats.map(([cat]) => cat),
-      })
-    } catch (diagErr) {
-      console.error('Diagnosis generation error (non-blocking):', diagErr)
-    }
-
-    // 4c. Persist audit + diagnosis into raw_responses (single round-trip)
-    if (websiteAudit || aiDiagnoses) {
-      const updatedRaw: Record<string, unknown> = { answers, categoryScores }
-      if (websiteAudit) {
-        updatedRaw.websiteUrl = body.website?.trim()
-        updatedRaw.websiteAudit = websiteAudit
-      }
-      if (aiDiagnoses) {
-        updatedRaw.aiDiagnoses = aiDiagnoses
-      }
+    // 4b. Persist website audit synchronously (fast). Diagnosis runs in background.
+    if (websiteAudit) {
       await supabase
         .from('assessments')
-        .update({ raw_responses: updatedRaw })
+        .update({
+          raw_responses: {
+            answers,
+            categoryScores,
+            websiteUrl: body.website?.trim(),
+            websiteAudit,
+          },
+        })
         .eq('id', assessmentData.id)
     }
+
+    // 4c. Schedule Claude diagnosis to run AFTER response sent. Portal polls for
+    //     it and renders when ready. Keeps submit fast (~2s vs ~10s synchronous).
+    after(async () => {
+      try {
+        const aiDiagnoses: Diagnosis[] | null = await generateDiagnosis({
+          firstName,
+          totalScore,
+          zone,
+          categoryScores,
+          answers: answers as Record<string, number>,
+          company: body.company,
+          weakestCategories: sortedCats.map(([cat]) => cat),
+        })
+
+        if (aiDiagnoses) {
+          // Re-fetch existing raw_responses so we don't clobber websiteAudit
+          const { data: current } = await supabase
+            .from('assessments')
+            .select('raw_responses')
+            .eq('id', assessmentData.id)
+            .single()
+
+          const merged = {
+            ...(current?.raw_responses || { answers, categoryScores }),
+            aiDiagnoses,
+          }
+
+          await supabase
+            .from('assessments')
+            .update({ raw_responses: merged })
+            .eq('id', assessmentData.id)
+        }
+      } catch (diagErr) {
+        console.error('Background diagnosis generation error:', diagErr)
+      }
+    })
 
     // 5. Insert into leads table
     const { error: leadError } = await supabase
