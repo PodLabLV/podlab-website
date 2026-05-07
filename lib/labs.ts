@@ -12,6 +12,8 @@ export interface Lab {
   presenter: string;
   teaser: string;
   unlockOutcome: string;
+  priceRange: string;
+  timeline: string;
   primaryFor: string[];
   href: string;
 }
@@ -25,6 +27,8 @@ export const LABS: Lab[] = [
     teaser:
       'Extract the positioning, messaging, and sales DNA trapped in your head. Define exactly who you serve, what you say, and how you say it — so every dollar you spend after this works harder.',
     unlockOutcome: 'Crystal-clear positioning that makes every marketing and sales decision easier.',
+    priceRange: '$1,000',
+    timeline: '1 week',
     primaryFor: ['Strategic Clarity', 'Founder Dependency', 'Marketing Systems'],
     href: '/labs/assets',
   },
@@ -36,6 +40,8 @@ export const LABS: Lab[] = [
     teaser:
       'A professional visual identity engineered to command premium pricing — logo, color, typography, brand guidelines. The kind of brand that makes prospects trust you before you say a word.',
     unlockOutcome: 'Your brand stops underselling you. Premium pricing becomes the obvious choice.',
+    priceRange: '$3,500',
+    timeline: '2–3 weeks',
     primaryFor: ['Brand & Perception'],
     href: '/labs/brand',
   },
@@ -47,6 +53,8 @@ export const LABS: Lab[] = [
     teaser:
       'A website built to convert the $1M–$8M buyer — clear positioning, social proof, video integration, conversion paths. Your digital sales floor that moves visitors from browsing to booking.',
     unlockOutcome: 'A website that closes for you, not one prospects bounce from.',
+    priceRange: '$3,500+',
+    timeline: '2–4 weeks',
     primaryFor: ['Brand & Perception', 'Sales Infrastructure'],
     href: '/labs/site',
   },
@@ -58,6 +66,8 @@ export const LABS: Lab[] = [
     teaser:
       '5 strategic videos that do your selling 24/7 — authority, origin story, offer breakdown, objection handling, social proof. Prospects show up to calls already pre-sold and ready to buy.',
     unlockOutcome: 'Shorter sales cycles. Higher close rates. Less time per deal.',
+    priceRange: '$10,000',
+    timeline: '3–4 weeks',
     primaryFor: ['Sales Infrastructure', 'Founder Dependency'],
     href: '/labs/video-sales',
   },
@@ -69,6 +79,8 @@ export const LABS: Lab[] = [
     teaser:
       'Ongoing conversion system — content production, LinkedIn campaigns, paid ads, retargeting, optimization. Your marketing engine running every month, not something you have to "get to."',
     unlockOutcome: 'Predictable lead flow from multiple channels. Marketing becomes a system that runs.',
+    priceRange: '$5,000+/mo',
+    timeline: 'Ongoing',
     primaryFor: ['Marketing Systems'],
     href: '/labs/expansion',
   },

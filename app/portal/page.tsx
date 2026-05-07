@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import WebsiteAudit from '@/components/WebsiteAudit';
 import LabTeaserCard from '@/components/LabTeaserCard';
+import CostOfInactionCard from '@/components/CostOfInactionCard';
 import { rankLabsForCategoryScores } from '@/lib/labs';
 
 interface AssessmentData {
@@ -283,6 +284,12 @@ export default function PortalDashboard() {
         </div>
       </section>
 
+      {/* Cost of Inaction */}
+      <CostOfInactionCard
+        categoryScores={assessment.category_scores}
+        bookHref={BOOK_HREF}
+      />
+
       {/* 5-Category Dependency Breakdown */}
       <section className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
         <div className="flex items-baseline justify-between mb-5">
@@ -438,13 +445,15 @@ export default function PortalDashboard() {
       {/* Final CTA */}
       <section className="bg-gradient-to-br from-[#2ADD1B]/10 via-[#1A1A1A] to-[#1A1A1A] border-2 border-[#2ADD1B]/30 rounded-2xl p-8 text-center">
         <p className="text-[10px] text-[#2ADD1B] font-bold tracking-[0.2em] uppercase mb-2">
-          Ready to unlock?
+          Your next step
         </p>
         <h2 className="text-2xl sm:text-3xl font-black text-white mb-3">
-          Book your Foundation Call.
+          30 minutes with Hiram.
         </h2>
         <p className="text-sm text-white/60 max-w-lg mx-auto mb-6">
-          30 minutes. We map your roadmap to specific labs, then you decide. No pressure, no pitch deck — just a plan.
+          Diagnostic, not a pitch. We map your roadmap to specific labs, walk through the math,
+          and tell you in the first 15 minutes whether it&apos;s a fit. You leave with your plan
+          either way.
         </p>
         <a
           href={BOOK_HREF}
@@ -452,8 +461,11 @@ export default function PortalDashboard() {
           rel="noopener noreferrer"
           className="inline-block px-10 py-5 bg-[#2ADD1B] text-black text-base font-black rounded-xl hover:bg-[#85FF78] transition-all uppercase tracking-wider"
         >
-          Book My Foundation Call →
+          Get my custom plan →
         </a>
+        <p className="text-[10px] text-white/40 mt-3 italic">
+          Founder-to-founder. No SDR, no slide deck.
+        </p>
         <div className="mt-6 pt-6 border-t border-white/5">
           <p className="text-xs text-white/40 italic">
             &ldquo;PodLab took us from $3.1M to $4.72M in 12 months — the assets do the selling now.&rdquo;

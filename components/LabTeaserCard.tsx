@@ -124,11 +124,17 @@ export default function LabTeaserCard({ lab, variant, reason, bookHref }: Props)
         </div>
 
         <div className="p-6 space-y-4">
-          <div>
-            <h3 className="text-xl font-black text-white">{lab.name}</h3>
-            <p className="text-xs text-[#2ADD1B] font-bold tracking-wider uppercase mt-1">
-              {lab.subtitle}
-            </p>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-xl font-black text-white">{lab.name}</h3>
+              <p className="text-xs text-[#2ADD1B] font-bold tracking-wider uppercase mt-1">
+                {lab.subtitle}
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <p className="text-base font-black text-white">{lab.priceRange}</p>
+              <p className="text-[10px] text-white/40 uppercase tracking-wider">{lab.timeline}</p>
+            </div>
           </div>
 
           {reason && (
@@ -150,8 +156,11 @@ export default function LabTeaserCard({ lab, variant, reason, bookHref }: Props)
             rel="noopener noreferrer"
             className="block w-full px-6 py-4 bg-[#2ADD1B] text-black text-center text-sm font-black rounded-xl hover:bg-[#85FF78] transition-all uppercase tracking-wider"
           >
-            Unlock with Foundation Call →
+            Get my custom plan — 30 min →
           </a>
+          <p className="text-[10px] text-white/40 text-center italic">
+            Diagnostic, not a pitch. We&apos;ll tell you in 15 min if it&apos;s a fit.
+          </p>
         </div>
       </div>
     );
@@ -193,11 +202,17 @@ export default function LabTeaserCard({ lab, variant, reason, bookHref }: Props)
       </div>
 
       <div className="p-4 space-y-2">
-        <div>
-          <h3 className="text-base font-bold text-white">{lab.name}</h3>
-          <p className="text-[10px] text-white/50 font-bold tracking-wider uppercase mt-0.5">
-            {lab.subtitle}
-          </p>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="text-base font-bold text-white truncate">{lab.name}</h3>
+            <p className="text-[10px] text-white/50 font-bold tracking-wider uppercase mt-0.5">
+              {lab.subtitle}
+            </p>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <p className="text-sm font-black text-white">{lab.priceRange}</p>
+            <p className="text-[9px] text-white/40 uppercase tracking-wider">{lab.timeline}</p>
+          </div>
         </div>
         <p className="text-xs text-white/60 leading-relaxed line-clamp-3">{lab.teaser}</p>
         <a
@@ -206,7 +221,7 @@ export default function LabTeaserCard({ lab, variant, reason, bookHref }: Props)
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-xs font-bold text-[#2ADD1B] hover:text-[#85FF78] transition-colors mt-1"
         >
-          Unlock with Foundation Call →
+          Get my custom plan →
         </a>
       </div>
     </div>
