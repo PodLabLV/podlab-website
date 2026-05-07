@@ -8,6 +8,7 @@ import LabTeaserCard from '@/components/LabTeaserCard';
 import CostOfInactionCard from '@/components/CostOfInactionCard';
 import AIDiagnosisCard from '@/components/AIDiagnosisCard';
 import WebsiteAiPanel from '@/components/WebsiteAiPanel';
+import DeliverablePreviewCard from '@/components/DeliverablePreviewCard';
 import { rankLabsForCategoryScores } from '@/lib/labs';
 
 interface AssessmentData {
@@ -187,13 +188,14 @@ export default function PortalDashboard() {
   }, []);
 
   // Poll for AI artifacts if they haven't arrived yet (Claude runs in background after submit).
-  // Stops polling once everything we expect has arrived OR after 30s.
+  // Stops polling once everything we expect has arrived OR after 60s.
   useEffect(() => {
     if (!assessment?.id) return;
     const hasDiag = !!assessment.raw_responses?.aiDiagnoses;
     const expectsWebsiteAi = !!assessment.raw_responses?.websiteUrl;
     const hasWebsiteAi = !!assessment.raw_responses?.websiteAiAnalysis;
-    if (hasDiag && (!expectsWebsiteAi || hasWebsiteAi)) return;
+    const hasDeliverable = !!assessment.raw_responses?.deliverablePreview;
+    if (hasDiag && (!expectsWebsiteAi || (hasWebsiteAi && hasDeliverable))) return;
 
     const supabase = getSupabaseBrowser();
     const startedAt = Date.now();
@@ -211,7 +213,11 @@ export default function PortalDashboard() {
 
       const nowHasDiag = !!data.raw_responses.aiDiagnoses;
       const nowHasWebsiteAi = !!data.raw_responses.websiteAiAnalysis;
-      const updated = nowHasDiag !== hasDiag || nowHasWebsiteAi !== hasWebsiteAi;
+      const nowHasDeliverable = !!data.raw_responses.deliverablePreview;
+      const updated =
+        nowHasDiag !== hasDiag ||
+        nowHasWebsiteAi !== hasWebsiteAi ||
+        nowHasDeliverable !== hasDeliverable;
 
       if (updated) {
         setAssessment((prev) =>
@@ -221,7 +227,7 @@ export default function PortalDashboard() {
         );
       }
 
-      if (nowHasDiag && (!expectsWebsiteAi || nowHasWebsiteAi)) {
+      if (nowHasDiag && (!expectsWebsiteAi || (nowHasWebsiteAi && nowHasDeliverable))) {
         clearInterval(intervalId);
       }
     }, 3000);
@@ -230,6 +236,7 @@ export default function PortalDashboard() {
     assessment?.id,
     assessment?.raw_responses?.aiDiagnoses,
     assessment?.raw_responses?.websiteAiAnalysis,
+    assessment?.raw_responses?.deliverablePreview,
     assessment?.raw_responses?.websiteUrl,
   ]);
 
@@ -466,6 +473,15 @@ export default function PortalDashboard() {
         <WebsiteAiPanel
           analysis={assessment.raw_responses?.websiteAiAnalysis}
           url={assessment.raw_responses.websiteUrl as string}
+        />
+      )}
+
+      {/* AssetsLab Deliverable Preview — only when we have website context to draft from */}
+      {assessment.raw_responses?.websiteUrl && (
+        <DeliverablePreviewCard
+          preview={assessment.raw_responses?.deliverablePreview}
+          firstName={client?.first_name || ''}
+          bookHref={BOOK_HREF}
         />
       )}
 

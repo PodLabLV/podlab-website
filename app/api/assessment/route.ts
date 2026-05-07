@@ -8,6 +8,7 @@ import { generateRoadmap } from '@/lib/roadmap-generator'
 import { auditWebsite } from '@/lib/website-auditor'
 import { generateDiagnosis, type Diagnosis } from '@/lib/diagnosis-generator'
 import { analyzeWebsiteWithAI, type WebsiteAiAnalysis } from '@/lib/website-ai-analyzer'
+import { generateDeliverablePreview, type DeliverablePreview } from '@/lib/deliverable-preview-generator'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -226,7 +227,7 @@ export async function POST(request: NextRequest) {
     after(async () => {
       const weakest = sortedCats.map(([cat]) => cat)
 
-      const [aiDiagnoses, websiteAi] = await Promise.allSettled([
+      const [aiDiagnoses, websiteAi, deliverable] = await Promise.allSettled([
         generateDiagnosis({
           firstName,
           totalScore,
@@ -247,12 +248,24 @@ export async function POST(request: NextRequest) {
               weakestCategories: weakest,
             })
           : Promise.resolve(null),
+        websiteAudit?.pageContent
+          ? generateDeliverablePreview({
+              firstName,
+              company: body.company,
+              pageContent: websiteAudit.pageContent,
+              categoryScores,
+              zone,
+              weakestCategories: weakest,
+            })
+          : Promise.resolve(null),
       ])
 
       const diagnosesValue: Diagnosis[] | null =
         aiDiagnoses.status === 'fulfilled' ? aiDiagnoses.value : null
       const websiteAiValue: WebsiteAiAnalysis | null =
         websiteAi.status === 'fulfilled' ? websiteAi.value : null
+      const deliverableValue: DeliverablePreview | null =
+        deliverable.status === 'fulfilled' ? deliverable.value : null
 
       if (aiDiagnoses.status === 'rejected') {
         console.error('Background diagnosis generation error:', aiDiagnoses.reason)
@@ -260,8 +273,11 @@ export async function POST(request: NextRequest) {
       if (websiteAi.status === 'rejected') {
         console.error('Background website-AI analysis error:', websiteAi.reason)
       }
+      if (deliverable.status === 'rejected') {
+        console.error('Background deliverable preview error:', deliverable.reason)
+      }
 
-      if (diagnosesValue || websiteAiValue) {
+      if (diagnosesValue || websiteAiValue || deliverableValue) {
         const { data: current } = await supabase
           .from('assessments')
           .select('raw_responses')
@@ -273,6 +289,7 @@ export async function POST(request: NextRequest) {
         }
         if (diagnosesValue) merged.aiDiagnoses = diagnosesValue
         if (websiteAiValue) merged.websiteAiAnalysis = websiteAiValue
+        if (deliverableValue) merged.deliverablePreview = deliverableValue
 
         await supabase
           .from('assessments')
