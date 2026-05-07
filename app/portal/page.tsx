@@ -7,6 +7,7 @@ import WebsiteAudit from '@/components/WebsiteAudit';
 import LabTeaserCard from '@/components/LabTeaserCard';
 import CostOfInactionCard from '@/components/CostOfInactionCard';
 import AIDiagnosisCard from '@/components/AIDiagnosisCard';
+import WebsiteAiPanel from '@/components/WebsiteAiPanel';
 import { rankLabsForCategoryScores } from '@/lib/labs';
 
 interface AssessmentData {
@@ -185,11 +186,14 @@ export default function PortalDashboard() {
     loadData();
   }, []);
 
-  // Poll for AI diagnosis if it hasn't arrived yet (Claude runs in background after submit).
-  // Stops polling once aiDiagnoses populates or after 30s — whichever comes first.
+  // Poll for AI artifacts if they haven't arrived yet (Claude runs in background after submit).
+  // Stops polling once everything we expect has arrived OR after 30s.
   useEffect(() => {
     if (!assessment?.id) return;
-    if (assessment.raw_responses?.aiDiagnoses) return;
+    const hasDiag = !!assessment.raw_responses?.aiDiagnoses;
+    const expectsWebsiteAi = !!assessment.raw_responses?.websiteUrl;
+    const hasWebsiteAi = !!assessment.raw_responses?.websiteAiAnalysis;
+    if (hasDiag && (!expectsWebsiteAi || hasWebsiteAi)) return;
 
     const supabase = getSupabaseBrowser();
     const startedAt = Date.now();
@@ -203,17 +207,31 @@ export default function PortalDashboard() {
         .select('raw_responses')
         .eq('id', assessment.id)
         .single();
-      if (data?.raw_responses?.aiDiagnoses) {
+      if (!data?.raw_responses) return;
+
+      const nowHasDiag = !!data.raw_responses.aiDiagnoses;
+      const nowHasWebsiteAi = !!data.raw_responses.websiteAiAnalysis;
+      const updated = nowHasDiag !== hasDiag || nowHasWebsiteAi !== hasWebsiteAi;
+
+      if (updated) {
         setAssessment((prev) =>
           prev
             ? { ...prev, raw_responses: { ...prev.raw_responses, ...data.raw_responses } }
             : prev
         );
+      }
+
+      if (nowHasDiag && (!expectsWebsiteAi || nowHasWebsiteAi)) {
         clearInterval(intervalId);
       }
     }, 3000);
     return () => clearInterval(intervalId);
-  }, [assessment?.id, assessment?.raw_responses?.aiDiagnoses]);
+  }, [
+    assessment?.id,
+    assessment?.raw_responses?.aiDiagnoses,
+    assessment?.raw_responses?.websiteAiAnalysis,
+    assessment?.raw_responses?.websiteUrl,
+  ]);
 
   if (loading) {
     return (
@@ -443,7 +461,15 @@ export default function PortalDashboard() {
         </section>
       )}
 
-      {/* Website Audit */}
+      {/* Website AI Panel — shows skeleton if URL was provided but Claude analysis not yet ready */}
+      {assessment.raw_responses?.websiteUrl && (
+        <WebsiteAiPanel
+          analysis={assessment.raw_responses?.websiteAiAnalysis}
+          url={assessment.raw_responses.websiteUrl as string}
+        />
+      )}
+
+      {/* Rules-based Website Audit */}
       {assessment.raw_responses?.websiteAudit && (
         <WebsiteAudit audit={assessment.raw_responses.websiteAudit} />
       )}

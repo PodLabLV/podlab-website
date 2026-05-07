@@ -17,6 +17,13 @@ interface AuditResult {
   }
   recommendations: Recommendation[]
   rawChecks: Record<string, boolean | string | number | null>
+  pageContent?: {
+    title: string | null
+    metaDescription: string | null
+    h1: string | null
+    ctaText: string | null
+    body: string
+  }
   auditedAt: string
   error?: string
 }
@@ -142,6 +149,15 @@ export async function auditWebsite(rawUrl: string): Promise<AuditResult> {
     const grade = getGrade(overallScore)
     const recommendations = generateRecommendations(checks, categories)
 
+    // Extract cleaned body text (truncated) so downstream LLM analysis has signal
+    const bodyText = html
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 4000)
+
     return {
       url: finalUrl,
       overallScore,
@@ -149,6 +165,13 @@ export async function auditWebsite(rawUrl: string): Promise<AuditResult> {
       categories,
       recommendations,
       rawChecks: checks,
+      pageContent: {
+        title: (checks.metaTitle as string | null) ?? null,
+        metaDescription: (checks.metaDescription as string | null) ?? null,
+        h1: (checks.h1Text as string | null) ?? null,
+        ctaText: (checks.ctaText as string | null) ?? null,
+        body: bodyText,
+      },
       auditedAt,
     }
   } catch (err: unknown) {

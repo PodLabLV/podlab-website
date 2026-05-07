@@ -7,6 +7,7 @@ import { sanitize } from '@/lib/sanitize'
 import { generateRoadmap } from '@/lib/roadmap-generator'
 import { auditWebsite } from '@/lib/website-auditor'
 import { generateDiagnosis, type Diagnosis } from '@/lib/diagnosis-generator'
+import { analyzeWebsiteWithAI, type WebsiteAiAnalysis } from '@/lib/website-ai-analyzer'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -220,40 +221,63 @@ export async function POST(request: NextRequest) {
         .eq('id', assessmentData.id)
     }
 
-    // 4c. Schedule Claude diagnosis to run AFTER response sent. Portal polls for
-    //     it and renders when ready. Keeps submit fast (~2s vs ~10s synchronous).
+    // 4c. Run AI workloads in background AFTER response sent. Portal polls for
+    //     them and renders when ready. Keeps submit fast (~2s vs ~10s synchronous).
     after(async () => {
-      try {
-        const aiDiagnoses: Diagnosis[] | null = await generateDiagnosis({
+      const weakest = sortedCats.map(([cat]) => cat)
+
+      const [aiDiagnoses, websiteAi] = await Promise.allSettled([
+        generateDiagnosis({
           firstName,
           totalScore,
           zone,
           categoryScores,
           answers: answers as Record<string, number>,
           company: body.company,
-          weakestCategories: sortedCats.map(([cat]) => cat),
-        })
+          weakestCategories: weakest,
+        }),
+        websiteAudit?.pageContent && body.website
+          ? analyzeWebsiteWithAI({
+              url: body.website.trim(),
+              pageContent: websiteAudit.pageContent,
+              rulesGrade: websiteAudit.grade,
+              rulesScore: websiteAudit.overallScore,
+              firstName,
+              zone,
+              weakestCategories: weakest,
+            })
+          : Promise.resolve(null),
+      ])
 
-        if (aiDiagnoses) {
-          // Re-fetch existing raw_responses so we don't clobber websiteAudit
-          const { data: current } = await supabase
-            .from('assessments')
-            .select('raw_responses')
-            .eq('id', assessmentData.id)
-            .single()
+      const diagnosesValue: Diagnosis[] | null =
+        aiDiagnoses.status === 'fulfilled' ? aiDiagnoses.value : null
+      const websiteAiValue: WebsiteAiAnalysis | null =
+        websiteAi.status === 'fulfilled' ? websiteAi.value : null
 
-          const merged = {
-            ...(current?.raw_responses || { answers, categoryScores }),
-            aiDiagnoses,
-          }
+      if (aiDiagnoses.status === 'rejected') {
+        console.error('Background diagnosis generation error:', aiDiagnoses.reason)
+      }
+      if (websiteAi.status === 'rejected') {
+        console.error('Background website-AI analysis error:', websiteAi.reason)
+      }
 
-          await supabase
-            .from('assessments')
-            .update({ raw_responses: merged })
-            .eq('id', assessmentData.id)
+      if (diagnosesValue || websiteAiValue) {
+        const { data: current } = await supabase
+          .from('assessments')
+          .select('raw_responses')
+          .eq('id', assessmentData.id)
+          .single()
+
+        const merged: Record<string, unknown> = {
+          ...(current?.raw_responses || { answers, categoryScores }),
         }
-      } catch (diagErr) {
-        console.error('Background diagnosis generation error:', diagErr)
+        if (diagnosesValue) merged.aiDiagnoses = diagnosesValue
+        if (websiteAiValue) merged.websiteAiAnalysis = websiteAiValue
+
+        await supabase
+          .from('assessments')
+          .update({ raw_responses: merged })
+          .eq('id', assessmentData.id)
       }
     })
 
