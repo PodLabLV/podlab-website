@@ -9,9 +9,16 @@ import { auditWebsite } from '@/lib/website-auditor'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 function getSupabase() {
   return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
+
+function getSupabaseAnon() {
+  return createClient(supabaseUrl, supabaseAnonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 }
@@ -233,73 +240,107 @@ export async function POST(request: NextRequest) {
       console.warn('Lead insert failed but assessment was saved successfully')
     }
 
-    // 6. Create Supabase Auth user (non-blocking)
+    // 6. Create or fetch Supabase Auth user, then mint a session so EVERY lead
+    //    walks straight into /portal regardless of whether they set a password.
+    //    No password = magic-link-style passwordless session via OTP-verify-on-server.
     let authUserId: string | null = null
     let authExisting = false
-    if (body.password && body.password.length >= 8) {
-      try {
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email: email.toLowerCase().trim(),
-          password: body.password,
-          email_confirm: true,
-          user_metadata: {
-            first_name: firstName,
-            last_name: lastName,
-            phone: body.phone || null,
-            company: body.company || null,
-          },
-        })
+    let sessionTokens: { access_token: string; refresh_token: string } | null = null
 
-        if (authError) {
-          if (
-            authError.message?.includes('already been registered') ||
-            authError.message?.includes('already exists')
-          ) {
-            console.log('Auth user already exists for:', email)
-            authExisting = true
-            const { data: listData } = await supabase.auth.admin.listUsers()
-            const existingUser = listData?.users?.find(
-              (u) => u.email?.toLowerCase() === email.toLowerCase().trim()
-            )
-            authUserId = existingUser?.id || null
+    try {
+      const userMetadata = {
+        first_name: firstName,
+        last_name: lastName,
+        phone: body.phone || null,
+        company: body.company || null,
+      }
 
-            // Update existing user's password so the assessment-flow auto sign-in works.
-            // This is the same email/password the user just entered on a form they own,
-            // so this is a legitimate password set, not an account takeover.
-            if (authUserId) {
-              const { error: updateErr } = await supabase.auth.admin.updateUserById(authUserId, {
-                password: body.password,
-                user_metadata: {
-                  first_name: firstName,
-                  last_name: lastName,
-                  phone: body.phone || null,
-                  company: body.company || null,
-                },
-              })
-              if (updateErr) {
-                console.error('Failed to update existing user password:', updateErr.message)
-              }
+      const createPayload: Parameters<typeof supabase.auth.admin.createUser>[0] = {
+        email: email.toLowerCase().trim(),
+        email_confirm: true,
+        user_metadata: userMetadata,
+      }
+      if (body.password && body.password.length >= 8) {
+        createPayload.password = body.password
+      }
+
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser(createPayload)
+
+      if (authError) {
+        if (
+          authError.message?.includes('already been registered') ||
+          authError.message?.includes('already exists')
+        ) {
+          authExisting = true
+          const { data: listData } = await supabase.auth.admin.listUsers()
+          const existingUser = listData?.users?.find(
+            (u) => u.email?.toLowerCase() === email.toLowerCase().trim()
+          )
+          authUserId = existingUser?.id || null
+
+          if (authUserId) {
+            const updatePayload: Parameters<typeof supabase.auth.admin.updateUserById>[1] = {
+              user_metadata: userMetadata,
             }
-          } else {
-            console.error('Auth user creation failed:', authError.message)
+            if (body.password && body.password.length >= 8) {
+              updatePayload.password = body.password
+            }
+            const { error: updateErr } = await supabase.auth.admin.updateUserById(authUserId, updatePayload)
+            if (updateErr) {
+              console.error('Failed to update existing user:', updateErr.message)
+            }
           }
         } else {
-          authUserId = authData.user.id
+          console.error('Auth user creation failed:', authError.message)
         }
-
-        // Link auth user ID to client record
-        if (authUserId) {
-          await supabase
-            .from('clients')
-            .update({ auth_user_id: authUserId })
-            .eq('id', clientId)
-            .then(({ error }) => {
-              if (error) console.warn('Failed to link auth_user_id to client:', error.message)
-            })
-        }
-      } catch (authErr) {
-        console.error('Auth user creation error (non-blocking):', authErr)
+      } else {
+        authUserId = authData.user.id
       }
+
+      if (authUserId) {
+        // Link auth user ID to client record (non-blocking — column may not exist)
+        await supabase
+          .from('clients')
+          .update({ auth_user_id: authUserId })
+          .eq('id', clientId)
+          .then(({ error }) => {
+            if (error) console.warn('Failed to link auth_user_id to client:', error.message)
+          })
+
+        // Mint a session via magic-link OTP. Generate, then verify server-side with
+        // the anon key. The client gets the resulting access/refresh tokens and calls
+        // setSession() to install them — no email round-trip required.
+        try {
+          const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+            type: 'magiclink',
+            email: email.toLowerCase().trim(),
+          })
+
+          if (linkError) {
+            console.error('Magic link generation failed:', linkError.message)
+          } else if (linkData?.properties?.email_otp) {
+            const anonClient = getSupabaseAnon()
+            const { data: verifyData, error: verifyError } = await anonClient.auth.verifyOtp({
+              email: email.toLowerCase().trim(),
+              token: linkData.properties.email_otp,
+              type: 'magiclink',
+            })
+
+            if (verifyError) {
+              console.error('OTP verify failed:', verifyError.message)
+            } else if (verifyData?.session) {
+              sessionTokens = {
+                access_token: verifyData.session.access_token,
+                refresh_token: verifyData.session.refresh_token,
+              }
+            }
+          }
+        } catch (linkErr) {
+          console.error('Session generation error (non-blocking):', linkErr)
+        }
+      }
+    } catch (authErr) {
+      console.error('Auth user creation error (non-blocking):', authErr)
     }
 
     // 7. Send team notification (non-blocking)
@@ -400,6 +441,7 @@ export async function POST(request: NextRequest) {
       assessmentId: assessmentData.id,
       authUserId,
       authExisting,
+      session: sessionTokens,
     })
   } catch (error) {
     console.error('Assessment API error:', error)
