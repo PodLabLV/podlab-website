@@ -6,6 +6,7 @@ import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import WebsiteAudit from '@/components/WebsiteAudit';
 import LabTeaserCard from '@/components/LabTeaserCard';
 import CostOfInactionCard from '@/components/CostOfInactionCard';
+import AIDiagnosisCard from '@/components/AIDiagnosisCard';
 import { rankLabsForCategoryScores } from '@/lib/labs';
 
 interface AssessmentData {
@@ -289,6 +290,14 @@ export default function PortalDashboard() {
         categoryScores={assessment.category_scores}
         bookHref={BOOK_HREF}
       />
+
+      {/* AI Diagnosis (only renders if Claude analysis exists in raw_responses) */}
+      {assessment.raw_responses?.aiDiagnoses && (
+        <AIDiagnosisCard
+          diagnoses={assessment.raw_responses.aiDiagnoses}
+          firstName={client?.first_name || ''}
+        />
+      )}
 
       {/* 5-Category Dependency Breakdown */}
       <section className="bg-[#1A1A1A]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
