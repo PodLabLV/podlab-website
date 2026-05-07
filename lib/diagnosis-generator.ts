@@ -129,7 +129,7 @@ Write a diagnosis for each of the ${targets.length} categories above. Return JSO
 
   try {
     const { output } = await generateText({
-      model: 'anthropic/claude-sonnet-4.6',
+      model: 'anthropic/claude-haiku-4.5',
       output: Output.object({ schema: DiagnosisSchema }),
       system: systemPrompt,
       prompt: userPrompt,
