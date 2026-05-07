@@ -351,6 +351,30 @@ export async function POST(request: NextRequest) {
       resultsEmailHtml
     ).catch((err) => console.error('Customer results email error:', err))
 
+    // 9. Add lead to Instantly nurture campaign via Maton gateway (non-blocking)
+    const matonApiKey = process.env.MATON_API_KEY
+    const instantlyCampaignId = process.env.INSTANTLY_NURTURE_CAMPAIGN_ID
+    if (matonApiKey && instantlyCampaignId) {
+      fetch('https://gateway.maton.ai/instantly/api/v2/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${matonApiKey}`,
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          first_name: firstName,
+          last_name: lastName,
+          company_name: body.company || '',
+          campaign_id: instantlyCampaignId,
+          custom_variables: {
+            zone: zone,
+            top_bottleneck: sortedCats[0]?.[0] || '',
+          },
+        }),
+      }).catch((err) => console.error('Instantly lead add error:', err))
+    }
+
     return NextResponse.json({
       success: true,
       clientId,

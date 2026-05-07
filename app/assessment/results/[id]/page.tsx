@@ -84,6 +84,23 @@ export default async function AssessmentResultsPage({ params }: PageProps) {
     );
   }
 
+  const createdAt = new Date(assessment.created_at);
+  const daysSinceCreation = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+  if (daysSinceCreation > 30) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <div className="text-5xl mb-4">⏰</div>
+          <h1 className="text-2xl font-bold text-white mb-2">Results Expired</h1>
+          <p className="text-white/50 text-sm mb-6">This assessment was completed over 30 days ago. Take a fresh assessment to get your current bottleneck score.</p>
+          <Link href="/assessment" className="inline-block px-8 py-4 bg-[#2ADD1B] text-black font-bold rounded-xl hover:bg-[#25c418] transition-all uppercase tracking-wider">
+            Retake Assessment →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   // Build category_scores: try individual columns first, then raw_responses fallback
   let categoryScores: Record<string, number> = {};
   const hasIndividualScores = assessment.founder_dependency_score != null;
