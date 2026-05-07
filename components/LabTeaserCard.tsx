@@ -158,9 +158,19 @@ export default function LabTeaserCard({ lab, variant, reason, bookHref }: Props)
           >
             Get my custom plan — 30 min →
           </a>
-          <p className="text-[10px] text-white/40 text-center italic">
-            Diagnostic, not a pitch. We&apos;ll tell you in 15 min if it&apos;s a fit.
-          </p>
+          <div className="flex items-center justify-between gap-3 pt-1">
+            <p className="text-[10px] text-white/40 italic">
+              Diagnostic, not a pitch. We&apos;ll tell you in 15 min.
+            </p>
+            <a
+              href={lab.youtubeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-white/40 hover:text-white/70 transition-colors uppercase tracking-wider whitespace-nowrap flex-shrink-0"
+            >
+              YouTube ↗
+            </a>
+          </div>
         </div>
       </div>
     );
@@ -310,14 +320,24 @@ function LockedLabCard({ lab, bookHref }: { lab: Lab; bookHref: string }) {
           </div>
         </div>
         <p className="text-xs text-white/60 leading-relaxed line-clamp-3">{lab.teaser}</p>
-        <a
-          href={bookHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-xs font-bold text-[#2ADD1B] hover:text-[#85FF78] transition-colors mt-1"
-        >
-          Get my custom plan →
-        </a>
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <a
+            href={bookHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-bold text-[#2ADD1B] hover:text-[#85FF78] transition-colors"
+          >
+            Get my custom plan →
+          </a>
+          <a
+            href={lab.youtubeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] text-white/40 hover:text-white/70 transition-colors uppercase tracking-wider whitespace-nowrap flex-shrink-0"
+          >
+            YouTube ↗
+          </a>
+        </div>
       </div>
     </div>
   );
