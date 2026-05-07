@@ -16,6 +16,7 @@ export interface Lab {
   timeline: string;
   primaryFor: string[];
   href: string;
+  youtubeUrl: string;
 }
 
 export const LABS: Lab[] = [
@@ -31,6 +32,7 @@ export const LABS: Lab[] = [
     timeline: '1 week',
     primaryFor: ['Strategic Clarity', 'Founder Dependency', 'Marketing Systems'],
     href: '/labs/assets',
+    youtubeUrl: 'https://youtu.be/DaaI23DU4_I',
   },
   {
     slug: 'brand-lab',
@@ -44,6 +46,7 @@ export const LABS: Lab[] = [
     timeline: '2–3 weeks',
     primaryFor: ['Brand & Perception'],
     href: '/labs/brand',
+    youtubeUrl: 'https://youtu.be/L71CAugSo5g',
   },
   {
     slug: 'site-lab',
@@ -57,6 +60,7 @@ export const LABS: Lab[] = [
     timeline: '2–4 weeks',
     primaryFor: ['Brand & Perception', 'Sales Infrastructure'],
     href: '/labs/site',
+    youtubeUrl: 'https://youtu.be/PUcAbdizyao',
   },
   {
     slug: 'video-sales-lab',
@@ -70,6 +74,7 @@ export const LABS: Lab[] = [
     timeline: '3–4 weeks',
     primaryFor: ['Sales Infrastructure', 'Founder Dependency'],
     href: '/labs/video-sales',
+    youtubeUrl: 'https://youtu.be/v-i3msWxH0s',
   },
   {
     slug: 'expansion-lab',
@@ -83,6 +88,7 @@ export const LABS: Lab[] = [
     timeline: 'Ongoing',
     primaryFor: ['Marketing Systems'],
     href: '/labs/expansion',
+    youtubeUrl: 'https://youtu.be/5_ixoMgvv48',
   },
 ];
 
