@@ -76,10 +76,65 @@ export async function notifySlack(message: SlackMessage): Promise<void> {
 
 // ─── Email (Resend) ──────────────────────────────────────────────────────────
 
-export async function notifyEmail(to: string, subject: string, html: string): Promise<void> {
+interface NotifyEmailOpts {
+  text?: string
+  replyTo?: string
+  fromName?: string
+  unsubscribeUrl?: string
+  tags?: { name: string; value: string }[]
+}
+
+/**
+ * Send a transactional email via Resend with deliverability hygiene baked in.
+ *
+ * Modern (2026+) inbox providers — Gmail, Outlook, Yahoo — junk or block
+ * messages without:
+ *   - List-Unsubscribe + List-Unsubscribe-Post headers (one-click unsub)
+ *   - Reply-To set to a real human inbox
+ *   - Plain-text alternative alongside HTML
+ *   - Sender Authentication (SPF/DKIM via verified domain — handled at DNS)
+ *
+ * notifyEmail handles all of these defensibly.
+ */
+export async function notifyEmail(
+  to: string,
+  subject: string,
+  html: string,
+  opts: NotifyEmailOpts = {}
+): Promise<void> {
   if (!RESEND_API_KEY || RESEND_API_KEY.startsWith('placeholder')) {
     console.warn('[notifications] RESEND_API_KEY not configured — skipping email notification')
     return
+  }
+
+  const fromName = opts.fromName || 'PodLab'
+  const replyTo = opts.replyTo || FROM_EMAIL
+  const unsubscribeUrl = opts.unsubscribeUrl
+
+  // Strip HTML to plaintext fallback when caller didn't provide one.
+  const text =
+    opts.text ||
+    html
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/\s+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+
+  const requestHeaders: Record<string, string> = {}
+  if (unsubscribeUrl) {
+    requestHeaders['List-Unsubscribe'] = `<${unsubscribeUrl}>, <mailto:${replyTo}?subject=unsubscribe>`
+    requestHeaders['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click'
+  } else {
+    requestHeaders['List-Unsubscribe'] = `<mailto:${replyTo}?subject=unsubscribe>`
   }
 
   try {
@@ -90,10 +145,14 @@ export async function notifyEmail(to: string, subject: string, html: string): Pr
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: `PodLab Notifications <${FROM_EMAIL}>`,
+        from: `${fromName} <${FROM_EMAIL}>`,
         to: [to],
+        reply_to: replyTo,
         subject,
         html,
+        text,
+        headers: requestHeaders,
+        ...(opts.tags ? { tags: opts.tags } : {}),
       }),
     })
 
@@ -131,7 +190,10 @@ export async function notifyTeam(opts: NotifyTeamOpts): Promise<void> {
   )
 
   promises.push(
-    notifyEmail(NOTIFICATION_EMAIL, opts.emailSubject, opts.emailHtml)
+    notifyEmail(NOTIFICATION_EMAIL, opts.emailSubject, opts.emailHtml, {
+      fromName: 'PodLab Notifications',
+      tags: [{ name: 'kind', value: 'team_notification' }],
+    })
   )
 
   // Fire both in parallel, don't block on either
