@@ -97,6 +97,61 @@ interface ChatMessage {
   content: string
 }
 
+interface PortalContext {
+  firstName?: string
+  company?: string
+  totalScore?: number
+  zone?: string
+  weakestCategories?: string[]
+  primaryBottleneck?: string
+  aiDiagnoses?: { category: string; headline: string; narrative: string }[]
+  websiteUrl?: string
+  websiteAi?: {
+    positioningClarity: number
+    premiumness: number
+    targetMarketFit: number
+    heroVerdict: string
+    premiumPriceCeiling: string
+  }
+  roadmapPhases?: { phase: number; lab: string; name: string; duration: string }[]
+}
+
+function buildPortalContextBlock(ctx: PortalContext): string {
+  if (!ctx) return ''
+  const lines: string[] = ['', '## Current visitor (in portal — they completed the Bottleneck Assessment)']
+  if (ctx.firstName) lines.push(`- Name: ${ctx.firstName}${ctx.company ? ` (${ctx.company})` : ''}`)
+  if (ctx.totalScore != null && ctx.zone) lines.push(`- Score: ${ctx.totalScore}/100 — ${ctx.zone} Zone`)
+  if (ctx.weakestCategories?.length) lines.push(`- Weakest categories (in order): ${ctx.weakestCategories.slice(0, 3).join(', ')}`)
+  if (ctx.primaryBottleneck) lines.push(`- Primary bottleneck: ${ctx.primaryBottleneck}`)
+  if (ctx.aiDiagnoses?.length) {
+    lines.push('- AI diagnosis blocks (these are on their portal — reference them, don\'t repeat them verbatim):')
+    ctx.aiDiagnoses.slice(0, 3).forEach((d) => {
+      lines.push(`  · ${d.category}: "${d.headline}" — ${d.narrative}`)
+    })
+  }
+  if (ctx.websiteUrl) {
+    lines.push(`- Their website: ${ctx.websiteUrl}`)
+    if (ctx.websiteAi) {
+      lines.push(`  · Positioning Clarity ${ctx.websiteAi.positioningClarity}/10, Premium Feel ${ctx.websiteAi.premiumness}/10, Buyer-Match ${ctx.websiteAi.targetMarketFit}/10`)
+      lines.push(`  · Hero verdict: ${ctx.websiteAi.heroVerdict}`)
+      lines.push(`  · Pricing ceiling: ${ctx.websiteAi.premiumPriceCeiling}`)
+    }
+  }
+  if (ctx.roadmapPhases?.length) {
+    lines.push(`- Their 90-day plan: ${ctx.roadmapPhases.map((p) => `${p.duration} = ${p.lab}`).join(' → ')}`)
+  }
+
+  lines.push('')
+  lines.push('## How to use their context')
+  lines.push('- When they ask "is X right for me?" — reference their actual score and bottleneck. Don\'t give a generic answer.')
+  lines.push('- When they ask about labs — connect to their weakest category specifically.')
+  lines.push('- When they ask "how much will this cost me?" — gently steer toward what their score tells you they need first, not a price list.')
+  lines.push('- When they show buying intent (asking timelines, scheduling questions, "ready to start") — surface the Calendly link confidently: https://calendly.com/podlablv/strategy-call. Frame it as a diagnostic, not a sales call.')
+  lines.push('- Use their first name occasionally if you have it. Make them feel known.')
+  lines.push('- They ALREADY took the assessment — never tell them to take it. They already see their score on the portal.')
+  return lines.join('\n')
+}
+
 export async function OPTIONS(request: NextRequest) {
   return handleCors(request) || NextResponse.json({}, { headers: corsHeaders(request) })
 }
@@ -108,9 +163,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { messages, visitorInfo } = await request.json() as {
+    const { messages, visitorInfo, portalContext } = await request.json() as {
       messages: ChatMessage[]
       visitorInfo?: { name?: string; email?: string; company?: string }
+      portalContext?: PortalContext
     }
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -180,10 +236,15 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model: MODEL,
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          {
+            role: 'system',
+            content: portalContext
+              ? SYSTEM_PROMPT + buildPortalContextBlock(portalContext)
+              : SYSTEM_PROMPT,
+          },
           ...messages.slice(-10), // Keep last 10 messages for context
         ],
-        max_tokens: 300,
+        max_tokens: 400,
         temperature: 0.7,
       }),
     })

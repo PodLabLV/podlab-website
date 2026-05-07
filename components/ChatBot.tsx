@@ -1,11 +1,40 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
+import { getSupabaseBrowser } from '@/lib/supabase-browser'
 
 interface Message {
   role: 'user' | 'assistant'
   content: string
 }
+
+interface PortalContext {
+  firstName?: string
+  company?: string
+  totalScore?: number
+  zone?: string
+  weakestCategories?: string[]
+  primaryBottleneck?: string
+  aiDiagnoses?: { category: string; headline: string; narrative: string }[]
+  websiteUrl?: string
+  websiteAi?: {
+    positioningClarity: number
+    premiumness: number
+    targetMarketFit: number
+    heroVerdict: string
+    premiumPriceCeiling: string
+  }
+  roadmapPhases?: { phase: number; lab: string; name: string; duration: string }[]
+}
+
+const CATEGORIES = [
+  'Founder Dependency',
+  'Brand & Perception',
+  'Marketing Systems',
+  'Sales Infrastructure',
+  'Strategic Clarity',
+] as const
 
 const QUICK_ACTIONS = [
   { label: '🎩 What Labs do you offer?', message: 'What services or Labs does PodLab offer?' },
@@ -13,6 +42,13 @@ const QUICK_ACTIONS = [
   { label: '📹 The studio', message: 'Tell me about your video studio' },
   { label: '📅 Book a call', message: 'I want to book a strategy call' },
   { label: '🔬 Take the assessment', message: 'I want to take the bottleneck assessment' },
+]
+
+const PORTAL_QUICK_ACTIONS = [
+  { label: '🎯 Where should I start?', message: 'Looking at my score, what should I start with first?' },
+  { label: '💸 Cost vs. ROI?', message: 'Help me understand the ROI math on my situation.' },
+  { label: '🤔 Foundation Call?', message: 'What happens on the Foundation Call? Is it really not a pitch?' },
+  { label: '📅 Book my call', message: 'I want to book my Foundation Call.' },
 ]
 
 function linkify(text: string): string {
@@ -34,6 +70,9 @@ function linkify(text: string): string {
 }
 
 export default function ChatBot() {
+  const pathname = usePathname()
+  const isOnPortal = pathname?.startsWith('/portal') ?? false
+
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -41,8 +80,96 @@ export default function ChatBot() {
   const [showQuickActions, setShowQuickActions] = useState(true)
   const [hasInteracted, setHasInteracted] = useState(false)
   const [dismissed, setDismissed] = useState(false)
+  const [portalContext, setPortalContext] = useState<PortalContext | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // When on /portal, fetch the visitor's assessment + roadmap once and cache it
+  // so every chat message can be answered with their specific context.
+  useEffect(() => {
+    if (!isOnPortal) {
+      setPortalContext(null)
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      try {
+        const supabase = getSupabaseBrowser()
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session || cancelled) return
+
+        const userEmail = session.user.email?.toLowerCase()
+        const meta = session.user.user_metadata || {}
+
+        const { data: clientData } = await supabase
+          .from('clients')
+          .select('id, first_name, company_name')
+          .eq('email', userEmail)
+          .single()
+        if (!clientData || cancelled) return
+
+        const { data: a } = await supabase
+          .from('assessments')
+          .select('*')
+          .eq('client_id', clientData.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+        if (!a || cancelled) return
+
+        const cs: Record<string, number> = {
+          'Founder Dependency': a.founder_dependency_score ?? a.raw_responses?.categoryScores?.['Founder Dependency'] ?? 0,
+          'Brand & Perception': a.brand_perception_score ?? a.raw_responses?.categoryScores?.['Brand & Perception'] ?? 0,
+          'Marketing Systems': a.marketing_systems_score ?? a.raw_responses?.categoryScores?.['Marketing Systems'] ?? 0,
+          'Sales Infrastructure': a.sales_infrastructure_score ?? a.raw_responses?.categoryScores?.['Sales Infrastructure'] ?? 0,
+          'Strategic Clarity': a.strategic_clarity_score ?? a.raw_responses?.categoryScores?.['Strategic Clarity'] ?? 0,
+        }
+        const weakest = [...CATEGORIES].sort((x, y) => (cs[x] ?? 0) - (cs[y] ?? 0))
+
+        const { data: roadmapData } = await supabase
+          .from('roadmaps')
+          .select('phases')
+          .eq('assessment_id', a.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (cancelled) return
+
+        const wa = a.raw_responses?.websiteAiAnalysis
+        setPortalContext({
+          firstName: clientData.first_name || meta.first_name,
+          company: clientData.company_name || meta.company,
+          totalScore: a.total_score,
+          zone: a.zone ? a.zone.charAt(0).toUpperCase() + a.zone.slice(1).toLowerCase() : undefined,
+          weakestCategories: weakest,
+          primaryBottleneck: a.primary_bottleneck,
+          aiDiagnoses: a.raw_responses?.aiDiagnoses,
+          websiteUrl: a.raw_responses?.websiteUrl,
+          websiteAi: wa
+            ? {
+                positioningClarity: wa.positioningClarity,
+                premiumness: wa.premiumness,
+                targetMarketFit: wa.targetMarketFit,
+                heroVerdict: wa.heroVerdict,
+                premiumPriceCeiling: wa.premiumPriceCeiling,
+              }
+            : undefined,
+          roadmapPhases: roadmapData?.phases?.map((p: { phase: number; lab: string; name: string; duration: string }) => ({
+            phase: p.phase,
+            lab: p.lab,
+            name: p.name,
+            duration: p.duration,
+          })),
+        })
+      } catch (err) {
+        console.error('Portal context fetch failed (Cleetus will respond without it):', err)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [isOnPortal])
 
   // Remember if user dismissed the chat — don't pop up again this session
   useEffect(() => {
@@ -110,7 +237,10 @@ export default function ChatBot() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({
+          messages: newMessages,
+          ...(portalContext ? { portalContext } : {}),
+        }),
       })
 
       const data = await res.json()
@@ -218,8 +348,22 @@ export default function ChatBot() {
                   </div>
                   <div className="bg-[#1A1A1A] border border-[#2E2E2E] rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%]">
                     <p className="text-gray-300 text-sm leading-relaxed">
-                      Good to see you. I&apos;m Cleetus — consider me your personal guide to everything PodLab. 🎩<br /><br />
-                      Tell me a bit about your business and I&apos;ll point you in the right direction. Or tap a button below if you&apos;d prefer the express route.
+                      {isOnPortal && portalContext?.firstName ? (
+                        <>
+                          {portalContext.firstName}, welcome. 🎩<br /><br />
+                          I&apos;ve seen your score and your roadmap. Ask me anything about what you&apos;re looking at — your weakest categories, the labs, the math, what the Foundation Call actually looks like. I&apos;ll give it to you straight.
+                        </>
+                      ) : isOnPortal ? (
+                        <>
+                          Welcome to your portal. 🎩<br /><br />
+                          Ask me anything about what you&apos;re seeing — your score, the labs, the math, or what the Foundation Call actually looks like.
+                        </>
+                      ) : (
+                        <>
+                          Good to see you. I&apos;m Cleetus — consider me your personal guide to everything PodLab. 🎩<br /><br />
+                          Tell me a bit about your business and I&apos;ll point you in the right direction. Or tap a button below if you&apos;d prefer the express route.
+                        </>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -227,7 +371,7 @@ export default function ChatBot() {
                 {/* Quick actions */}
                 {showQuickActions && (
                   <div className="flex flex-wrap gap-2 pl-2 sm:pl-10">
-                    {QUICK_ACTIONS.map((action) => (
+                    {(isOnPortal ? PORTAL_QUICK_ACTIONS : QUICK_ACTIONS).map((action) => (
                       <button
                         key={action.label}
                         onClick={() => sendMessage(action.message)}
