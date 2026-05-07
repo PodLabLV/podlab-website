@@ -6,6 +6,7 @@ import { buildResultsEmailHtml } from '@/lib/results-email'
 import { sanitize } from '@/lib/sanitize'
 import { generateRoadmap } from '@/lib/roadmap-generator'
 import { auditWebsite } from '@/lib/website-auditor'
+import { generateDiagnosis, type Diagnosis } from '@/lib/diagnosis-generator'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -194,28 +195,47 @@ export async function POST(request: NextRequest) {
       console.error('Roadmap generation error (non-blocking):', roadmapErr)
     }
 
-    // 4. Run website audit (if URL provided)
+    // 4a. Run website audit (if URL provided)
     let websiteAudit = null
     if (body.website && body.website.trim().length > 3) {
       try {
         websiteAudit = await auditWebsite(body.website.trim())
-
-        // Store audit results in assessment's raw_responses
-        await supabase
-          .from('assessments')
-          .update({
-            raw_responses: {
-              answers,
-              categoryScores,
-              websiteUrl: body.website.trim(),
-              websiteAudit,
-            },
-          })
-          .eq('id', assessmentData.id)
-
       } catch (auditErr) {
         console.error('Website audit error (non-blocking):', auditErr)
       }
+    }
+
+    // 4b. Generate Claude-powered personalized diagnosis blocks (3 weakest categories).
+    //     Synchronous so the portal renders with diagnosis already populated.
+    let aiDiagnoses: Diagnosis[] | null = null
+    try {
+      aiDiagnoses = await generateDiagnosis({
+        firstName,
+        totalScore,
+        zone,
+        categoryScores,
+        answers: answers as Record<string, number>,
+        company: body.company,
+        weakestCategories: sortedCats.map(([cat]) => cat),
+      })
+    } catch (diagErr) {
+      console.error('Diagnosis generation error (non-blocking):', diagErr)
+    }
+
+    // 4c. Persist audit + diagnosis into raw_responses (single round-trip)
+    if (websiteAudit || aiDiagnoses) {
+      const updatedRaw: Record<string, unknown> = { answers, categoryScores }
+      if (websiteAudit) {
+        updatedRaw.websiteUrl = body.website?.trim()
+        updatedRaw.websiteAudit = websiteAudit
+      }
+      if (aiDiagnoses) {
+        updatedRaw.aiDiagnoses = aiDiagnoses
+      }
+      await supabase
+        .from('assessments')
+        .update({ raw_responses: updatedRaw })
+        .eq('id', assessmentData.id)
     }
 
     // 5. Insert into leads table
