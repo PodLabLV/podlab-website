@@ -697,18 +697,24 @@ export default function AssessmentPage() {
         setAssessmentId(data.assessmentId);
       }
 
-      // If they created an account, sign them in and route to portal
+      // If they created an account, sign them in and route to portal.
+      // signInWithPassword returns { data, error } — it doesn't throw on auth failure,
+      // so we must check error explicitly. If it fails, fall through to inline results
+      // instead of pushing to /portal where they'd just bounce to /login.
       if (password && password.length >= 8) {
         try {
           const supabase = getSupabaseBrowser();
-          await supabase.auth.signInWithPassword({
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email: email.toLowerCase().trim(),
             password,
           });
-          router.push('/portal');
-          return;
+          if (!signInError && signInData?.session) {
+            router.push('/portal');
+            return;
+          }
+          console.warn('Auto sign-in did not establish a session:', signInError?.message);
         } catch (signInErr) {
-          console.error('Auto sign-in failed (showing results inline):', signInErr);
+          console.error('Auto sign-in threw:', signInErr);
         }
       }
 
