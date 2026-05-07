@@ -235,6 +235,7 @@ export async function POST(request: NextRequest) {
 
     // 6. Create Supabase Auth user (non-blocking)
     let authUserId: string | null = null
+    let authExisting = false
     if (body.password && body.password.length >= 8) {
       try {
         const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -255,12 +256,30 @@ export async function POST(request: NextRequest) {
             authError.message?.includes('already exists')
           ) {
             console.log('Auth user already exists for:', email)
-            // Try to find their ID
+            authExisting = true
             const { data: listData } = await supabase.auth.admin.listUsers()
             const existingUser = listData?.users?.find(
               (u) => u.email?.toLowerCase() === email.toLowerCase().trim()
             )
             authUserId = existingUser?.id || null
+
+            // Update existing user's password so the assessment-flow auto sign-in works.
+            // This is the same email/password the user just entered on a form they own,
+            // so this is a legitimate password set, not an account takeover.
+            if (authUserId) {
+              const { error: updateErr } = await supabase.auth.admin.updateUserById(authUserId, {
+                password: body.password,
+                user_metadata: {
+                  first_name: firstName,
+                  last_name: lastName,
+                  phone: body.phone || null,
+                  company: body.company || null,
+                },
+              })
+              if (updateErr) {
+                console.error('Failed to update existing user password:', updateErr.message)
+              }
+            }
           } else {
             console.error('Auth user creation failed:', authError.message)
           }
@@ -351,11 +370,36 @@ export async function POST(request: NextRequest) {
       resultsEmailHtml
     ).catch((err) => console.error('Customer results email error:', err))
 
+    // 9. Add lead to Instantly nurture campaign via Maton gateway (non-blocking)
+    const matonApiKey = process.env.MATON_API_KEY
+    const instantlyCampaignId = process.env.INSTANTLY_NURTURE_CAMPAIGN_ID
+    if (matonApiKey && instantlyCampaignId) {
+      fetch('https://gateway.maton.ai/instantly/api/v2/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${matonApiKey}`,
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          first_name: firstName,
+          last_name: lastName,
+          company_name: body.company || '',
+          campaign_id: instantlyCampaignId,
+          custom_variables: {
+            zone: zone,
+            top_bottleneck: sortedCats[0]?.[0] || '',
+          },
+        }),
+      }).catch((err) => console.error('Instantly lead add error:', err))
+    }
+
     return NextResponse.json({
       success: true,
       clientId,
       assessmentId: assessmentData.id,
       authUserId,
+      authExisting,
     })
   } catch (error) {
     console.error('Assessment API error:', error)

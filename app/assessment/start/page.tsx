@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Navigation from "@/components/Navigation";
+import { getSupabaseBrowser } from '@/lib/supabase-browser';
 
 // ============================================
 // FOUNDER BOTTLENECK ASSESSMENT v2
@@ -573,6 +575,7 @@ function getCatZoneBgClass(zone: CategoryZone): string {
 // ============================================
 
 export default function AssessmentPage() {
+  const router = useRouter();
   const [started, setStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>(new Array(questions.length).fill(0));
@@ -692,6 +695,27 @@ export default function AssessmentPage() {
 
       if (data.assessmentId) {
         setAssessmentId(data.assessmentId);
+      }
+
+      // If they created an account, sign them in and route to portal.
+      // signInWithPassword returns { data, error } — it doesn't throw on auth failure,
+      // so we must check error explicitly. If it fails, fall through to inline results
+      // instead of pushing to /portal where they'd just bounce to /login.
+      if (password && password.length >= 8) {
+        try {
+          const supabase = getSupabaseBrowser();
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: email.toLowerCase().trim(),
+            password,
+          });
+          if (!signInError && signInData?.session) {
+            router.push('/portal');
+            return;
+          }
+          console.warn('Auto sign-in did not establish a session:', signInError?.message);
+        } catch (signInErr) {
+          console.error('Auto sign-in threw:', signInErr);
+        }
       }
 
       setShowEmailCapture(false);
@@ -891,21 +915,20 @@ export default function AssessmentPage() {
                   )}
                 </div>
 
-                {/* Password — Create Account */}
+                {/* Password — Create Account (optional) */}
                 <div className="mt-6 pt-6 border-t border-border">
-                  <p className="text-sm font-semibold text-accent mb-1">Create your PodLab account to save your results</p>
-                  <p className="text-xs text-text-secondary mb-4">You&apos;ll be able to log in anytime to view your score, track progress, and access deliverables.</p>
+                  <p className="text-sm font-semibold text-accent mb-1">Save your results <span className="text-text-secondary font-normal">(optional)</span></p>
+                  <p className="text-xs text-text-secondary mb-4">Create a password to access your portal anytime — or skip to see your results now.</p>
 
                   <div className="space-y-4">
                     <div>
                       <label htmlFor="password" className="block text-sm font-medium text-text-secondary mb-2">
-                        Password <span className="text-red-400">*</span>
+                        Password <span className="text-text-secondary text-xs">(optional)</span>
                       </label>
                       <div className="relative">
                         <input
                           id="password"
                           type={showPassword ? 'text' : 'password'}
-                          required
                           minLength={8}
                           value={password}
                           onChange={(e) => { setPassword(e.target.value); setPasswordError(''); }}
@@ -929,12 +952,11 @@ export default function AssessmentPage() {
 
                     <div>
                       <label htmlFor="confirmPassword" className="block text-sm font-medium text-text-secondary mb-2">
-                        Confirm Password <span className="text-red-400">*</span>
+                        Confirm Password <span className="text-text-secondary text-xs">(optional)</span>
                       </label>
                       <input
                         id="confirmPassword"
                         type={showPassword ? 'text' : 'password'}
-                        required
                         minLength={8}
                         value={confirmPassword}
                         onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }}
@@ -963,7 +985,7 @@ export default function AssessmentPage() {
                   className="w-full group px-12 py-5 bg-accent text-black text-lg font-black rounded-xl hover:bg-accent-hover transition-all hover:-translate-y-1 hover:shadow-[0_15px_40px_rgba(42,221,27,0.5)] active:scale-[0.98] relative overflow-hidden uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
-                    {submitting ? 'Creating Account & Unlocking...' : 'Unlock My Results →'}
+                    {submitting ? 'Unlocking...' : 'Unlock My Results →'}
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
                   <div className="absolute inset-0 bg-gradient-to-r from-accent-hover to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -1169,7 +1191,7 @@ export default function AssessmentPage() {
 
                 {assessmentId && (
                   <a
-                    href="/portal"
+                    href="https://portal.podlablv.com"
                     className="px-12 py-6 border-2 border-accent text-accent text-lg font-bold rounded-xl hover:bg-accent/10 transition-all text-center"
                   >
                     View in Portal →
