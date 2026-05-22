@@ -50,6 +50,20 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      // EssentialsLab — proxied from the standalone Vite project at essentialslab.vercel.app.
+      // The destination project has its own rewrite that strips the /essentialslab prefix.
+      {
+        source: '/essentialslab',
+        destination: 'https://essentialslab.vercel.app/essentialslab',
+      },
+      {
+        source: '/essentialslab/:path*',
+        destination: 'https://essentialslab.vercel.app/essentialslab/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
