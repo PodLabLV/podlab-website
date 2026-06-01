@@ -16,6 +16,15 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "youre-at-the-starting-line",
+    title: "You're Not Behind — You're at the Starting Line",
+    excerpt: "You've been running hard for years. So why does it feel like you haven't left the parking lot? Because you've been running a job — not a business that scales without you.",
+    date: "June 1, 2026",
+    readTime: "5 min read",
+    image: "/blog/beakers.png",
+    category: "Strategy",
+  },
+  {
     slug: "you-dont-need-more-content",
     title: "You Don't Need More Content — You Need Better Assets",
     excerpt: "Most founders are on a content treadmill. Posting daily, showing up everywhere, burning time they don't have — and wondering why it's not moving the needle.",
