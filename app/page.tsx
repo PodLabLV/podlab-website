@@ -2,6 +2,7 @@ import Navigation from '@/components/Navigation';
 import HomePageWrapper from '@/components/HomePageWrapper';
 import PodsSection from '@/components/PodsSection';
 import LabsSection from '@/components/LabsSection';
+import EssentialsLabCta from '@/components/EssentialsLabCta';
 import Link from 'next/link';
 import ImageWithHover from '@/components/ImageWithHover';
 import FadeIn from '@/components/FadeIn';
@@ -339,6 +340,9 @@ export default function HomePage() {
 
       {/* 5 Labs Overview */}
       <LabsSection />
+
+      {/* Sub-$1M on-ramp → EssentialsLab */}
+      <EssentialsLabCta />
 
       {/* Video Testimonials */}
       <section className="py-24 px-6">
