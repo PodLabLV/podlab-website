@@ -16,12 +16,12 @@ export const metadata: Metadata = {
 
 const posts = [
   {
-    slug: "youre-at-the-starting-line",
-    title: "You're Not Behind — You're at the Starting Line",
-    excerpt: "You've been running hard for years. So why does it feel like you haven't left the parking lot? Because you've been running a job — not a business that scales without you.",
+    slug: "one-million-is-the-starting-line",
+    title: "$1M Is the Starting Line. EssentialsLab Is the On-Ramp.",
+    excerpt: "A million isn't the finish line — it's the starting line. Under $1M is the grind. EssentialsLab is the on-ramp: a lite version of the Business Growth System that cuts the fluff and builds a vehicle to get you there.",
     date: "June 1, 2026",
     readTime: "5 min read",
-    image: "/blog/beakers.png",
+    image: "/blog/essentialslab.jpg",
     category: "Strategy",
   },
   {
