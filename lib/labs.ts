@@ -66,7 +66,7 @@ export const LABS: Lab[] = [
     slug: 'video-sales-lab',
     name: 'VideoSalesLab',
     subtitle: 'Strategic 4K Video Sales System',
-    presenter: 'Dakota',
+    presenter: 'Hiram',
     teaser:
       '5 strategic videos that do your selling 24/7 — authority, origin story, offer breakdown, objection handling, social proof. Prospects show up to calls already pre-sold and ready to buy.',
     unlockOutcome: 'Shorter sales cycles. Higher close rates. Less time per deal.',

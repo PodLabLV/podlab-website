@@ -45,8 +45,8 @@ const projects: Project[] = [
     progress: 25,
     started: 'Mar 10, 2026',
     estimated: 'Apr 1, 2026',
-    assignee: 'Dakota Hanshew',
-    assigneeInitials: 'DH',
+    assignee: 'TipTop',
+    assigneeInitials: 'TT',
   },
   {
     name: 'Blog Content Series — Authority Pillars',

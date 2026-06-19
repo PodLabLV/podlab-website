@@ -301,12 +301,6 @@ const team = [
     bio: "Brand strategist. Makes sure everything looks and feels right.",
   },
   {
-    name: "Dakota Hanshew",
-    role: "Co-Founder",
-    image: "/about/Dakota.png",
-    bio: "Systems architect. Automation expert. Makes the backend invisible.",
-  },
-  {
     name: "Adonis",
     role: "Director of Business Development",
     image: "/about/Adonis.png",
