@@ -307,7 +307,7 @@ const team = [
     bio: "Combat Marine vet. Knows how to close with integrity.",
   },
   {
-    name: "Stephen",
+    name: "Stephen Scrivens",
     role: "Studio Director",
     image: "/about/Stephen.png",
     bio: "Runs the studio floor. Makes sure every shoot ships sharp and on time.",
