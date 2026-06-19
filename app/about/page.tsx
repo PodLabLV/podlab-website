@@ -225,9 +225,9 @@ export default function AboutPage() {
         <section className="py-24 px-6">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-16 text-center">The Team</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
+            <div className="flex flex-wrap justify-center gap-12">
               {team.map((member) => (
-                <div key={member.name} className="group text-center cursor-pointer">
+                <div key={member.name} className="group text-center cursor-pointer w-full sm:w-[300px]">
                   <div className="mb-6 mx-auto max-w-[500px] group-hover:-translate-y-2 transition-transform duration-350">
                     <ImageWithHover
                       src={member.image}
