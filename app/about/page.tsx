@@ -225,7 +225,7 @@ export default function AboutPage() {
         <section className="py-24 px-6">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-16 text-center">The Team</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
               {team.map((member) => (
                 <div key={member.name} className="group text-center cursor-pointer">
                   <div className="mb-6 mx-auto max-w-[500px] group-hover:-translate-y-2 transition-transform duration-350">
@@ -301,16 +301,16 @@ const team = [
     bio: "Brand strategist. Makes sure everything looks and feels right.",
   },
   {
-    name: "Dakota Hanshew",
-    role: "Co-Founder",
-    image: "/about/Dakota.png",
-    bio: "Systems architect. Automation expert. Makes the backend invisible.",
-  },
-  {
     name: "Adonis",
     role: "Director of Business Development",
     image: "/about/Adonis.png",
     bio: "Combat Marine vet. Knows how to close with integrity.",
+  },
+  {
+    name: "Stephen Scrivens",
+    role: "Studio Director",
+    image: "/about/Stephen.png",
+    bio: "Runs the studio floor. Makes sure every shoot ships sharp and on time.",
   },
 ];
 
