@@ -38,6 +38,11 @@ interface EssentialsLabPayload {
   brandWords?: string
   anythingElse?: string
   contactPref?: string
+  // Attribution (e.g. business-card QR)
+  utm_source?: string
+  utm_medium?: string
+  utm_content?: string
+  utm_campaign?: string
 }
 
 export async function OPTIONS(request: NextRequest) {
@@ -114,8 +119,15 @@ export async function POST(request: NextRequest) {
       source: 'website',
       source_detail: 'EssentialsLab Assessment',
       status: 'new',
-      tags: ['assessment', 'essentialslab', 'website'],
+      tags: ['assessment', 'essentialslab', 'website',
+        ...(typeof body.utm_source === 'string' && body.utm_source ? [`src:${sanitize(body.utm_source)}`] : []),
+        ...(typeof body.utm_content === 'string' && body.utm_content ? [`card:${sanitize(body.utm_content)}`] : []),
+      ],
       raw_responses: {
+        utm_source: sanitize(body.utm_source) || null,
+        utm_medium: sanitize(body.utm_medium) || null,
+        utm_content: sanitize(body.utm_content) || null,
+        utm_campaign: sanitize(body.utm_campaign) || null,
         revenueBand,
         yearsInBusiness: sanitize(body.yearsInBusiness) || null,
         website: website || null,
@@ -151,6 +163,7 @@ export async function POST(request: NextRequest) {
       ...(businessName ? { Business: businessName } : {}),
       ...(website ? { Website: website } : {}),
       Revenue: revenueBand,
+      ...(body.utm_content || body.utm_source ? { Source: `${sanitize(body.utm_source) || '—'} / ${sanitize(body.utm_content) || '—'}` } : {}),
       ...(body.yearsInBusiness ? { 'Years in Business': sanitize(body.yearsInBusiness) } : {}),
       ...(body.whatYouDo ? { 'What They Do': sanitize(body.whatYouDo) } : {}),
       ...(body.coreOffer ? { 'Core Offer': sanitize(body.coreOffer) } : {}),

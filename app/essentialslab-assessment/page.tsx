@@ -147,11 +147,25 @@ export default function EssentialsLabAssessmentPage() {
       contactPref: form.contactPref || undefined,
     };
 
+    // Capture attribution (e.g. which person's business-card QR this came from)
+    const utm =
+      typeof window !== 'undefined'
+        ? (() => {
+            const p = new URLSearchParams(window.location.search);
+            return {
+              utm_source: p.get('utm_source') || undefined,
+              utm_medium: p.get('utm_medium') || undefined,
+              utm_content: p.get('utm_content') || undefined,
+              utm_campaign: p.get('utm_campaign') || undefined,
+            };
+          })()
+        : {};
+
     try {
       const res = await fetch('/api/essentialslab-assessment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, ...utm }),
       });
 
       const data = await res.json().catch(() => ({}));
