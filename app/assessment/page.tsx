@@ -3,6 +3,7 @@ import Navigation from '@/components/Navigation';
 import ImageWithHover from '@/components/ImageWithHover';
 import type { Metadata } from 'next';
 import HomePageWrapper from '@/components/HomePageWrapper';
+import UtmCapture from '@/components/UtmCapture';
 
 export const metadata: Metadata = {
   title: 'Founder Bottleneck Assessment — Free 5-Minute Quiz',
@@ -17,6 +18,7 @@ export const metadata: Metadata = {
 export default function BottleneckAssessmentPage() {
   return (
     <HomePageWrapper>
+      <UtmCapture />
       <div className="min-h-screen">
         <Navigation />
         {/* Video Hero Section */}
