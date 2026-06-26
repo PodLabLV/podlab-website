@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navigation from "@/components/Navigation";
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import { captureUtm, getUtm } from '@/lib/utm';
 
 // ============================================
 // FOUNDER BOTTLENECK ASSESSMENT v2
@@ -576,6 +577,8 @@ function getCatZoneBgClass(zone: CategoryZone): string {
 
 export default function AssessmentPage() {
   const router = useRouter();
+  // Persist UTM attribution if someone deep-links here (landing page also captures).
+  useEffect(() => { captureUtm(); }, []);
   const [started, setStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>(new Array(questions.length).fill(0));
@@ -678,6 +681,7 @@ export default function AssessmentPage() {
       categoryScores,
       totalScore,
       zone,
+      ...getUtm(),
     };
 
     try {

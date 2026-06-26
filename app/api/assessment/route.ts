@@ -56,6 +56,10 @@ interface AssessmentPayload {
   categoryScores: Record<string, number>
   totalScore: number
   zone: 'Red' | 'Yellow' | 'Green'
+  utm_source?: string
+  utm_medium?: string
+  utm_content?: string
+  utm_campaign?: string
 }
 
 export async function OPTIONS(request: NextRequest) {
@@ -299,6 +303,8 @@ export async function POST(request: NextRequest) {
     })
 
     // 5. Insert into leads table
+    const utmSource = sanitize(body.utm_source) || ''
+    const utmContent = sanitize(body.utm_content) || ''
     const { error: leadError } = await supabase
       .from('leads')
       .insert({
@@ -312,7 +318,20 @@ export async function POST(request: NextRequest) {
         source_detail: 'Bottleneck Assessment',
         status: 'new',
         score: totalScore,
-        tags: ['assessment', 'bottleneck-assessment', 'website'],
+        tags: [
+          'assessment', 'bottleneck-assessment', 'website',
+          ...(utmSource ? [`src:${utmSource}`] : []),
+          ...(utmContent ? [`via:${utmContent}`] : []),
+        ],
+        raw_responses:
+          utmSource || utmContent || body.utm_medium || body.utm_campaign
+            ? {
+                utm_source: utmSource || null,
+                utm_medium: sanitize(body.utm_medium) || null,
+                utm_content: utmContent || null,
+                utm_campaign: sanitize(body.utm_campaign) || null,
+              }
+            : null,
       })
 
     if (leadError) {
@@ -438,6 +457,7 @@ export async function POST(request: NextRequest) {
       Score: `${totalScore}/100`,
       Zone: `${zone} Zone`,
       'Category Scores': categoryScoresStr,
+      ...(utmSource || utmContent ? { Source: `${utmSource || '—'} / ${utmContent || '—'}` } : {}),
       ...(websiteAudit ? { 'Website Grade': `${websiteAudit.grade} (${websiteAudit.overallScore}/100)` } : {}),
     }
 
