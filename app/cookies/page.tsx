@@ -64,7 +64,7 @@ export default function CookiePolicyPage() {
                 <p className="mb-3">These cookies help us understand how visitors use our website.</p>
                 <ul className="list-disc ml-6 space-y-2">
                   <li><strong className="text-white">Google Analytics 4 (G-F32FR2PPTT):</strong> Tracks page views, session duration, traffic sources, device type, and user behavior. Data is aggregated and anonymized. Retention: up to 26 months.</li>
-                  <li><strong className="text-white">Google Tag Manager (GTM-KN5FB9XH):</strong> Manages the loading of analytics and advertising tags. Does not collect data directly but facilitates other tracking tools.</li>
+                  <li><strong className="text-white">Google Tag Manager (GTM-PMJQL5VL):</strong> Manages the loading of analytics and advertising tags. Does not collect data directly but facilitates other tracking tools.</li>
                   <li><strong className="text-white">Microsoft Clarity:</strong> Records session replays and heatmaps to help us understand how users navigate the site. Personal data is masked. Retention: up to 30 days.</li>
                 </ul>
 

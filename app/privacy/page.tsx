@@ -96,7 +96,7 @@ export default function PrivacyPolicyPage() {
                 <h2 className="text-2xl font-bold text-white mb-4">6. Cookies & Tracking</h2>
                 <p className="mb-3">Our site uses the following tracking technologies:</p>
                 <ul className="list-disc ml-6 space-y-2">
-                  <li><strong className="text-white">Google Tag Manager (GTM-KN5FB9XH):</strong> Manages analytics and advertising tags</li>
+                  <li><strong className="text-white">Google Tag Manager (GTM-PMJQL5VL):</strong> Manages analytics and advertising tags</li>
                   <li><strong className="text-white">Google Analytics 4:</strong> Tracks site usage, conversions, and traffic sources</li>
                   <li><strong className="text-white">Microsoft Clarity:</strong> Session recordings and heatmaps to improve user experience</li>
                   <li><strong className="text-white">Meta Pixel:</strong> Tracks conversions from Facebook/Instagram advertising</li>

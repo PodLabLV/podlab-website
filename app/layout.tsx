@@ -8,10 +8,10 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const michroma = Michroma({ weight: '400', subsets: ['latin'], variable: '--font-michroma' });
 
 // Tracking IDs
-const GTM_ID = 'GTM-KN5FB9XH';
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-PMJQL5VL';
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-F32FR2PPTT';
 const CLARITY_ID = 'v9ghczr4pd';
-const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FB_PIXEL_ID || '1187387449256258';
+const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FB_PIXEL_ID || '966191451919908';
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY || 'phc_vURmoEnG6Y937r7SFwpU9yNaP8DXXuK4D6ZFJJc3s5SE';
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com';
 
