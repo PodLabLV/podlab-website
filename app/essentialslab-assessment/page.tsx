@@ -32,6 +32,9 @@ interface FormState {
   dreamClient: string;
   topPain: string;
   outcome: string;
+  differentiators: string;
+  topCompetitors: string;
+  clientFeedback: string;
   topGoal: string;
   marketingGap: string;
   biggestBottleneck: string;
@@ -55,6 +58,9 @@ const INITIAL_STATE: FormState = {
   dreamClient: '',
   topPain: '',
   outcome: '',
+  differentiators: '',
+  topCompetitors: '',
+  clientFeedback: '',
   topGoal: '',
   marketingGap: '',
   biggestBottleneck: '',
@@ -138,6 +144,9 @@ export default function EssentialsLabAssessmentPage() {
       dreamClient: form.dreamClient || undefined,
       topPain: form.topPain || undefined,
       outcome: form.outcome || undefined,
+      differentiators: form.differentiators || undefined,
+      topCompetitors: form.topCompetitors || undefined,
+      clientFeedback: form.clientFeedback || undefined,
       topGoal: form.topGoal || undefined,
       marketingGap: form.marketingGap || undefined,
       biggestBottleneck: form.biggestBottleneck || undefined,
@@ -479,6 +488,42 @@ export default function EssentialsLabAssessmentPage() {
                     onChange={(e) => update('outcome', e.target.value)}
                     className={textareaClass}
                     placeholder="What does success look like after working with you?"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="differentiators" className={labelClass}>
+                    What makes you different from your competitors?
+                  </label>
+                  <textarea
+                    id="differentiators"
+                    value={form.differentiators}
+                    onChange={(e) => update('differentiators', e.target.value)}
+                    className={textareaClass}
+                    placeholder="Why do clients pick you over the alternatives?"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="topCompetitors" className={labelClass}>
+                    Who are your top 2&ndash;3 competitors?
+                  </label>
+                  <textarea
+                    id="topCompetitors"
+                    value={form.topCompetitors}
+                    onChange={(e) => update('topCompetitors', e.target.value)}
+                    className={textareaClass}
+                    placeholder="Names or websites &mdash; whoever you bump into most."
+                  />
+                </div>
+                <div>
+                  <label htmlFor="clientFeedback" className={labelClass}>
+                    What do your best clients say about you?
+                  </label>
+                  <textarea
+                    id="clientFeedback"
+                    value={form.clientFeedback}
+                    onChange={(e) => update('clientFeedback', e.target.value)}
+                    className={textareaClass}
+                    placeholder="A quote, a compliment, the thing they always tell you."
                   />
                 </div>
               </div>

@@ -13,35 +13,43 @@ function getSupabase() {
   })
 }
 
-interface EssentialsLabPayload {
+interface AssetsLabIntakePayload {
   // Step 1 — You & your business
-  firstName: string
-  lastName: string
+  fullName: string
   email: string
-  businessName?: string
+  phone?: string
+  businessName: string
   website?: string
   yearsInBusiness?: string
-  revenueBand: string
-  phone?: string
-  // Step 2 — What you sell & to whom
-  whatYouDo?: string
-  coreOffer?: string
-  dreamClient?: string
-  topPain?: string
-  outcome?: string
+  annualRevenue?: string
+  // Step 2 — What you do
+  businessDescription?: string
+  servicesOffered?: string
+  coreOfferDescription?: string
   differentiators?: string
+  // Step 3 — Your customers
+  currentCustomers?: string
+  dreamClient?: string
+  painPoints?: string
+  outcomeDelivered?: string
+  bestClientFeedback?: string
+  customerChannels?: string[]
+  // Step 4 — Competitors & market
   topCompetitors?: string
-  clientFeedback?: string
-  // Step 3 — Where you're stuck
-  topGoal?: string
+  competitorAdmire?: string
+  // Step 5 — Brand
+  brandPersonality?: string
+  brandAdjectives?: string
+  brandTone?: string
+  brandsAdmired?: string
+  hasMvv?: string
+  // Step 6 — Wrap
+  existingMaterials?: string
+  customerResearchStatus?: string
+  topGoals?: string
   marketingGap?: string
-  biggestBottleneck?: string
-  channels?: string[]
-  // Step 4 — Voice & wrap
-  brandWords?: string
   anythingElse?: string
-  contactPref?: string
-  // Attribution (e.g. business-card QR)
+  // Attribution
   utm_source?: string
   utm_medium?: string
   utm_content?: string
@@ -59,26 +67,29 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body: EssentialsLabPayload = await request.json()
+    const body: AssetsLabIntakePayload = await request.json()
 
-    const firstName = sanitize(body.firstName)
-    const lastName = sanitize(body.lastName)
+    const fullName = sanitize(body.fullName)
     const email = sanitize(body.email)
-    const revenueBand = sanitize(body.revenueBand)
+    const businessName = sanitize(body.businessName)
 
-    if (!firstName || !lastName || !email || !revenueBand) {
+    if (!fullName || !email || !businessName) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Missing required fields: firstName, lastName, email, revenueBand',
+          error: 'Missing required fields: fullName, email, businessName',
         },
         { status: 400 }
       )
     }
 
-    const businessName = sanitize(body.businessName) || ''
-    const website = sanitize(body.website) || ''
+    // Split full name into first/last for the clients table.
+    const nameParts = fullName.split(/\s+/)
+    const firstName = nameParts[0]
+    const lastName = nameParts.slice(1).join(' ') || ''
+
     const phone = sanitize(body.phone) || ''
+    const website = sanitize(body.website) || ''
     const normalizedEmail = email.toLowerCase().trim()
 
     const supabase = getSupabase()
@@ -94,7 +105,7 @@ export async function POST(request: NextRequest) {
           phone: phone || null,
           company_name: businessName,
           status: 'lead',
-          lead_source: 'essentialslab_assessment',
+          lead_source: 'assetslab_intake',
         },
         { onConflict: 'email' }
       )
@@ -111,7 +122,8 @@ export async function POST(request: NextRequest) {
 
     const clientId = clientData.id
 
-    // 2. Insert into leads table (columns matched to the Bottleneck route — no invented columns)
+    // 2. Insert into leads table — the entire deep intake persists in raw_responses
+    //    so /assetslab can consume it. Columns matched to the EssentialsLab route.
     const { error: leadError } = await supabase.from('leads').insert({
       client_id: clientId,
       first_name: firstName,
@@ -120,35 +132,53 @@ export async function POST(request: NextRequest) {
       phone: phone || null,
       company: businessName || null,
       source: 'website',
-      source_detail: 'EssentialsLab Assessment',
+      source_detail: 'AssetsLab Intake',
       status: 'new',
-      tags: ['assessment', 'essentialslab', 'website',
+      tags: ['intake', 'assetslab', 'website',
         ...(typeof body.utm_source === 'string' && body.utm_source ? [`src:${sanitize(body.utm_source)}`] : []),
         ...(typeof body.utm_content === 'string' && body.utm_content ? [`card:${sanitize(body.utm_content)}`] : []),
       ],
       raw_responses: {
+        // Attribution
         utm_source: sanitize(body.utm_source) || null,
         utm_medium: sanitize(body.utm_medium) || null,
         utm_content: sanitize(body.utm_content) || null,
         utm_campaign: sanitize(body.utm_campaign) || null,
-        revenueBand,
-        yearsInBusiness: sanitize(body.yearsInBusiness) || null,
+        // Step 1 — You & your business
+        fullName,
+        email: normalizedEmail,
+        phone: phone || null,
+        businessName,
         website: website || null,
-        whatYouDo: sanitize(body.whatYouDo) || null,
-        coreOffer: sanitize(body.coreOffer) || null,
-        dreamClient: sanitize(body.dreamClient) || null,
-        topPain: sanitize(body.topPain) || null,
-        outcome: sanitize(body.outcome) || null,
+        yearsInBusiness: sanitize(body.yearsInBusiness) || null,
+        annualRevenue: sanitize(body.annualRevenue) || null,
+        // Step 2 — What you do
+        businessDescription: sanitize(body.businessDescription) || null,
+        servicesOffered: sanitize(body.servicesOffered) || null,
+        coreOfferDescription: sanitize(body.coreOfferDescription) || null,
         differentiators: sanitize(body.differentiators) || null,
+        // Step 3 — Your customers
+        currentCustomers: sanitize(body.currentCustomers) || null,
+        dreamClient: sanitize(body.dreamClient) || null,
+        painPoints: sanitize(body.painPoints) || null,
+        outcomeDelivered: sanitize(body.outcomeDelivered) || null,
+        bestClientFeedback: sanitize(body.bestClientFeedback) || null,
+        customerChannels: Array.isArray(body.customerChannels) ? body.customerChannels : [],
+        // Step 4 — Competitors & market
         topCompetitors: sanitize(body.topCompetitors) || null,
-        clientFeedback: sanitize(body.clientFeedback) || null,
-        topGoal: sanitize(body.topGoal) || null,
+        competitorAdmire: sanitize(body.competitorAdmire) || null,
+        // Step 5 — Brand
+        brandPersonality: sanitize(body.brandPersonality) || null,
+        brandAdjectives: sanitize(body.brandAdjectives) || null,
+        brandTone: sanitize(body.brandTone) || null,
+        brandsAdmired: sanitize(body.brandsAdmired) || null,
+        hasMvv: sanitize(body.hasMvv) || null,
+        // Step 6 — Wrap
+        existingMaterials: sanitize(body.existingMaterials) || null,
+        customerResearchStatus: sanitize(body.customerResearchStatus) || null,
+        topGoals: sanitize(body.topGoals) || null,
         marketingGap: sanitize(body.marketingGap) || null,
-        biggestBottleneck: sanitize(body.biggestBottleneck) || null,
-        channels: Array.isArray(body.channels) ? body.channels : [],
-        brandWords: sanitize(body.brandWords) || null,
         anythingElse: sanitize(body.anythingElse) || null,
-        contactPref: sanitize(body.contactPref) || null,
       },
     })
 
@@ -157,42 +187,41 @@ export async function POST(request: NextRequest) {
       console.warn('Lead insert failed but client was saved successfully')
     }
 
-    // 3. Send team notification (non-blocking). Full discovery is persisted in
+    // 3. Send team notification (non-blocking). Full intake is persisted in
     //    leads.raw_responses; these fields make the Slack/email instantly readable.
-    const fullName = `${firstName} ${lastName}`
-    const channelsStr = Array.isArray(body.channels) ? body.channels.join(', ') : ''
+    const channelsStr = Array.isArray(body.customerChannels) ? body.customerChannels.join(', ') : ''
 
     const notifFields: Record<string, string> = {
       Name: fullName,
       Email: email,
       ...(phone ? { Phone: phone } : {}),
-      ...(businessName ? { Business: businessName } : {}),
+      Business: businessName,
       ...(website ? { Website: website } : {}),
-      Revenue: revenueBand,
-      ...(body.utm_content || body.utm_source ? { Source: `${sanitize(body.utm_source) || '—'} / ${sanitize(body.utm_content) || '—'}` } : {}),
+      ...(body.annualRevenue ? { Revenue: sanitize(body.annualRevenue) } : {}),
       ...(body.yearsInBusiness ? { 'Years in Business': sanitize(body.yearsInBusiness) } : {}),
-      ...(body.whatYouDo ? { 'What They Do': sanitize(body.whatYouDo) } : {}),
-      ...(body.coreOffer ? { 'Core Offer': sanitize(body.coreOffer) } : {}),
-      ...(body.dreamClient ? { 'Dream Client': sanitize(body.dreamClient) } : {}),
-      ...(body.topPain ? { 'Top Pain': sanitize(body.topPain) } : {}),
-      ...(body.outcome ? { 'Desired Outcome': sanitize(body.outcome) } : {}),
+      ...(body.utm_content || body.utm_source ? { Source: `${sanitize(body.utm_source) || '—'} / ${sanitize(body.utm_content) || '—'}` } : {}),
+      ...(body.businessDescription ? { 'Business': sanitize(body.businessDescription) } : {}),
+      ...(body.coreOfferDescription ? { 'Core Offer': sanitize(body.coreOfferDescription) } : {}),
       ...(body.differentiators ? { Differentiators: sanitize(body.differentiators) } : {}),
-      ...(body.topCompetitors ? { Competitors: sanitize(body.topCompetitors) } : {}),
-      ...(body.clientFeedback ? { 'Client Feedback': sanitize(body.clientFeedback) } : {}),
-      ...(body.topGoal ? { 'Top Goal': sanitize(body.topGoal) } : {}),
-      ...(body.marketingGap ? { 'Marketing Gap': sanitize(body.marketingGap) } : {}),
-      ...(body.biggestBottleneck ? { Bottleneck: sanitize(body.biggestBottleneck) } : {}),
+      ...(body.dreamClient ? { 'Dream Client': sanitize(body.dreamClient) } : {}),
+      ...(body.painPoints ? { 'Pain Points': sanitize(body.painPoints) } : {}),
+      ...(body.outcomeDelivered ? { 'Outcome': sanitize(body.outcomeDelivered) } : {}),
       ...(channelsStr ? { Channels: channelsStr } : {}),
-      ...(body.brandWords ? { 'Brand Words': sanitize(body.brandWords) } : {}),
+      ...(body.topCompetitors ? { Competitors: sanitize(body.topCompetitors) } : {}),
+      ...(body.brandAdjectives ? { 'Brand Words': sanitize(body.brandAdjectives) } : {}),
+      ...(body.brandTone ? { 'Brand Tone': sanitize(body.brandTone) } : {}),
+      ...(body.hasMvv ? { 'Has MVV': sanitize(body.hasMvv) } : {}),
+      ...(body.topGoals ? { 'Top Goals': sanitize(body.topGoals) } : {}),
+      ...(body.marketingGap ? { 'Marketing Gap': sanitize(body.marketingGap) } : {}),
+      ...(body.existingMaterials ? { 'Existing Materials': sanitize(body.existingMaterials) } : {}),
       ...(body.anythingElse ? { 'Anything Else': sanitize(body.anythingElse) } : {}),
-      ...(body.contactPref ? { 'Contact Preference': sanitize(body.contactPref) } : {}),
     }
 
     notifyTeam({
-      title: '🚀 New EssentialsLab Assessment',
+      title: '🧪 New AssetsLab Intake',
       fields: notifFields,
-      emailSubject: `🚀 New EssentialsLab Assessment: ${fullName} (${revenueBand})`,
-      emailHtml: buildEmailHtml('🚀 New EssentialsLab Assessment', notifFields),
+      emailSubject: `🧪 New AssetsLab Intake: ${fullName} (${businessName})`,
+      emailHtml: buildEmailHtml('🧪 New AssetsLab Intake', notifFields),
       slackColor: '#2ADD1B',
       supabaseUrl: `https://supabase.com/dashboard/project/tncipuxobcbkwkmpcevt/editor`,
     }).catch((err) => console.error('Team notification error:', err))
@@ -211,15 +240,15 @@ export async function POST(request: NextRequest) {
       <h1 style="margin:0;color:#2ADD1B;font-size:14px;text-transform:uppercase;letter-spacing:2px;">PodLab</h1>
     </div>
     <div style="background:#141414;border:1px solid #2a2a2a;border-radius:12px;padding:32px;">
-      <h2 style="margin:0 0 16px;color:#fafafa;font-size:22px;">Got it, ${firstName} — $1M is the starting line.</h2>
+      <h2 style="margin:0 0 16px;color:#fafafa;font-size:22px;">Got it, ${firstName} — let's build your foundation.</h2>
       <p style="margin:0 0 16px;color:#c0c0c0;font-size:15px;line-height:1.6;">
-        Thanks for completing your EssentialsLab Assessment. We'll review your answers and reach out with next steps.
+        Thanks for completing your AssetsLab Intake. We'll review every answer and turn it into your strategic foundation — your offer, your customer, your voice, your edge.
       </p>
       <p style="margin:0 0 24px;color:#c0c0c0;font-size:15px;line-height:1.6;">
-        Want to fast-track? Book a strategy call and we'll walk through your bottleneck live.
+        Want to talk it through? Book a call and we'll walk it live.
       </p>
       <div style="text-align:center;margin:8px 0 8px;">
-        <a href="${calendlyUrl}" style="display:inline-block;background:#2ADD1B;color:#000;font-weight:700;text-decoration:none;padding:14px 28px;border-radius:10px;font-size:15px;">Book a Strategy Call →</a>
+        <a href="${calendlyUrl}" style="display:inline-block;background:#2ADD1B;color:#000;font-weight:700;text-decoration:none;padding:14px 28px;border-radius:10px;font-size:15px;">Book a Call →</a>
       </div>
     </div>
     <div style="text-align:center;padding:24px;color:#666;font-size:12px;">
@@ -230,11 +259,11 @@ export async function POST(request: NextRequest) {
 </body>
 </html>`
 
-    const customerPlaintext = `Got it, ${firstName} — $1M is the starting line.
+    const customerPlaintext = `Got it, ${firstName} — let's build your foundation.
 
-Thanks for completing your EssentialsLab Assessment. We'll review your answers and reach out with next steps.
+Thanks for completing your AssetsLab Intake. We'll review every answer and turn it into your strategic foundation — your offer, your customer, your voice, your edge.
 
-Want to fast-track? Book a strategy call: ${calendlyUrl}
+Want to talk it through? Book a call: ${calendlyUrl}
 
 — Hiram at PodLab
 Las Vegas, NV
@@ -244,19 +273,19 @@ To unsubscribe, reply to this email with "unsubscribe".`
 
     notifyEmail(
       normalizedEmail,
-      `${firstName}, we got your EssentialsLab Assessment`,
+      `${firstName}, we got your AssetsLab Intake`,
       customerHtml,
       {
         text: customerPlaintext,
         replyTo: 'info@podlablv.com',
         fromName: 'Hiram at PodLab',
-        tags: [{ name: 'kind', value: 'essentialslab_assessment' }],
+        tags: [{ name: 'kind', value: 'assetslab_intake' }],
       }
     ).catch((err) => console.error('Customer confirmation email error:', err))
 
     return NextResponse.json({ success: true, clientId })
   } catch (error) {
-    console.error('EssentialsLab Assessment API error:', error)
+    console.error('AssetsLab Intake API error:', error)
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
