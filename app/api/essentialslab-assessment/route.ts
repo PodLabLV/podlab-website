@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
     }).catch((err) => console.error('Team notification error:', err))
 
     // 4. Send confirmation email to customer (non-blocking)
-    const calendlyUrl = 'https://calendly.com/podlablv/strategy-call'
+    const calendlyUrl = 'https://calendly.com/podlablv/essentialslab-clarity-call'
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://podlablv.com'
 
     const customerHtml = `
