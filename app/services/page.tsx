@@ -12,11 +12,13 @@ export const metadata: Metadata = {
     title: 'The 5-Phase Growth System',
     description: 'Complete founder duplication system across 5 strategic phases.',
     url: 'https://podlablv.com/services',
-    images: [{ url: '/api/og?title=The%205-Phase%20Growth%20System&subtitle=Complete%20Founder%20Duplication', width: 1200, height: 630 }],
+    images: [{ url: 'https://podlablv.com/services-og.png', width: 1920, height: 1080, alt: 'Business Growth System by PodLab' }],
   },
   twitter: {
+    card: 'summary_large_image',
     title: 'The 5-Phase Growth System',
     description: 'Complete founder duplication system across 5 strategic phases.',
+    images: ['https://podlablv.com/services-og.png'],
   },
 };
 

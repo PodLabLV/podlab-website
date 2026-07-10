@@ -12,6 +12,14 @@ export const metadata: Metadata = {
     title: 'Are You the Bottleneck? Take the Free 5-Minute Assessment',
     description: 'Find out where your business is stuck and get a tactical roadmap to fix it. For $1M-$8M service-based founders.',
     type: 'website',
+    url: 'https://podlablv.com/assessment',
+    images: [{ url: 'https://podlablv.com/assessment-og.png', width: 1366, height: 768, alt: 'PodLab' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Are You the Bottleneck? Take the Free 5-Minute Assessment',
+    description: 'Find out where your business is stuck and get a tactical roadmap to fix it.',
+    images: ['https://podlablv.com/assessment-og.png'],
   },
 };
 

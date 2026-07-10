@@ -10,7 +10,13 @@ export const metadata: Metadata = {
     title: 'Case Studies — Real Results',
     description: 'See how PodLab helps $1M–$8M service-based founders eliminate founder dependency and scale through strategic video assets.',
     url: 'https://podlablv.com/case-studies',
-    images: [{ url: '/api/og?title=Case%20Studies&subtitle=Real%20Founders.%20Real%20Results.', width: 1200, height: 630 }],
+    images: [{ url: 'https://podlablv.com/podlab-og.png', width: 1366, height: 768, alt: 'PodLab' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Case Studies — Real Results',
+    description: 'See how PodLab helps $1M–$8M service-based founders eliminate founder dependency and scale through strategic video assets.',
+    images: ['https://podlablv.com/podlab-og.png'],
   },
 };
 

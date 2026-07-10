@@ -10,7 +10,13 @@ export const metadata: Metadata = {
     title: 'Blog — Founder Duplication Insights',
     description: 'Insights on founder duplication, content systems, and building businesses that do not depend on you.',
     url: 'https://podlablv.com/blog',
-    images: [{ url: '/api/og?title=Blog&subtitle=Founder%20Duplication%20Insights', width: 1200, height: 630 }],
+    images: [{ url: 'https://podlablv.com/podlab-og.png', width: 1366, height: 768, alt: 'PodLab' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Blog — Founder Duplication Insights',
+    description: 'Insights on founder duplication, content systems, and building businesses that do not depend on you.',
+    images: ['https://podlablv.com/podlab-og.png'],
   },
 };
 

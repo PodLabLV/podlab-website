@@ -12,11 +12,13 @@ export const metadata: Metadata = {
     title: 'About — Built by a Founder, For Founders',
     description: 'Meet Hiram Andino. Combat vet turned founder duplication expert.',
     url: 'https://podlablv.com/about',
-    images: [{ url: '/api/og?title=About%20PodLab&subtitle=Built%20by%20a%20Founder%2C%20For%20Founders', width: 1200, height: 630 }],
+    images: [{ url: 'https://podlablv.com/podlab-og.png', width: 1366, height: 768, alt: 'PodLab' }],
   },
   twitter: {
+    card: 'summary_large_image',
     title: 'About — Built by a Founder, For Founders',
     description: 'Meet Hiram Andino. Combat vet turned founder duplication expert.',
+    images: ['https://podlablv.com/podlab-og.png'],
   },
 };
 

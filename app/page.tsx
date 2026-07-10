@@ -16,11 +16,13 @@ export const metadata: Metadata = {
     title: 'PodLab - Duplicate Yourself, Scale Without Burning Out',
     description: 'Turn your expertise into strategic 4K video assets that sell 24/7. No more founder bottleneck.',
     url: 'https://podlablv.com',
-    images: ['/og-image.png'],
+    images: [{ url: 'https://podlablv.com/podlab-og.png', width: 1366, height: 768, alt: 'PodLab' }],
   },
   twitter: {
+    card: 'summary_large_image',
     title: 'PodLab - Duplicate Yourself, Scale Without Burning Out',
     description: 'Turn your expertise into strategic 4K video assets that sell 24/7. No more founder bottleneck.',
+    images: ['https://podlablv.com/podlab-og.png'],
   },
 };
 
