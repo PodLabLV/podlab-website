@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Navigation from '@/components/Navigation';
 import HomePageWrapper from '@/components/HomePageWrapper';
+import PodIcon, { PodIconName } from '@/components/PodIcon';
 import Link from 'next/link';
 
 const revenueOptions = [
@@ -118,12 +119,16 @@ export default function PodcastApplyPage() {
             </p>
             <div className="flex flex-wrap justify-center gap-6 md:gap-10">
               {[
-                { label: 'Goal: 50 Episodes', icon: '🎙️' },
-                { label: 'Goal: 10K Listeners', icon: '🎧' },
-                { label: '$1M–$8M Founders', icon: '🎯' },
+                { label: 'Goal: 50 Episodes', icon: 'mic' as PodIconName },
+                { label: 'Goal: 10K Listeners', icon: 'headphones' as PodIconName },
+                { label: '$1M–$8M Founders', icon: 'target' as PodIconName },
               ].map((stat) => (
-                <div key={stat.label} className="flex items-center gap-2 text-text-secondary">
-                  <span className="text-2xl">{stat.icon}</span>
+                <div key={stat.label} className="flex items-center gap-2.5 text-text-secondary">
+                  <PodIcon
+                    name={stat.icon}
+                    size={26}
+                    className="text-accent drop-shadow-[0_0_10px_rgba(42,221,27,0.55)]"
+                  />
                   <span className="text-lg font-semibold text-white">{stat.label}</span>
                 </div>
               ))}
@@ -136,7 +141,15 @@ export default function PodcastApplyPage() {
           <div className="max-w-3xl mx-auto">
             {status === 'success' ? (
               <div className="glass-card p-6 md:p-12 text-center border-accent">
-                <div className="text-6xl mb-6">🎙️</div>
+                <div className="mb-6 flex justify-center">
+                  <span className="inline-flex h-20 w-20 items-center justify-center rounded-full border border-accent/40 bg-accent/10">
+                    <PodIcon
+                      name="mic"
+                      size={40}
+                      className="text-accent drop-shadow-[0_0_14px_rgba(42,221,27,0.6)]"
+                    />
+                  </span>
+                </div>
                 <h2 className="text-3xl font-bold mb-4 text-accent">Application Received!</h2>
                 <p className="text-lg text-text-secondary max-w-xl mx-auto">
                   We review every application personally. If you&apos;re a fit, we&apos;ll reach out
@@ -340,19 +353,19 @@ export default function PodcastApplyPage() {
             <div className="grid md:grid-cols-3 gap-8">
               {[
                 {
-                  icon: '📞',
+                  icon: 'phone' as PodIconName,
                   title: 'Pre-Interview Call',
                   description:
                     '15-minute prep call to nail your story angle and talking points.',
                 },
                 {
-                  icon: '🎬',
+                  icon: 'clapper' as PodIconName,
                   title: 'Studio Session',
                   description:
                     '60-90 minutes in our Las Vegas studio. Professional production, relaxed conversation.',
                 },
                 {
-                  icon: '📡',
+                  icon: 'broadcast' as PodIconName,
                   title: 'Distribution',
                   description:
                     'Published on YouTube + all podcast platforms. Clips for your social media included.',
@@ -362,7 +375,15 @@ export default function PodcastApplyPage() {
                   key={card.title}
                   className="glass-card p-8 text-center hover:border-accent transition-all group"
                 >
-                  <div className="text-5xl mb-4">{card.icon}</div>
+                  <div className="mb-5 flex justify-center">
+                    <span className="inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-accent/30 bg-accent/10 transition-all group-hover:border-accent/60 group-hover:bg-accent/15">
+                      <PodIcon
+                        name={card.icon}
+                        size={32}
+                        className="text-accent drop-shadow-[0_0_12px_rgba(42,221,27,0.5)]"
+                      />
+                    </span>
+                  </div>
                   <h3 className="text-xl font-bold mb-3 group-hover:text-accent transition-colors">
                     {card.title}
                   </h3>
