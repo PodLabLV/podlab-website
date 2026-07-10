@@ -13,13 +13,13 @@ export const metadata: Metadata = {
     title: 'ExpansionLab — Ongoing Growth Engine',
     description: 'Fractional CMO support, campaign management, and growth strategy for scaling founders.',
     url: '/labs/expansion',
-    images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: 'PodLab ExpansionLab' }],
+    images: [{ url: 'https://podlablv.com/labs-expansion-og.png', width: 1366, height: 768, alt: 'PodLab ExpansionLab' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'ExpansionLab — Ongoing Growth Engine',
     description: 'Fractional CMO support, campaign management, and growth strategy for scaling founders.',
-    images: ['/opengraph-image.png'],
+    images: ['https://podlablv.com/labs-expansion-og.png'],
     creator: '@podlab',
   },
 };

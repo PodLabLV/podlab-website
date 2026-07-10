@@ -13,13 +13,13 @@ export const metadata: Metadata = {
     title: 'BrandLab — Premium Brand Identity',
     description: 'Visual identity systems that include logo, color, typography, and brand guidelines.',
     url: '/labs/brand',
-    images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: 'PodLab BrandLab' }],
+    images: [{ url: 'https://podlablv.com/labs-brand-og.png', width: 1366, height: 768, alt: 'PodLab BrandLab' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'BrandLab — Premium Brand Identity',
     description: 'Visual identity systems that include logo, color, typography, and brand guidelines.',
-    images: ['/opengraph-image.png'],
+    images: ['https://podlablv.com/labs-brand-og.png'],
     creator: '@podlab',
   },
 };

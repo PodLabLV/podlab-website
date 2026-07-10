@@ -13,13 +13,13 @@ export const metadata: Metadata = {
     title: 'SiteLab — High-Converting Websites',
     description: 'Conversion-focused website design built to turn visitors into leads and clients.',
     url: '/labs/site',
-    images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: 'PodLab SiteLab' }],
+    images: [{ url: 'https://podlablv.com/labs-site-og.png', width: 1366, height: 768, alt: 'PodLab SiteLab' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'SiteLab — High-Converting Websites',
     description: 'Conversion-focused website design built to turn visitors into leads and clients.',
-    images: ['/opengraph-image.png'],
+    images: ['https://podlablv.com/labs-site-og.png'],
     creator: '@podlab',
   },
 };
