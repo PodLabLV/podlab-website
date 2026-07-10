@@ -7,7 +7,13 @@ export const metadata: Metadata = {
     title: 'Apply to Be a Guest — How It Started | PodLab',
     description: 'Share your founder story on our podcast.',
     url: 'https://podlablv.com/how-it-started/apply',
-    images: [{ url: '/api/og?title=PodLab&subtitle=Record%20Once.%20Sell%20Forever.', width: 1200, height: 630 }],
+    images: [{ url: 'https://podlablv.com/how-it-started-og.png', width: 1376, height: 768, alt: 'How It Started — PodLab' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Apply to Be a Guest — How It Started | PodLab',
+    description: 'Share your founder story on our podcast.',
+    images: ['https://podlablv.com/how-it-started-og.png'],
   },
 }
 

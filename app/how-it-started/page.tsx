@@ -12,11 +12,13 @@ export const metadata: Metadata = {
     title: 'How It Started — The Podcast',
     description: 'The stories behind the founders we work with. Real conversations about how they built their businesses.',
     url: 'https://podlablv.com/how-it-started',
-    images: [{ url: '/api/og?title=How%20It%20Started&subtitle=The%20Podcast%20for%20Real%20Founders', width: 1200, height: 630 }],
+    images: [{ url: 'https://podlablv.com/how-it-started-og.png', width: 1376, height: 768, alt: 'How It Started — PodLab' }],
   },
   twitter: {
+    card: 'summary_large_image',
     title: 'How It Started — The Podcast',
     description: 'The stories behind the founders we work with. Real conversations about how they built their businesses.',
+    images: ['https://podlablv.com/how-it-started-og.png'],
   },
 };
 
