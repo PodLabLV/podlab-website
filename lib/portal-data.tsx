@@ -14,6 +14,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -30,6 +31,8 @@ export interface PortalClient {
   plan_label: string | null;
   stage: string | null;
   welcome_note: string | null;
+  crm_lead_id: string | null;
+  document_url: string | null;
 }
 
 export interface PortalAsset {
@@ -73,6 +76,26 @@ export interface PortalActivity {
   happened_at: string | null;
 }
 
+export interface PortalComment {
+  id: string;
+  section: string | null;
+  body: string;
+  status: string | null;
+  resolution: string | null;
+  created_at: string;
+}
+
+export interface PortalActionItem {
+  id: string;
+  title: string;
+  detail: string | null;
+  effort: string | null;
+  source: string | null;
+  status: string | null;
+  completed_at: string | null;
+  sort_order: number;
+}
+
 export interface PortalMetric {
   id: string;
   period_label: string;
@@ -90,6 +113,12 @@ interface PortalData {
   invoices: PortalInvoice[];
   activity: PortalActivity[];
   metrics: PortalMetric[];
+  comments: PortalComment[];
+  actionItems: PortalActionItem[];
+  /** Optimistic local updates, then a background refetch. */
+  setActionItem: (id: string, done: boolean) => void;
+  addComment: (comment: PortalComment) => void;
+  accessToken: string | null;
 }
 
 const EMPTY: PortalData = {
@@ -101,6 +130,11 @@ const EMPTY: PortalData = {
   invoices: [],
   activity: [],
   metrics: [],
+  comments: [],
+  actionItems: [],
+  setActionItem: () => {},
+  addComment: () => {},
+  accessToken: null,
 };
 
 const PortalContext = createContext<PortalData>(EMPTY);
@@ -111,6 +145,21 @@ export function usePortal() {
 
 export function PortalProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PortalData>(EMPTY);
+
+  const setActionItem = useCallback((id: string, done: boolean) => {
+    setData((prev) => ({
+      ...prev,
+      actionItems: prev.actionItems.map((i) =>
+        i.id === id
+          ? { ...i, status: done ? 'done' : 'open', completed_at: done ? new Date().toISOString() : null }
+          : i,
+      ),
+    }));
+  }, []);
+
+  const addComment = useCallback((comment: PortalComment) => {
+    setData((prev) => ({ ...prev, comments: [comment, ...prev.comments] }));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -138,13 +187,17 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const [assets, projects, invoices, activity, metrics] = await Promise.all([
-        db.from('portal_assets').select('*').order('sort_order'),
-        db.from('portal_projects').select('*').order('sort_order'),
-        db.from('portal_invoices').select('*').order('sort_order'),
-        db.from('portal_activity').select('*').order('happened_at', { ascending: false }),
-        db.from('portal_report_metrics').select('*').order('sort_order'),
-      ]);
+      const [assets, projects, invoices, activity, metrics, comments, actions, session] =
+        await Promise.all([
+          db.from('portal_assets').select('*').order('sort_order'),
+          db.from('portal_projects').select('*').order('sort_order'),
+          db.from('portal_invoices').select('*').order('sort_order'),
+          db.from('portal_activity').select('*').order('happened_at', { ascending: false }),
+          db.from('portal_report_metrics').select('*').order('sort_order'),
+          db.from('portal_comments').select('*').order('created_at', { ascending: false }),
+          db.from('portal_action_items').select('*').order('sort_order'),
+          db.auth.getSession(),
+        ]);
 
       if (cancelled) return;
 
@@ -157,6 +210,11 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         invoices: (invoices.data as PortalInvoice[]) ?? [],
         activity: (activity.data as PortalActivity[]) ?? [],
         metrics: (metrics.data as PortalMetric[]) ?? [],
+        comments: (comments.data as PortalComment[]) ?? [],
+        actionItems: (actions.data as PortalActionItem[]) ?? [],
+        accessToken: session.data.session?.access_token ?? null,
+        setActionItem,
+        addComment,
       });
     }
 
@@ -164,7 +222,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [setActionItem, addComment]);
 
   return <PortalContext.Provider value={data}>{children}</PortalContext.Provider>;
 }

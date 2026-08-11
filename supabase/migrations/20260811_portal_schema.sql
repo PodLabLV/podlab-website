@@ -133,6 +133,10 @@ begin
   foreach t in array array['clients','assets','projects','invoices','activity','report_metrics']
   loop
     execute format('grant select on public.portal_%I to authenticated', t);
+    -- service_role bypasses RLS but still needs a table grant. These tables were
+    -- created elsewhere and moved into public, so public's default privileges
+    -- never applied to them.
+    execute format('grant all on public.portal_%I to service_role', t);
     execute format('revoke all on public.portal_%I from anon', t);
   end loop;
 end $$;

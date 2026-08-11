@@ -5,6 +5,8 @@ import { usePortal, formatDate } from '@/lib/portal-data';
 import { Card, StatCard, EmptyState } from '@/components/portal/Shared';
 
 const QUICK_LINKS = [
+  { href: '/portal/document', label: 'Clarity Document', body: 'Read your strategy document and request changes.' },
+  { href: '/portal/actions', label: 'Action Items', body: 'What to do first. Tick them off as you go.' },
   { href: '/portal/deliverables', label: 'Deliverables', body: 'Every file we have produced for you.' },
   { href: '/portal/progress', label: 'Progress', body: 'Where each project stands right now.' },
   { href: '/portal/reports', label: 'Reports', body: 'Performance once campaigns are running.' },
@@ -12,7 +14,7 @@ const QUICK_LINKS = [
 ];
 
 export default function PortalDashboard() {
-  const { loading, error, client, assets, projects, activity } = usePortal();
+  const { loading, error, client, assets, projects, activity, actionItems } = usePortal();
 
   if (loading) {
     return <p className="text-white/40 text-sm">Loading your portal...</p>;
@@ -67,7 +69,10 @@ export default function PortalDashboard() {
           label="Projects Complete"
           value={String(projects.filter((p) => p.progress_pct >= 100).length)}
         />
-        <StatCard label="Stage" value={client.stage === 'active' ? 'Active Client' : 'Onboarding'} />
+        <StatCard
+          label="Action Items Open"
+          value={String(actionItems.filter((i) => i.status !== 'done').length)}
+        />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
