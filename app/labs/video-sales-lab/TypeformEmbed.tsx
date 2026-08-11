@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { ArrowRight } from 'lucide-react';
 
 interface TypeformEmbedProps {
   formId: string;
@@ -13,43 +14,84 @@ declare global {
   }
 }
 
+function fireGA4Event(eventName: string, params: Record<string, unknown>) {
+  if (typeof window.gtag === 'function') {
+    window.gtag('event', eventName, params);
+  }
+  if (Array.isArray(window.dataLayer)) {
+    window.dataLayer.push({ event: eventName, ...params });
+  }
+}
+
+const PLACEHOLDER_ID = 'YOUR_FORM_ID';
+
 export default function TypeformEmbed({ formId }: TypeformEmbedProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const hasForm = formId && formId !== PLACEHOLDER_ID;
 
   useEffect(() => {
-    function handleMessage(event: MessageEvent) {
+    // Typeform submit → generate_lead
+    function handleTypeformMessage(event: MessageEvent) {
       if (event.origin !== 'https://form.typeform.com') return;
-
       let data: { type?: string } | null = null;
       try {
         data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
       } catch {
         return;
       }
-
       if (data?.type === 'form-submit') {
-        // Fire GA4 lead event
-        if (typeof window.gtag === 'function') {
-          window.gtag('event', 'lead', {
-            event_category: 'VideoSalesLab',
-            event_label: 'Typeform Submit',
-            value: 10000,
-          });
-        }
-        // Push to dataLayer for GTM
-        if (Array.isArray(window.dataLayer)) {
-          window.dataLayer.push({
-            event: 'lead',
-            form_name: 'VideoSalesLab Intake',
-            form_source: 'typeform',
-          });
-        }
+        fireGA4Event('generate_lead', {
+          event_category: 'VideoSalesLab',
+          event_label: 'Typeform Submit',
+          value: 10000,
+        });
       }
     }
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    // Calendly booking → book_appointment
+    function handleCalendlyMessage(event: MessageEvent) {
+      if (event.origin !== 'https://calendly.com') return;
+      let data: { event?: string } | null = null;
+      try {
+        data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+      } catch {
+        return;
+      }
+      if (data?.event === 'calendly.event_scheduled') {
+        fireGA4Event('book_appointment', {
+          event_category: 'VideoSalesLab',
+          event_label: 'Calendly Booking',
+          value: 10000,
+        });
+      }
+    }
+
+    window.addEventListener('message', handleTypeformMessage);
+    window.addEventListener('message', handleCalendlyMessage);
+    return () => {
+      window.removeEventListener('message', handleTypeformMessage);
+      window.removeEventListener('message', handleCalendlyMessage);
+    };
   }, []);
+
+  if (!hasForm) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-6 py-12 px-6 text-center">
+        <p className="text-text-secondary text-lg max-w-md">
+          Ready to duplicate yourself on camera? Book a 30-minute strategy call — we&apos;ll confirm fit and outline your filming day.
+        </p>
+        <a
+          href="https://calendly.com/podlablv/strategy-call"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all text-lg"
+        >
+          Schedule Your Strategy Call
+          <ArrowRight className="h-5 w-5" />
+        </a>
+      </div>
+    );
+  }
 
   return (
     <iframe
