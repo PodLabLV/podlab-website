@@ -29,6 +29,16 @@ const nextConfig: NextConfig = {
           { key: 'X-DNS-Prefetch-Control', value: 'on' },
         ],
       },
+      {
+        // The portal frames a client's own clarity document from this origin.
+        // The site-wide DENY above blocks same-origin framing too, which would
+        // render the document tab blank. SAMEORIGIN still blocks every other site.
+        source: '/portal/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Content-Security-Policy', value: "frame-ancestors 'self'" },
+        ],
+      },
     ];
   },
   async redirects() {
