@@ -4,13 +4,15 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import { PortalProvider, usePortal } from '@/lib/portal-data';
 
+// SVG marks, not emoji - this sits in front of clients.
 const portalNav = [
-  { href: '/portal', label: 'Dashboard', icon: '📊' },
-  { href: '/portal/deliverables', label: 'Deliverables', icon: '📦' },
-  { href: '/portal/progress', label: 'Progress', icon: '🚀' },
-  { href: '/portal/reports', label: 'Reports', icon: '📈' },
-  { href: '/portal/invoices', label: 'Invoices', icon: '💰' },
+  { href: '/portal', label: 'Dashboard', d: 'M4 5h6v6H4zM14 5h6v4h-6zM14 13h6v6h-6zM4 15h6v4H4z' },
+  { href: '/portal/deliverables', label: 'Deliverables', d: 'M4 7l8-4 8 4v10l-8 4-8-4zM4 7l8 4 8-4M12 11v10' },
+  { href: '/portal/progress', label: 'Progress', d: 'M4 18V9M10 18V5M16 18v-6M22 18H2' },
+  { href: '/portal/reports', label: 'Reports', d: 'M4 19h16M6 16V9M11 16V5M16 16v-4' },
+  { href: '/portal/invoices', label: 'Invoices', d: 'M6 3h9l5 5v13H6zM15 3v5h5M9 13h8M9 17h5' },
 ];
 
 interface UserInfo {
@@ -20,12 +22,14 @@ interface UserInfo {
   initials: string;
 }
 
-export default function PortalLayout({ children }: { children: React.ReactNode }) {
+function PortalShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [checking, setChecking] = useState(true);
+  const { client } = usePortal();
+  const businessName = client?.business_name ?? '';
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
@@ -119,7 +123,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                     : 'text-white/60 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <span className="text-lg">{item.icon}</span>
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d={item.d} /></svg>
                 <span className="font-medium">{item.label}</span>
               </Link>
             );
@@ -137,7 +141,9 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                 <p className="text-sm text-white font-medium truncate">
                   {user.firstName} {user.lastName}
                 </p>
-                <p className="text-xs text-white/40 truncate">{user.email}</p>
+                <p className="text-xs text-white/40 truncate">
+                  {businessName || user.email}
+                </p>
               </div>
             </div>
           )}
@@ -173,5 +179,13 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">{children}</div>
       </main>
     </div>
+  );
+}
+
+export default function PortalLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <PortalProvider>
+      <PortalShell>{children}</PortalShell>
+    </PortalProvider>
   );
 }
