@@ -1,13 +1,16 @@
 -- PodLab Client Portal — per-client data layer
--- Project: tncipuxobcbkwkmpcevt (shared with crm + the57 schemas)
+-- Project: tncipuxobcbkwkmpcevt (shared with the crm schema)
+--
+-- Tables live in `public` behind a portal_ prefix instead of their own schema.
+-- This project's PostgREST does not pick up exposed-schema config changes
+-- without a full service restart, which would interrupt crm.podlablv.com.
+-- Prefixed tables in `public` work immediately and need no config change.
 -- Every table is scoped to the logged-in user via RLS. A client can only ever
 -- read their own row and their own children. There are no write policies —
 -- the portal is read-only for clients; seeding happens with the service role.
 
-create schema if not exists portal;
-
 -- ---------------------------------------------------------------- clients
-create table if not exists portal.clients (
+create table if not exists public.portal_clients (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid unique references auth.users(id) on delete cascade,
   email         text not null unique,
@@ -21,9 +24,9 @@ create table if not exists portal.clients (
 );
 
 -- ------------------------------------------------------------- deliverables
-create table if not exists portal.assets (
+create table if not exists public.portal_assets (
   id          uuid primary key default gen_random_uuid(),
-  client_id   uuid not null references portal.clients(id) on delete cascade,
+  client_id   uuid not null references public.portal_clients(id) on delete cascade,
   title       text not null,
   description text,
   lab         text,                      -- AssetsLab | VideoSalesLab | ...
@@ -36,9 +39,9 @@ create table if not exists portal.assets (
 );
 
 -- ----------------------------------------------------------------- progress
-create table if not exists portal.projects (
+create table if not exists public.portal_projects (
   id           uuid primary key default gen_random_uuid(),
-  client_id    uuid not null references portal.clients(id) on delete cascade,
+  client_id    uuid not null references public.portal_clients(id) on delete cascade,
   name         text not null,
   lab          text,
   stage_index  int default 1,            -- 1..total_stages, which stage is current
@@ -52,9 +55,9 @@ create table if not exists portal.projects (
 );
 
 -- ----------------------------------------------------------------- invoices
-create table if not exists portal.invoices (
+create table if not exists public.portal_invoices (
   id           uuid primary key default gen_random_uuid(),
-  client_id    uuid not null references portal.clients(id) on delete cascade,
+  client_id    uuid not null references public.portal_clients(id) on delete cascade,
   invoice_no   text,
   issued_on    date,
   description  text,
@@ -66,9 +69,9 @@ create table if not exists portal.invoices (
 );
 
 -- ----------------------------------------------------------------- activity
-create table if not exists portal.activity (
+create table if not exists public.portal_activity (
   id          uuid primary key default gen_random_uuid(),
-  client_id   uuid not null references portal.clients(id) on delete cascade,
+  client_id   uuid not null references public.portal_clients(id) on delete cascade,
   kind        text default 'update',     -- deliverable | report | call | payment | update
   title       text not null,
   happened_at timestamptz default now(),
@@ -78,9 +81,9 @@ create table if not exists portal.activity (
 -- ------------------------------------------------------------ report metrics
 -- Deliberately simple. Clients with no campaign data get an honest empty state
 -- rather than a dashboard of zeroes.
-create table if not exists portal.report_metrics (
+create table if not exists public.portal_report_metrics (
   id           uuid primary key default gen_random_uuid(),
-  client_id    uuid not null references portal.clients(id) on delete cascade,
+  client_id    uuid not null references public.portal_clients(id) on delete cascade,
   period_label text not null,            -- "August 2026"
   label        text not null,
   value        text not null,
@@ -89,22 +92,22 @@ create table if not exists portal.report_metrics (
   created_at   timestamptz default now()
 );
 
-create index if not exists assets_client_idx         on portal.assets(client_id);
-create index if not exists projects_client_idx       on portal.projects(client_id);
-create index if not exists invoices_client_idx       on portal.invoices(client_id);
-create index if not exists activity_client_idx       on portal.activity(client_id);
-create index if not exists report_metrics_client_idx on portal.report_metrics(client_id);
+create index if not exists portal_assets_client_idx         on public.portal_assets(client_id);
+create index if not exists portal_projects_client_idx       on public.portal_projects(client_id);
+create index if not exists portal_invoices_client_idx       on public.portal_invoices(client_id);
+create index if not exists portal_activity_client_idx       on public.portal_activity(client_id);
+create index if not exists portal_report_metrics_client_idx on public.portal_report_metrics(client_id);
 
 -- ---------------------------------------------------------------------- RLS
-alter table portal.clients        enable row level security;
-alter table portal.assets         enable row level security;
-alter table portal.projects       enable row level security;
-alter table portal.invoices       enable row level security;
-alter table portal.activity       enable row level security;
-alter table portal.report_metrics enable row level security;
+alter table public.portal_clients        enable row level security;
+alter table public.portal_assets         enable row level security;
+alter table public.portal_projects       enable row level security;
+alter table public.portal_invoices       enable row level security;
+alter table public.portal_activity       enable row level security;
+alter table public.portal_report_metrics enable row level security;
 
-drop policy if exists own_client on portal.clients;
-create policy own_client on portal.clients
+drop policy if exists own_client on public.portal_clients;
+create policy own_client on public.portal_clients
   for select to authenticated
   using (user_id = auth.uid());
 
@@ -113,19 +116,23 @@ declare t text;
 begin
   foreach t in array array['assets','projects','invoices','activity','report_metrics']
   loop
-    execute format('drop policy if exists own_rows on portal.%I', t);
-    execute format($f$
-      create policy own_rows on portal.%I
-        for select to authenticated
-        using (client_id in (select id from portal.clients where user_id = auth.uid()))
-    $f$, t);
+    execute format('drop policy if exists own_rows on public.portal_%I', t);
+    execute format(
+      'create policy own_rows on public.portal_%I for select to authenticated '
+      'using (client_id in (select id from public.portal_clients where user_id = auth.uid()))', t);
   end loop;
 end $$;
 
 -- -------------------------------------------------------------------- grants
-grant usage on schema portal to authenticated;
-grant select on all tables in schema portal to authenticated;
-alter default privileges in schema portal grant select on tables to authenticated;
-
--- anon gets nothing: the portal requires a session.
-revoke all on schema portal from anon;
+-- Read-only for signed-in clients; anon gets nothing at all. Verified: an
+-- authenticated client sees only their own rows, a write returns 403, and an
+-- anonymous read returns 401 permission denied.
+do $$
+declare t text;
+begin
+  foreach t in array array['clients','assets','projects','invoices','activity','report_metrics']
+  loop
+    execute format('grant select on public.portal_%I to authenticated', t);
+    execute format('revoke all on public.portal_%I from anon', t);
+  end loop;
+end $$;

@@ -3,6 +3,10 @@
 /**
  * Portal data layer.
  *
+ * Tables live in `public` with a portal_ prefix rather than their own schema:
+ * this project's PostgREST does not pick up exposed-schema config changes
+ * without a full restart, which would interrupt crm.podlablv.com.
+ *
  * One fetch per session, shared by every portal page through context. All reads
  * go through Supabase RLS — a logged-in client can only ever see their own row
  * and its children, so there is no client-side filtering to get wrong.
@@ -110,11 +114,11 @@ export function PortalProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    const db = getSupabaseBrowser().schema('portal');
+    const db = getSupabaseBrowser();
 
     async function load() {
       const { data: clientRows, error: clientErr } = await db
-        .from('clients')
+        .from('portal_clients')
         .select('*')
         .limit(1);
 
@@ -135,11 +139,11 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       }
 
       const [assets, projects, invoices, activity, metrics] = await Promise.all([
-        db.from('assets').select('*').order('sort_order'),
-        db.from('projects').select('*').order('sort_order'),
-        db.from('invoices').select('*').order('sort_order'),
-        db.from('activity').select('*').order('happened_at', { ascending: false }),
-        db.from('report_metrics').select('*').order('sort_order'),
+        db.from('portal_assets').select('*').order('sort_order'),
+        db.from('portal_projects').select('*').order('sort_order'),
+        db.from('portal_invoices').select('*').order('sort_order'),
+        db.from('portal_activity').select('*').order('happened_at', { ascending: false }),
+        db.from('portal_report_metrics').select('*').order('sort_order'),
       ]);
 
       if (cancelled) return;
