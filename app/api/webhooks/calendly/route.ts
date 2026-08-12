@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 const MONDAY_API_TOKEN = process.env.MONDAY_API_TOKEN!
 const MONDAY_BOARD_ID = '18400694687'
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
 
 async function findMondayItemByEmail(email: string): Promise<string | null> {
   const query = `
@@ -110,15 +119,45 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No email in payload' }, { status: 400 })
   }
 
-  // Look up existing Monday.com item by email (if they filled Typeform first)
+  // Always save to Supabase — this is the source of truth regardless of Monday.com status
+  const normalizedEmail = email.toLowerCase().trim()
+  const supabase = getSupabase()
+  const { data: clientData } = await supabase
+    .from('clients')
+    .upsert(
+      {
+        first_name: name.split(' ')[0],
+        last_name: name.split(' ').slice(1).join(' ') || '',
+        email: normalizedEmail,
+        status: 'lead',
+        lead_source: 'calendly',
+      },
+      { onConflict: 'email' }
+    )
+    .select('id')
+    .single()
+
+  if (clientData?.id) {
+    await supabase.from('leads').insert({
+      client_id: clientData.id,
+      first_name: name.split(' ')[0],
+      last_name: name.split(' ').slice(1).join(' ') || '',
+      email: normalizedEmail,
+      source: 'calendly',
+      source_detail: eventTypeName,
+      status: 'call_booked',
+      tags: ['calendly', 'video-sales-lab'],
+      raw_responses: { name, email, eventTypeName, startTime },
+    })
+  }
+
+  // Attempt Monday.com update (best-effort, fails gracefully on Free plan)
   const existingItemId = await findMondayItemByEmail(email)
 
   if (existingItemId) {
-    // Update existing lead to "Call Booked"
     await updateMondayItemStatus(existingItemId, 'Call Booked')
     return NextResponse.json({ ok: true, action: 'updated', mondayItemId: existingItemId })
   } else {
-    // No prior Typeform submission — create a new item for this direct Calendly booking
     const result = await createMondayItemForBooking(name, email, eventTypeName, startTime)
     const mondayItemId = result?.data?.create_item?.id ?? null
     return NextResponse.json({ ok: true, action: 'created', mondayItemId })
