@@ -3,6 +3,25 @@ import { createClient } from '@supabase/supabase-js'
 
 const MONDAY_API_TOKEN = process.env.MONDAY_API_TOKEN!
 const MONDAY_BOARD_ID = '18400694687'
+const TYPEFORM_WEBHOOK_SECRET = process.env.TYPEFORM_WEBHOOK_SECRET
+
+// Typeform sends HMAC-SHA256 signature as "sha256=<hex>" in Typeform-Signature header
+async function verifyTypeformSignature(rawBody: string, signature: string, secret: string): Promise<boolean> {
+  if (!signature.startsWith('sha256=')) return false
+  const receivedHex = signature.slice(7)
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  )
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(rawBody))
+  const expected = Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+  return expected === receivedHex
+}
 
 function getSupabase() {
   return createClient(
@@ -50,9 +69,19 @@ async function createMondayItem(name: string, columnValues: Record<string, unkno
 }
 
 export async function POST(request: NextRequest) {
+  const rawBody = await request.text()
+  const signature = request.headers.get('typeform-signature') ?? ''
+
+  if (TYPEFORM_WEBHOOK_SECRET) {
+    const valid = await verifyTypeformSignature(rawBody, signature, TYPEFORM_WEBHOOK_SECRET)
+    if (!valid) {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+    }
+  }
+
   let body: Record<string, unknown>
   try {
-    body = await request.json()
+    body = JSON.parse(rawBody)
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
