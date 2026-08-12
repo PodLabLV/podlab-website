@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
           first_name: name.split(' ')[0],
           last_name: name.split(' ').slice(1).join(' ') || '',
           email: normalizedEmail,
-          company_name: company || null,
+          company_name: company || '',
           status: 'lead',
           lead_source: 'vsl_typeform',
         },
