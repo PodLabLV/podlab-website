@@ -94,13 +94,16 @@ export async function POST(request: NextRequest) {
   }
 
   const payload = body.payload as Record<string, unknown>
-  const invitee = payload?.invitee as Record<string, unknown>
   const scheduledEvent = payload?.scheduled_event as Record<string, unknown>
-  const eventTypeDetails = payload?.event_type as Record<string, unknown>
 
-  const name = (invitee?.name as string) ?? 'Unknown'
-  const email = (invitee?.email as string) ?? ''
-  const eventTypeName = (eventTypeDetails?.name as string) ?? 'Discovery Call'
+  // Support Calendly v2 (email/name at payload root) and v1 (nested under payload.invitee)
+  const inviteeLegacy = payload?.invitee as Record<string, unknown> | undefined
+  const name = (payload?.name as string) ?? (inviteeLegacy?.name as string) ?? 'Unknown'
+  const email = (payload?.email as string) ?? (inviteeLegacy?.email as string) ?? ''
+
+  // Event type name: v2 uses scheduled_event.name, v1 used payload.event_type.name
+  const eventTypeDetailsLegacy = payload?.event_type as Record<string, unknown> | undefined
+  const eventTypeName = (scheduledEvent?.name as string) ?? (eventTypeDetailsLegacy?.name as string) ?? 'Discovery Call'
   const startTime = (scheduledEvent?.start_time as string) ?? new Date().toISOString()
 
   if (!email) {
