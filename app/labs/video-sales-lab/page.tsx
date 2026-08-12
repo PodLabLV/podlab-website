@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowRight, Check, Video, Users, TrendingUp } from 'lucide-react';
 import type { Metadata } from 'next';
 import TypeformEmbed from './TypeformEmbed';
+import CalendlyButton from './CalendlyButton';
 
 // Set via NEXT_PUBLIC_VSL_TYPEFORM_ID in environment variables
 const TYPEFORM_FORM_ID = process.env.NEXT_PUBLIC_VSL_TYPEFORM_ID || 'YOUR_FORM_ID';
@@ -83,15 +84,13 @@ export default function VideoSalesLabFunnelPage() {
               For $1M–$8M founders spending 20+ hours a week on repetitive sales conversations.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
-                href="https://calendly.com/podlablv/strategy-call"
-                target="_blank"
-                rel="noopener noreferrer"
+              <CalendlyButton
+                url="https://calendly.com/podlablv/strategy-call"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all text-lg"
               >
                 Book a Strategy Call
                 <ArrowRight className="h-5 w-5" />
-              </a>
+              </CalendlyButton>
               <a
                 href="#apply"
                 className="inline-flex items-center gap-2 px-8 py-4 border border-accent/40 text-accent font-semibold rounded-lg hover:border-accent hover:bg-accent/5 transition-all text-lg"
@@ -190,15 +189,13 @@ export default function VideoSalesLabFunnelPage() {
               <div className="text-center">
                 <p className="text-4xl font-bold text-accent mb-2">$10,000</p>
                 <p className="text-text-secondary mb-8">One-time investment. Evergreen assets.</p>
-                <a
-                  href="https://calendly.com/podlablv/strategy-call"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <CalendlyButton
+                  url="https://calendly.com/podlablv/strategy-call"
                   className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"
                 >
                   Book Your Strategy Call
                   <ArrowRight className="h-5 w-5" />
-                </a>
+                </CalendlyButton>
               </div>
             </div>
           </div>
@@ -231,15 +228,13 @@ export default function VideoSalesLabFunnelPage() {
             <p className="text-xl text-text-secondary max-w-2xl mx-auto mb-10">
               Spots are limited — we only take clients who are ready to execute. Book your call to see if VideoSalesLab is the right fit.
             </p>
-            <a
-              href="https://calendly.com/podlablv/strategy-call"
-              target="_blank"
-              rel="noopener noreferrer"
+            <CalendlyButton
+              url="https://calendly.com/podlablv/strategy-call"
               className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"
             >
               Book a Strategy Call
               <ArrowRight className="h-5 w-5" />
-            </a>
+            </CalendlyButton>
           </div>
         </section>
       </div>

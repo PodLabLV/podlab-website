@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
+import CalendlyButton from './CalendlyButton';
 
 interface TypeformEmbedProps {
   formId: string;
@@ -23,7 +24,19 @@ function fireGA4Event(eventName: string, params: Record<string, unknown>) {
   }
 }
 
+function getUtmParams(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  const p = new URLSearchParams(window.location.search);
+  const result: Record<string, string> = {};
+  for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content']) {
+    const val = p.get(key);
+    if (val) result[key] = val;
+  }
+  return result;
+}
+
 const PLACEHOLDER_ID = 'YOUR_FORM_ID';
+const CALENDLY_URL = 'https://calendly.com/podlablv/strategy-call';
 
 export default function TypeformEmbed({ formId }: TypeformEmbedProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -43,7 +56,10 @@ export default function TypeformEmbed({ formId }: TypeformEmbedProps) {
         fireGA4Event('generate_lead', {
           event_category: 'VideoSalesLab',
           event_label: 'Typeform Submit',
+          lead_source: 'typeform',
+          page_path: '/labs/video-sales-lab',
           value: 10000,
+          ...getUtmParams(),
         });
       }
     }
@@ -61,7 +77,11 @@ export default function TypeformEmbed({ formId }: TypeformEmbedProps) {
         fireGA4Event('book_appointment', {
           event_category: 'VideoSalesLab',
           event_label: 'Calendly Booking',
+          lead_source: 'calendly',
+          meeting_type: 'pre_interview',
+          page_path: '/labs/video-sales-lab',
           value: 10000,
+          ...getUtmParams(),
         });
       }
     }
@@ -80,15 +100,13 @@ export default function TypeformEmbed({ formId }: TypeformEmbedProps) {
         <p className="text-text-secondary text-lg max-w-md">
           Ready to duplicate yourself on camera? Book a 30-minute strategy call — we&apos;ll confirm fit and outline your filming day.
         </p>
-        <a
-          href="https://calendly.com/podlablv/strategy-call"
-          target="_blank"
-          rel="noopener noreferrer"
+        <CalendlyButton
+          url={CALENDLY_URL}
           className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all text-lg"
         >
           Schedule Your Strategy Call
           <ArrowRight className="h-5 w-5" />
-        </a>
+        </CalendlyButton>
       </div>
     );
   }
