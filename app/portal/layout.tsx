@@ -10,6 +10,8 @@ import { PortalProvider, usePortal } from '@/lib/portal-data';
 const portalNav = [
   { href: '/portal', label: 'Dashboard', d: 'M4 5h6v6H4zM14 5h6v4h-6zM14 13h6v6h-6zM4 15h6v4H4z' },
   { href: '/portal/document', label: 'Clarity Document', d: 'M6 3h9l5 5v13H6zM15 3v5h5M9 12h8M9 16h5' },
+  { href: '/portal/intake', label: 'Intake', d: 'M4 5h16v14H4zM8 9h8M8 13h8M8 17h4' },
+  { href: '/portal/delivery', label: 'Delivery', d: 'M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10' },
   { href: '/portal/actions', label: 'Action Items', d: 'M4 6h2l1.5 1.5L11 4M4 12h2l1.5 1.5L11 10M4 18h2l1.5 1.5L11 16M14 6h6M14 12h6M14 18h6' },
   { href: '/portal/deliverables', label: 'Deliverables', d: 'M4 7l8-4 8 4v10l-8 4-8-4zM4 7l8 4 8-4M12 11v10' },
   { href: '/portal/progress', label: 'Progress', d: 'M4 18V9M10 18V5M16 18v-6M22 18H2' },

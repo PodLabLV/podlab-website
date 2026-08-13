@@ -96,6 +96,33 @@ export interface PortalActionItem {
   sort_order: number;
 }
 
+export interface PortalIntakeItem {
+  id: string;
+  section: string;
+  prompt: string;
+  help: string | null;
+  kind: string;
+  options: string[] | null;
+  required: boolean;
+  sort_order: number;
+}
+
+export interface PortalIntakeAnswer {
+  item_id: string;
+  value: string | null;
+}
+
+export interface PortalPhase {
+  id: string;
+  title: string;
+  detail: string | null;
+  status: string;
+  owner: string | null;
+  due_label: string | null;
+  sort_order: number;
+  updated_at: string | null;
+}
+
 export interface PortalMetric {
   id: string;
   period_label: string;
@@ -115,6 +142,12 @@ interface PortalData {
   metrics: PortalMetric[];
   comments: PortalComment[];
   actionItems: PortalActionItem[];
+  intakeItems: PortalIntakeItem[];
+  answers: Record<string, string>;
+  phases: PortalPhase[];
+  isStaff: boolean;
+  setAnswer: (itemId: string, value: string) => void;
+  setPhaseStatus: (id: string, status: string) => void;
   /** Optimistic local updates, then a background refetch. */
   setActionItem: (id: string, done: boolean) => void;
   addComment: (comment: PortalComment) => void;
@@ -132,10 +165,19 @@ const EMPTY: PortalData = {
   metrics: [],
   comments: [],
   actionItems: [],
+  intakeItems: [],
+  answers: {},
+  phases: [],
+  isStaff: false,
+  setAnswer: () => {},
+  setPhaseStatus: () => {},
   setActionItem: () => {},
   addComment: () => {},
   accessToken: null,
 };
+
+/** Display-only hint. Every write re-checks staff status server-side. */
+const STAFF_EMAILS = ['info@podlablv.com'];
 
 const PortalContext = createContext<PortalData>(EMPTY);
 
@@ -159,6 +201,17 @@ export function PortalProvider({ children }: { children: ReactNode }) {
 
   const addComment = useCallback((comment: PortalComment) => {
     setData((prev) => ({ ...prev, comments: [comment, ...prev.comments] }));
+  }, []);
+
+  const setAnswer = useCallback((itemId: string, value: string) => {
+    setData((prev) => ({ ...prev, answers: { ...prev.answers, [itemId]: value } }));
+  }, []);
+
+  const setPhaseStatus = useCallback((id: string, status: string) => {
+    setData((prev) => ({
+      ...prev,
+      phases: prev.phases.map((p) => (p.id === id ? { ...p, status } : p)),
+    }));
   }, []);
 
   useEffect(() => {
@@ -187,7 +240,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const [assets, projects, invoices, activity, metrics, comments, actions, session] =
+      const [assets, projects, invoices, activity, metrics, comments, actions, session,
+             intake, intakeAnswers, phases] =
         await Promise.all([
           db.from('portal_assets').select('*').order('sort_order'),
           db.from('portal_projects').select('*').order('sort_order'),
@@ -197,6 +251,9 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           db.from('portal_comments').select('*').order('created_at', { ascending: false }),
           db.from('portal_action_items').select('*').order('sort_order'),
           db.auth.getSession(),
+          db.from('portal_intake_items').select('*').order('sort_order'),
+          db.from('portal_intake_answers').select('item_id, value'),
+          db.from('portal_delivery_phases').select('*').order('sort_order'),
         ]);
 
       if (cancelled) return;
@@ -213,8 +270,19 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         comments: (comments.data as PortalComment[]) ?? [],
         actionItems: (actions.data as PortalActionItem[]) ?? [],
         accessToken: session.data.session?.access_token ?? null,
+        intakeItems: (intake.data as PortalIntakeItem[]) ?? [],
+        answers: Object.fromEntries(
+          ((intakeAnswers.data as PortalIntakeAnswer[]) ?? []).map((a) => [a.item_id, a.value ?? '']),
+        ),
+        phases: (phases.data as PortalPhase[]) ?? [],
+        // Staff is asserted by the server on every write; this only decides
+        // whether the edit controls render.
+        isStaff: Boolean(session.data.session?.user?.email &&
+          STAFF_EMAILS.includes(session.data.session.user.email.toLowerCase())),
         setActionItem,
         addComment,
+        setAnswer,
+        setPhaseStatus,
       });
     }
 
@@ -222,7 +290,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [setActionItem, addComment]);
+  }, [setActionItem, addComment, setAnswer, setPhaseStatus]);
 
   return <PortalContext.Provider value={data}>{children}</PortalContext.Provider>;
 }

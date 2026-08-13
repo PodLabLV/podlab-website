@@ -21,6 +21,8 @@ export interface PortalCaller {
   businessName: string;
   displayName: string;
   crmLeadId: string | null;
+  email: string;
+  isStaff: boolean;
 }
 
 /**
@@ -52,7 +54,44 @@ export async function resolveCaller(
     businessName: client.business_name,
     displayName: name || client.business_name,
     crmLeadId: client.crm_lead_id ?? null,
+    email: userData.user.email ?? '',
+    isStaff: await isStaff(db, userData.user.email),
   };
+}
+
+/**
+ * Staff check, server-side only. The browser never gets to assert this - a client
+ * session that claims to be staff is still just a client session.
+ */
+export async function isStaff(db: SupabaseClient, email?: string | null): Promise<boolean> {
+  if (!email) return false;
+  const { data } = await db
+    .from('portal_staff')
+    .select('email')
+    .eq('email', email.toLowerCase())
+    .maybeSingle();
+  return Boolean(data);
+}
+
+/**
+ * Resolve a staff caller acting on any client. Returns null unless the bearer token
+ * belongs to a staff email.
+ */
+export async function resolveStaff(
+  req: Request,
+  db: SupabaseClient,
+): Promise<{ email: string; name: string } | null> {
+  const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
+  if (!token) return null;
+  const { data, error } = await db.auth.getUser(token);
+  if (error || !data?.user?.email) return null;
+  if (!(await isStaff(db, data.user.email))) return null;
+  const { data: row } = await db
+    .from('portal_staff')
+    .select('name')
+    .eq('email', data.user.email.toLowerCase())
+    .maybeSingle();
+  return { email: data.user.email, name: row?.name ?? data.user.email };
 }
 
 /** Best-effort Slack ping. A webhook failure must never fail the client's action. */

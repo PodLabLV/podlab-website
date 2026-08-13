@@ -7,6 +7,8 @@ import { Card, StatCard, EmptyState } from '@/components/portal/Shared';
 const QUICK_LINKS = [
   { href: '/portal/document', label: 'Clarity Document', body: 'Read your strategy document and request changes.' },
   { href: '/portal/actions', label: 'Action Items', body: 'What to do first. Tick them off as you go.' },
+  { href: '/portal/intake', label: 'Intake', body: 'What we need from you. Saves as you type.' },
+  { href: '/portal/delivery', label: 'Delivery', body: 'Every phase of the build and where it stands.' },
   { href: '/portal/deliverables', label: 'Deliverables', body: 'Every file we have produced for you.' },
   { href: '/portal/progress', label: 'Progress', body: 'Where each project stands right now.' },
   { href: '/portal/reports', label: 'Reports', body: 'Performance once campaigns are running.' },
