@@ -26,7 +26,7 @@ export default function PrivacyPolicyPage() {
         <section className="relative z-10 pt-32 pb-24 px-6">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-black mb-4 font-display">PRIVACY POLICY</h1>
-            <p className="text-text-secondary mb-12">Last updated: April 2, 2026</p>
+            <p className="text-text-secondary mb-12">Last updated: August 12, 2026</p>
 
             <div className="glass-card p-8 md:p-12 space-y-10 text-text-secondary leading-relaxed">
 
@@ -56,7 +56,7 @@ export default function PrivacyPolicyPage() {
                 <h3 className="text-lg font-semibold text-white mt-6 mb-2">Information Collected Automatically</h3>
                 <ul className="list-disc ml-6 space-y-2">
                   <li><strong className="text-white">Analytics:</strong> Pages visited, time on site, referral source, device type, browser type (via Google Analytics and Microsoft Clarity)</li>
-                  <li><strong className="text-white">Cookies:</strong> Session cookies, analytics cookies, and advertising cookies (see Section 6)</li>
+                  <li><strong className="text-white">Cookies:</strong> Session cookies, analytics cookies, and advertising cookies (see Section 7)</li>
                   <li><strong className="text-white">Log data:</strong> IP address, access times, pages viewed</li>
                 </ul>
               </div>
@@ -76,7 +76,17 @@ export default function PrivacyPolicyPage() {
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">4. How We Share Your Information</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">4. SMS / Text Messaging</h2>
+                <p className="mb-3">
+                  If you provide your mobile number and opt in, PodLab LV may send you text messages related to your inquiry, including appointment reminders, scheduling confirmations, and follow-up about services you asked about. Message frequency varies. Message and data rates may apply. Reply <strong className="text-white">STOP</strong> to opt out at any time, or <strong className="text-white">HELP</strong> for assistance.
+                </p>
+                <p>
+                  <strong className="text-white">No mobile information will be shared with third parties or affiliates for marketing or promotional purposes.</strong> Information sharing to subcontractors in support services, such as customer service, is permitted. All other use case categories exclude text messaging originator opt-in data and consent; this information will not be shared with any third parties.
+                </p>
+              </div>
+
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-4">5. How We Share Your Information</h2>
                 <p className="mb-3">We do not sell your personal information. We may share data with:</p>
                 <ul className="list-disc ml-6 space-y-2">
                   <li><strong className="text-white">Service providers:</strong> Vercel (hosting), Supabase (database), Calendly (scheduling), Stripe (payments), Resend (email), Google (analytics), Microsoft (analytics), Meta (advertising)</li>
@@ -86,14 +96,14 @@ export default function PrivacyPolicyPage() {
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">5. Data Security</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">6. Data Security</h2>
                 <p>
                   We use industry-standard security measures including encrypted connections (SSL/TLS), secure database hosting with row-level security, and access controls. However, no method of transmission over the Internet is 100% secure, and we cannot guarantee absolute security.
                 </p>
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">6. Cookies & Tracking</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">7. Cookies &amp; Tracking</h2>
                 <p className="mb-3">Our site uses the following tracking technologies:</p>
                 <ul className="list-disc ml-6 space-y-2">
                   <li><strong className="text-white">Google Tag Manager (GTM-PMJQL5VL):</strong> Manages analytics and advertising tags</li>
@@ -107,7 +117,7 @@ export default function PrivacyPolicyPage() {
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">7. Your Rights</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">8. Your Rights</h2>
                 <p className="mb-3">Depending on your location, you may have the right to:</p>
                 <ul className="list-disc ml-6 space-y-2">
                   <li>Access the personal data we hold about you</li>
@@ -122,42 +132,42 @@ export default function PrivacyPolicyPage() {
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">8. California Privacy Rights (CCPA)</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">9. California Privacy Rights (CCPA)</h2>
                 <p>
                   If you are a California resident, you have the right to know what personal information we collect, request deletion, and opt out of the sale of your data. PodLab does not sell personal information. To make a request, contact <a href="mailto:info@podlablv.com" className="text-accent hover:underline">info@podlablv.com</a>.
                 </p>
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">9. Data Retention</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">10. Data Retention</h2>
                 <p>
                   We retain your personal information for as long as necessary to provide our services, comply with legal obligations, resolve disputes, and enforce our agreements. Assessment data and lead information is retained indefinitely unless you request deletion.
                 </p>
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">10. Third-Party Links</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">11. Third-Party Links</h2>
                 <p>
                   Our site may contain links to third-party websites (YouTube, Calendly, social media). We are not responsible for the privacy practices of these sites. We encourage you to review their privacy policies.
                 </p>
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">11. Children&apos;s Privacy</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">12. Children&apos;s Privacy</h2>
                 <p>
                   Our services are not directed to individuals under 18. We do not knowingly collect personal information from children. If you believe we have collected data from a minor, please contact us immediately.
                 </p>
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">12. Changes to This Policy</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">13. Changes to This Policy</h2>
                 <p>
                   We may update this Privacy Policy from time to time. Changes will be posted on this page with an updated &quot;Last updated&quot; date. Continued use of our site after changes constitutes acceptance of the updated policy.
                 </p>
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">13. Contact Us</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">14. Contact Us</h2>
                 <p>
                   If you have questions about this Privacy Policy, contact us at:
                 </p>
