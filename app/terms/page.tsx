@@ -26,7 +26,7 @@ export default function TermsOfServicePage() {
         <section className="relative z-10 pt-32 pb-24 px-6">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-black mb-4 font-display">TERMS OF SERVICE</h1>
-            <p className="text-text-secondary mb-12">Last updated: April 2, 2026</p>
+            <p className="text-text-secondary mb-12">Last updated: August 13, 2026</p>
 
             <div className="glass-card p-8 md:p-12 space-y-10 text-text-secondary leading-relaxed">
 
@@ -115,7 +115,22 @@ export default function TermsOfServicePage() {
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">8. Affiliate Program (Beaker Program)</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">8. SMS / Text Messaging</h2>
+                <p className="mb-3">
+                  By providing your mobile phone number and opting in, you consent to receive text messages from PodLab LV related to your inquiry, including appointment reminders, scheduling confirmations, and follow-up about services you requested. Message frequency varies. Message and data rates may apply.
+                </p>
+                <ul className="list-disc ml-6 space-y-2">
+                  <li>Reply <strong className="text-white">STOP</strong> at any time to opt out of text messages</li>
+                  <li>Reply <strong className="text-white">HELP</strong> for assistance</li>
+                  <li>Opt-in is not a condition of purchasing any goods or services</li>
+                </ul>
+                <p className="mt-3">
+                  <strong className="text-white">No mobile information will be shared with third parties or affiliates for marketing or promotional purposes.</strong> Text messaging originator opt-in data and consent will not be shared with any third parties. For full details, see our <Link href="/privacy" className="text-accent hover:underline">Privacy Policy</Link>.
+                </p>
+              </div>
+
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-4">9. Affiliate Program (Beaker Program)</h2>
                 <p className="mb-3">
                   Participation in our affiliate program is subject to separate affiliate terms. Key points:
                 </p>
@@ -128,49 +143,49 @@ export default function TermsOfServicePage() {
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">9. Third-Party Services</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">10. Third-Party Services</h2>
                 <p>
                   Our site integrates with third-party services including Calendly, YouTube, Stripe, and social media platforms. Your use of these services is subject to their respective terms. PodLab is not responsible for third-party service availability, content, or practices.
                 </p>
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">10. Disclaimer of Warranties</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">11. Disclaimer of Warranties</h2>
                 <p>
                   Our website and services are provided &quot;as is&quot; without warranties of any kind, either express or implied. We do not guarantee that our website will be uninterrupted, error-free, or free of viruses. Results from our services vary and are not guaranteed — your success depends on multiple factors including your implementation, market conditions, and business fundamentals.
                 </p>
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">11. Limitation of Liability</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">12. Limitation of Liability</h2>
                 <p>
                   To the maximum extent permitted by law, PodLab LV shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of our website or services. Our total liability for any claim shall not exceed the amount you paid to PodLab in the twelve (12) months preceding the claim.
                 </p>
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">12. Indemnification</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">13. Indemnification</h2>
                 <p>
                   You agree to indemnify and hold harmless PodLab LV, its officers, employees, and agents from any claims, damages, losses, or expenses arising from your use of our website or violation of these terms.
                 </p>
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">13. Governing Law</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">14. Governing Law</h2>
                 <p>
                   These Terms are governed by the laws of the State of Nevada, without regard to conflict of law principles. Any disputes shall be resolved in the courts located in Clark County, Nevada.
                 </p>
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">14. Changes to Terms</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">15. Changes to Terms</h2>
                 <p>
                   We reserve the right to update these Terms at any time. Changes will be posted on this page with an updated date. Continued use of the site constitutes acceptance of modified terms.
                 </p>
               </div>
 
               <div>
-                <h2 className="text-2xl font-bold text-white mb-4">15. Contact</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">16. Contact</h2>
                 <p>
                   Questions about these Terms? Contact us:
                 </p>
