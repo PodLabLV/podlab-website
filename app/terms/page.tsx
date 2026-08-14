@@ -125,7 +125,7 @@ export default function TermsOfServicePage() {
                   <li>Opt-in is not a condition of purchasing any goods or services</li>
                 </ul>
                 <p className="mt-3">
-                  <strong className="text-white">No mobile information will be shared with third parties or affiliates for marketing or promotional purposes.</strong> Text messaging originator opt-in data and consent will not be shared with any third parties. For full details, see our <Link href="/privacy" className="text-accent hover:underline">Privacy Policy</Link>.
+                  <strong className="text-white">Mobile information and messaging consent will not be shared with third parties or affiliates for marketing or promotional purposes.</strong> Text messaging originator opt-in data and consent will not be shared with any third parties. For full details, see our <Link href="/privacy" className="text-accent hover:underline">Privacy Policy</Link>.
                 </p>
               </div>
 

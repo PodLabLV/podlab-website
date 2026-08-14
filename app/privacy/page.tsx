@@ -26,7 +26,7 @@ export default function PrivacyPolicyPage() {
         <section className="relative z-10 pt-32 pb-24 px-6">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-black mb-4 font-display">PRIVACY POLICY</h1>
-            <p className="text-text-secondary mb-12">Last updated: August 12, 2026</p>
+            <p className="text-text-secondary mb-12">Last updated: August 13, 2026</p>
 
             <div className="glass-card p-8 md:p-12 space-y-10 text-text-secondary leading-relaxed">
 
@@ -81,7 +81,7 @@ export default function PrivacyPolicyPage() {
                   If you provide your mobile number and opt in, PodLab LV may send you text messages related to your inquiry, including appointment reminders, scheduling confirmations, and follow-up about services you asked about. Message frequency varies. Message and data rates may apply. Reply <strong className="text-white">STOP</strong> to opt out at any time, or <strong className="text-white">HELP</strong> for assistance.
                 </p>
                 <p>
-                  <strong className="text-white">No mobile information will be shared with third parties or affiliates for marketing or promotional purposes.</strong> Information sharing to subcontractors in support services, such as customer service, is permitted. All other use case categories exclude text messaging originator opt-in data and consent; this information will not be shared with any third parties.
+                  <strong className="text-white">Mobile information and messaging consent will not be shared with third parties or affiliates for marketing or promotional purposes.</strong> Information sharing to subcontractors in support services, such as customer service, is permitted. All other use case categories exclude text messaging originator opt-in data and consent; this information will not be shared with any third parties.
                 </p>
               </div>
 
