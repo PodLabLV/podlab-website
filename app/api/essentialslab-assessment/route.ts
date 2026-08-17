@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
 import { createClient } from '@supabase/supabase-js'
+import { consentRecord, consentTags } from '@/lib/smsConsent'
 import { notifyTeam, notifyEmail, buildEmailHtml } from '@/lib/notifications'
 import { sanitize } from '@/lib/sanitize'
 
@@ -23,6 +24,7 @@ interface EssentialsLabPayload {
   yearsInBusiness?: string
   revenueBand: string
   phone?: string
+  sms_consent?: boolean
   // Step 2 — What you sell & to whom
   whatYouDo?: string
   coreOffer?: string
@@ -112,6 +114,8 @@ export async function POST(request: NextRequest) {
     const clientId = clientData.id
 
     // 2. Insert into leads table (columns matched to the Bottleneck route — no invented columns)
+    const consent = consentRecord(phone, body.sms_consent, 'website/essentialslab-assessment')
+
     const { error: leadError } = await supabase.from('leads').insert({
       client_id: clientId,
       first_name: firstName,
@@ -122,11 +126,12 @@ export async function POST(request: NextRequest) {
       source: 'website',
       source_detail: 'EssentialsLab Assessment',
       status: 'new',
-      tags: ['assessment', 'essentialslab', 'website',
+      tags: ['assessment', 'essentialslab', 'website', ...consentTags(consent),
         ...(typeof body.utm_source === 'string' && body.utm_source ? [`src:${sanitize(body.utm_source)}`] : []),
         ...(typeof body.utm_content === 'string' && body.utm_content ? [`card:${sanitize(body.utm_content)}`] : []),
       ],
       raw_responses: {
+        ...consent,
         utm_source: sanitize(body.utm_source) || null,
         utm_medium: sanitize(body.utm_medium) || null,
         utm_content: sanitize(body.utm_content) || null,

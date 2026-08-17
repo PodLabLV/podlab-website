@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Navigation from '@/components/Navigation';
 import HomePageWrapper from '@/components/HomePageWrapper';
 import PodIcon, { PodIconName } from '@/components/PodIcon';
+import SmsConsent from '@/components/SmsConsent';
 import Link from 'next/link';
 
 const revenueOptions = [
@@ -40,6 +41,7 @@ interface FormData {
   podcastExperience: string;
   howDidYouHear: string;
   anythingElse: string;
+  sms_consent: boolean;
 }
 
 const initialFormData: FormData = {
@@ -59,6 +61,7 @@ const initialFormData: FormData = {
   podcastExperience: '',
   howDidYouHear: '',
   anythingElse: '',
+  sms_consent: false,
 };
 
 export default function PodcastApplyPage() {
@@ -197,13 +200,24 @@ export default function PodcastApplyPage() {
                     onChange={handleChange}
                     required
                   />
-                  <Field
-                    label="Phone"
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleChange}
-                  />
+                  <div>
+                    <Field
+                      label="Phone"
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleChange}
+                    />
+                    {/* Only shown once there's a number to consent about. */}
+                    {formData.phone.trim() && (
+                      <div className="mt-3">
+                        <SmsConsent
+                          checked={formData.sms_consent}
+                          onChange={(v) => setFormData((prev) => ({ ...prev, sms_consent: v }))}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Company Row */}

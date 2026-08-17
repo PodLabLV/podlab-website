@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Navigation from '@/components/Navigation';
+import SmsConsent from '@/components/SmsConsent';
 import HomePageWrapper from '@/components/HomePageWrapper';
 
 /* ───────────── constants ───────────── */
@@ -107,6 +108,8 @@ export default function BeakerApplyPage() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState<FormData>(emptyForm);
   const [beakerId, setBeakerId] = useState('');
+  // Outside FormData on purpose: set() maps every key to a string event value.
+  const [smsConsent, setSmsConsent] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [typedSignature, setTypedSignature] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -171,6 +174,9 @@ export default function BeakerApplyPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          // Only meaningful alongside a number; sending it without one would put
+          // a consent record on a contact we can't text anyway.
+          sms_consent: Boolean(form.phone.trim() && smsConsent),
           beakerId,
           contractSigned: true,
           contractSignedDate: new Date().toISOString(),
@@ -333,6 +339,12 @@ export default function BeakerApplyPage() {
                   <div>
                     <label className={labelClass}>Phone</label>
                     <input className={inputClass} type="tel" value={form.phone} onChange={set('phone')} placeholder="(optional)" />
+                    {/* Only shown once there's a number to consent about. */}
+                    {form.phone.trim() && (
+                      <div className="mt-3">
+                        <SmsConsent checked={smsConsent} onChange={setSmsConsent} />
+                      </div>
+                    )}
                   </div>
                 </div>
 

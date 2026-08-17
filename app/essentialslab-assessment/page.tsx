@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Navigation from '@/components/Navigation';
+import SmsConsent from '@/components/SmsConsent';
 
 // ============================================
 // ESSENTIALSLAB ASSESSMENT — SHORT FORM
@@ -18,6 +19,7 @@ interface FormState {
   phone: string;
   revenueBand: string;
   biggestBottleneck: string;
+  smsConsent: boolean;
 }
 
 const INITIAL_STATE: FormState = {
@@ -27,6 +29,7 @@ const INITIAL_STATE: FormState = {
   phone: '',
   revenueBand: '',
   biggestBottleneck: '',
+  smsConsent: false,
 };
 
 // Formspree endpoint — instant-email backup capture (does NOT replace the
@@ -73,6 +76,9 @@ export default function EssentialsLabAssessmentPage() {
       phone: form.phone || undefined,
       revenueBand: form.revenueBand,
       biggestBottleneck: form.biggestBottleneck || undefined,
+      // Only meaningful alongside a number; sending it without one would put a
+      // consent record on a contact we can't text anyway.
+      sms_consent: Boolean(form.phone.trim() && form.smsConsent),
     };
 
     // Fire-and-forget: instant-email backup via Formspree. Never blocks or
@@ -87,6 +93,7 @@ export default function EssentialsLabAssessmentPage() {
           phone: form.phone || '',
           revenue: form.revenueBand,
           bottleneck: form.biggestBottleneck || '',
+          sms_consent: Boolean(form.phone.trim() && form.smsConsent) ? 'YES' : 'no',
           _subject: `New EssentialsLab Assessment: ${form.firstName} ${form.lastName} (${form.revenueBand})`,
         }),
       }).catch(() => {});
@@ -288,6 +295,15 @@ export default function EssentialsLabAssessmentPage() {
                     className={inputClass}
                     placeholder="(555) 123-4567"
                   />
+                  {/* Only shown once there's a number to consent about. */}
+                  {form.phone.trim() && (
+                    <div className="mt-3">
+                      <SmsConsent
+                        checked={form.smsConsent}
+                        onChange={(v) => update('smsConsent', v)}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="revenueBand" className={labelClass}>

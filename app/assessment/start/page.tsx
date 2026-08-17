@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navigation from "@/components/Navigation";
+import SmsConsent from '@/components/SmsConsent';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { captureUtm, getUtm } from '@/lib/utm';
 
@@ -592,6 +593,7 @@ export default function AssessmentPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [smsConsent, setSmsConsent] = useState(false);
   const [company, setCompany] = useState('');
   const [website, setWebsite] = useState('');
   const [password, setPassword] = useState('');
@@ -674,6 +676,9 @@ export default function AssessmentPage() {
       lastName,
       email,
       phone: phone || undefined,
+      // Only meaningful alongside a number; sending it without one would put a
+      // consent record on a contact we can't text anyway.
+      sms_consent: Boolean(phone.trim() && smsConsent),
       company: company || undefined,
       website: website || undefined,
       password: password || undefined,
@@ -898,6 +903,12 @@ export default function AssessmentPage() {
                       className="w-full px-4 py-3 bg-bg-secondary border-2 border-border rounded-xl text-white placeholder-text-tertiary focus:outline-none focus:border-accent transition-colors"
                       placeholder="(555) 123-4567"
                     />
+                    {/* Only shown once there's a number to consent about. */}
+                    {phone.trim() && (
+                      <div className="mt-3">
+                        <SmsConsent checked={smsConsent} onChange={setSmsConsent} />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="company" className="block text-sm font-medium text-text-secondary mb-2">

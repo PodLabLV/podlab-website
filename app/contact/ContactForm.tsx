@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import SmsConsent from '@/components/SmsConsent'
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -9,6 +10,7 @@ export default function ContactForm() {
     phone: '',
     company: '',
     message: '',
+    sms_consent: false,
   })
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
@@ -38,7 +40,7 @@ export default function ContactForm() {
       }
 
       setStatus('success')
-      setFormData({ name: '', email: '', phone: '', company: '', message: '' })
+      setFormData({ name: '', email: '', phone: '', company: '', message: '', sms_consent: false })
     } catch {
       setErrorMsg('Network error. Please check your connection and try again.')
       setStatus('error')
@@ -114,6 +116,16 @@ export default function ContactForm() {
             placeholder="(555) 123-4567"
             className="w-full px-4 py-3 bg-bg-secondary border border-border rounded-xl text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-colors"
           />
+          {/* Only shown once there's a number to consent about — an empty phone
+              field makes the disclosure noise rather than a choice. */}
+          {formData.phone.trim() && (
+            <div className="mt-3">
+              <SmsConsent
+                checked={formData.sms_consent}
+                onChange={(v) => setFormData((prev) => ({ ...prev, sms_consent: v }))}
+              />
+            </div>
+          )}
         </div>
         <div>
           <label htmlFor="company" className="block text-sm font-semibold text-text-secondary mb-2 uppercase tracking-wider">
