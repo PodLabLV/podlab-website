@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
 import { createClient } from '@supabase/supabase-js'
+import { consentRecord, consentTags } from '@/lib/smsConsent'
 import { notifyTeam, notifyEmail, buildEmailHtml } from '@/lib/notifications'
 import { sanitize } from '@/lib/sanitize'
 
@@ -18,6 +19,7 @@ interface AssetsLabIntakePayload {
   fullName: string
   email: string
   phone?: string
+  sms_consent?: boolean
   businessName: string
   website?: string
   yearsInBusiness?: string
@@ -124,6 +126,8 @@ export async function POST(request: NextRequest) {
 
     // 2. Insert into leads table — the entire deep intake persists in raw_responses
     //    so /assetslab can consume it. Columns matched to the EssentialsLab route.
+    const consent = consentRecord(phone, body.sms_consent, 'website/assetslab-intake')
+
     const { error: leadError } = await supabase.from('leads').insert({
       client_id: clientId,
       first_name: firstName,
@@ -134,11 +138,12 @@ export async function POST(request: NextRequest) {
       source: 'website',
       source_detail: 'AssetsLab Intake',
       status: 'new',
-      tags: ['intake', 'assetslab', 'website',
+      tags: ['intake', 'assetslab', 'website', ...consentTags(consent),
         ...(typeof body.utm_source === 'string' && body.utm_source ? [`src:${sanitize(body.utm_source)}`] : []),
         ...(typeof body.utm_content === 'string' && body.utm_content ? [`card:${sanitize(body.utm_content)}`] : []),
       ],
       raw_responses: {
+        ...consent,
         // Attribution
         utm_source: sanitize(body.utm_source) || null,
         utm_medium: sanitize(body.utm_medium) || null,

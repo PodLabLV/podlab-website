@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Navigation from '@/components/Navigation';
+import SmsConsent from '@/components/SmsConsent';
 
 // ============================================
 // ASSETSLAB INTAKE
@@ -36,6 +37,7 @@ interface FormState {
   fullName: string;
   email: string;
   phone: string;
+  smsConsent: boolean;
   businessName: string;
   website: string;
   yearsInBusiness: string;
@@ -73,6 +75,7 @@ const INITIAL_STATE: FormState = {
   fullName: '',
   email: '',
   phone: '',
+  smsConsent: false,
   businessName: '',
   website: '',
   yearsInBusiness: '',
@@ -167,6 +170,9 @@ export default function AssetsLabIntakePage() {
       fullName: form.fullName,
       email: form.email,
       phone: form.phone || undefined,
+      // Only meaningful alongside a number; sending it without one would put a
+      // consent record on a contact we can't text anyway.
+      sms_consent: Boolean(form.phone.trim() && form.smsConsent),
       businessName: form.businessName,
       website: form.website || undefined,
       yearsInBusiness: form.yearsInBusiness || undefined,
@@ -379,6 +385,15 @@ export default function AssetsLabIntakePage() {
                       className={inputClass}
                       placeholder="(555) 123-4567"
                     />
+                    {/* Only shown once there's a number to consent about. */}
+                    {form.phone.trim() && (
+                      <div className="mt-3">
+                        <SmsConsent
+                          checked={form.smsConsent}
+                          onChange={(v) => update('smsConsent', v)}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { consentRecord, consentTags } from '@/lib/smsConsent'
 import { notifyTeam, buildEmailHtml } from '@/lib/notifications'
 import { sanitize } from '@/lib/sanitize'
 import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
@@ -50,6 +51,8 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabase()
 
     // Save to leads table
+    const consent = consentRecord(phone, body.sms_consent, 'website/contact')
+
     const { error: dbError } = await supabase.from('leads').insert({
       first_name: name.trim(),
       email: email.trim().toLowerCase(),
@@ -58,8 +61,8 @@ export async function POST(request: NextRequest) {
       source: 'website',
       source_detail: 'Contact Form',
       status: 'new',
-      raw_data: { message: message.trim() },
-      tags: ['contact-form', 'website'],
+      raw_data: { message: message.trim(), ...consent },
+      tags: ['contact-form', 'website', ...consentTags(consent)],
     })
 
     if (dbError) {

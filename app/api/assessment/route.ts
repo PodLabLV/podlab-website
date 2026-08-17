@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse, after } from 'next/server'
 import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
 import { createClient } from '@supabase/supabase-js'
+import { consentRecord, consentTags } from '@/lib/smsConsent'
 import { notifyTeam, notifyEmail, buildEmailHtml } from '@/lib/notifications'
 import { buildResultsEmailHtml } from '@/lib/results-email'
 import { sanitize } from '@/lib/sanitize'
@@ -49,6 +50,7 @@ interface AssessmentPayload {
   lastName: string
   email: string
   phone?: string
+  sms_consent?: boolean
   company?: string
   website?: string
   password?: string
@@ -305,6 +307,7 @@ export async function POST(request: NextRequest) {
     // 5. Insert into leads table
     const utmSource = sanitize(body.utm_source) || ''
     const utmContent = sanitize(body.utm_content) || ''
+    const consent = consentRecord(body.phone, body.sms_consent, 'website/bottleneck-assessment')
     const { error: leadError } = await supabase
       .from('leads')
       .insert({
@@ -320,18 +323,19 @@ export async function POST(request: NextRequest) {
         score: totalScore,
         tags: [
           'assessment', 'bottleneck-assessment', 'website',
+          ...consentTags(consent),
           ...(utmSource ? [`src:${utmSource}`] : []),
           ...(utmContent ? [`via:${utmContent}`] : []),
         ],
-        raw_responses:
-          utmSource || utmContent || body.utm_medium || body.utm_campaign
-            ? {
-                utm_source: utmSource || null,
-                utm_medium: sanitize(body.utm_medium) || null,
-                utm_content: utmContent || null,
-                utm_campaign: sanitize(body.utm_campaign) || null,
-              }
-            : null,
+        // Always an object now — it used to be null with no attribution, which
+        // would have dropped the consent record on any direct-traffic lead.
+        raw_responses: {
+          ...consent,
+          utm_source: utmSource || null,
+          utm_medium: sanitize(body.utm_medium) || null,
+          utm_content: utmContent || null,
+          utm_campaign: sanitize(body.utm_campaign) || null,
+        },
       })
 
     if (leadError) {
