@@ -36,10 +36,12 @@ interface Brief {
   coSigner?: { name: string; email: string; title?: string };
   addendum?: AgreementOptions['addendum'];
   partner?: AgreementOptions['partner'];
+  collaborator?: AgreementOptions['collaborator'];
   /** Present only when transcribing a signature already given. */
   signature?: {
     typedSignature: string;
     coSignerSignature?: string;
+    collaboratorSignature?: string;
     signedAt?: string;
     ip?: string;
     userAgent?: string;
@@ -121,6 +123,7 @@ async function main() {
     // review draft can never be mistaken for an executed contract.
     typedSignature: signed ? brief.signature!.typedSignature.trim() : '',
     coSignerSignature: signed ? brief.signature!.coSignerSignature?.trim() : undefined,
+    collaboratorSignature: signed ? brief.signature!.collaboratorSignature?.trim() : undefined,
     signedAt: signed ? new Date(signedAt).toISOString().replace('T', ' ').slice(0, 19) : 'not yet signed',
     ip: brief.signature?.ip,
     userAgent: brief.signature?.userAgent,
@@ -130,6 +133,7 @@ async function main() {
   const options: AgreementOptions = {
     ...(brief.addendum ? { addendum: brief.addendum } : {}),
     ...(brief.partner ? { partner: brief.partner } : {}),
+    ...(brief.collaborator ? { collaborator: brief.collaborator } : {}),
   };
 
   const pdf = await renderAgreementPdf(party, evidence, options);

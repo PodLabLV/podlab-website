@@ -24,6 +24,7 @@ import { BrandPartner, PODLAB_LOGO, loadLogo } from './pdf-brand';
 import {
   Addendum,
   AgreementOptions,
+  Collaborator,
   AgreementParty,
   SigningEvidence,
   buildAgreement,
@@ -258,10 +259,12 @@ function Signatures({
   party,
   evidence,
   hasAddendum,
+  collaborator,
 }: {
   party: AgreementParty;
   evidence: SigningEvidence;
   hasAddendum: boolean;
+  collaborator?: Collaborator;
 }) {
   return (
     <>
@@ -281,6 +284,25 @@ function Signatures({
         </Text>
         <Text style={{ color: MUTED }}>Date: {party.effectiveDate}</Text>
       </View>
+
+      {collaborator ? (
+        <View style={styles.sigBlock}>
+          <Text style={styles.sigLabel}>
+            COLLABORATING PARTY — {collaborator.org.toUpperCase()}
+          </Text>
+          <Text style={styles.sigName}>{evidence.collaboratorSignature || ' '}</Text>
+          <View style={styles.sigRule} />
+          <Text>
+            {collaborator.name}
+            {collaborator.title ? `, ${collaborator.title}` : ''}, {collaborator.org}
+          </Text>
+          <Text style={{ color: MUTED }}>Date: {party.effectiveDate}</Text>
+          <Text style={[styles.note, { marginTop: 4, marginBottom: 0 }]}>
+            Signs as a collaborating party under Section 18.10. Not a party to this Agreement and
+            assumes no obligation under it.
+          </Text>
+        </View>
+      ) : null}
 
       <View style={styles.sigBlock}>
         <Text style={styles.sigLabel}>AFFILIATE — {partyDisplayName(party).toUpperCase()}</Text>
@@ -441,7 +463,12 @@ export function AgreementDocument({
 
       {/* ── Signatures ── */}
       <Page size="LETTER" style={styles.page}>
-        <Signatures party={party} evidence={evidence} hasAddendum={Boolean(options.addendum)} />
+        <Signatures
+          party={party}
+          evidence={evidence}
+          hasAddendum={Boolean(options.addendum)}
+          collaborator={options.collaborator}
+        />
         <Footer evidence={evidence} party={party} />
       </Page>
     </Document>
