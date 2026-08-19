@@ -4,6 +4,27 @@ import { useState, useRef } from 'react';
 import Navigation from '@/components/Navigation';
 import SmsConsent from '@/components/SmsConsent';
 import HomePageWrapper from '@/components/HomePageWrapper';
+import {
+  AGREEMENT_VERSION,
+  BASE_RATE,
+  FIRST_SALE_MULTIPLIER,
+  HOLD_PERIOD_DAYS,
+  LAB_COMMISSIONS,
+  MINIMUM_PAYOUT_USD,
+  PAYOUT_DAYS_AFTER_MONTH_END,
+  PAYOUT_METHODS as TERM_PAYOUT_METHODS,
+  VOLUME_TIERS,
+  commissionFor,
+  firstSaleFor,
+  pct,
+  usd,
+} from '@/lib/affiliate-terms';
+import {
+  buildAgreement,
+  buildPartyBlock,
+  buildRecitals,
+  exhibitANotes,
+} from '@/lib/affiliate-agreement';
 
 /* ───────────── constants ───────────── */
 
@@ -17,7 +38,9 @@ const BUSINESS_TYPES = [
 
 const AUDIENCE_SIZES = ['Under 1K', '1K-5K', '5K-25K', '25K-100K', '100K+'];
 
-const PAYOUT_METHODS = ['Apple Pay', 'Zelle', 'Wire Transfer'] as const;
+// Sourced from the terms module so the dropdown can never offer a method the
+// contract's payout clause doesn't recognise.
+const PAYOUT_METHODS = TERM_PAYOUT_METHODS;
 
 const PAYOUT_PLACEHOLDERS: Record<string, string> = {
   'Apple Pay': 'Apple Pay Email',
@@ -26,9 +49,9 @@ const PAYOUT_PLACEHOLDERS: Record<string, string> = {
 };
 
 const STATS = [
-  { value: '20%', label: 'First-Sale Commission' },
-  { value: '10%', label: 'Recurring Commission' },
-  { value: '$1.5K–$10K', label: 'Per Referral' },
+  { value: pct(BASE_RATE * FIRST_SALE_MULTIPLIER), label: 'First-Sale Commission' },
+  { value: pct(BASE_RATE), label: 'Standard Commission' },
+  { value: '$150–$1,850', label: 'Per Referral' },
 ];
 
 const BASE = 'https://podlablv.com';
@@ -111,6 +134,10 @@ export default function BeakerApplyPage() {
   // Outside FormData on purpose: set() maps every key to a string event value.
   const [smsConsent, setSmsConsent] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  // ESIGN consent is a separate affirmative act from agreeing to the terms.
+  // Bundling them into one checkbox is exactly what gets a click-wrap voided.
+  const [electronicConsent, setElectronicConsent] = useState(false);
+  const [agreementUrl, setAgreementUrl] = useState<string | null>(null);
   const [typedSignature, setTypedSignature] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -156,6 +183,10 @@ export default function BeakerApplyPage() {
       setError('Please agree to the terms before signing.');
       return;
     }
+    if (!electronicConsent) {
+      setError('Please consent to signing electronically before submitting.');
+      return;
+    }
     if (!typedSignature.trim()) {
       setError('Please type your full name as a digital signature.');
       return;
@@ -181,13 +212,17 @@ export default function BeakerApplyPage() {
           contractSigned: true,
           contractSignedDate: new Date().toISOString(),
           typedSignature,
+          electronicConsent,
           utmLinks: links,
         }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Submission failed');
       }
+      // Null when PDF generation or upload failed — the agreement is still
+      // signed and stored, so step 3 falls back to print rather than erroring.
+      setAgreementUrl(data.agreementUrl ?? null);
       setStep(3);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: unknown) {
@@ -213,6 +248,23 @@ export default function BeakerApplyPage() {
   }));
 
   const allLinksText = utmLinks.map((l) => `${l.label}: ${l.url}`).join('\n');
+
+  /* ── agreement, built from what they just typed ── */
+
+  const agreementParty = {
+    firstName: form.firstName,
+    lastName: form.lastName,
+    company: form.company,
+    email: form.email,
+    businessAddress: form.businessAddress,
+    payoutMethod: form.payoutMethod,
+    payoutDetails: form.payoutDetails,
+    beakerId,
+    effectiveDate: todayString(),
+  };
+
+  const agreementSections = buildAgreement(agreementParty);
+  const recurringLab = LAB_COMMISSIONS.find((l) => l.recurring);
 
   const homepageLink = buildLink(beakerId, '/');
 
@@ -459,32 +511,21 @@ export default function BeakerApplyPage() {
                 <h2 className="text-xl font-bold text-text-primary text-center mb-1">
                   PODLAB LV LLC – AFFILIATE AGREEMENT
                 </h2>
-
-                <p>
-                  This Affiliate Agreement (&ldquo;Agreement&rdquo;) is entered into as of{' '}
-                  <strong className="text-text-primary">{todayString()}</strong>{' '}
-                  (&ldquo;Effective Date&rdquo;) by and between:
+                <p className="text-center text-xs text-text-tertiary mb-4">
+                  PodLab Beaker Program · {AGREEMENT_VERSION}
                 </p>
 
-                <p>
-                  <strong className="text-text-primary">PodLab LV LLC</strong>{' '}
-                  (&ldquo;PodLab,&rdquo; &ldquo;Company,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;),
-                  with a principal business address at Las Vegas, Nevada,
-                </p>
-                <p>and</p>
-                <p>
-                  <strong className="text-text-primary">
-                    {form.firstName} {form.lastName}
-                  </strong>{' '}
-                  (&ldquo;Affiliate,&rdquo; &ldquo;you&rdquo;), an individual and/or business entity
-                  as identified below:
-                </p>
+                {buildRecitals(agreementParty).map((line, i) => (
+                  <p key={i}>{line}</p>
+                ))}
 
                 <ul className="list-disc pl-6 space-y-1">
-                  <li>Affiliate Legal Name: <strong className="text-text-primary">{form.firstName} {form.lastName}</strong></li>
-                  <li>Affiliate Business Name: <strong className="text-text-primary">{form.company || 'Individual'}</strong></li>
-                  <li>Affiliate Email: <strong className="text-text-primary">{form.email}</strong></li>
-                  <li>Affiliate Address: <strong className="text-text-primary">{form.businessAddress}</strong></li>
+                  {buildPartyBlock(agreementParty).map((row) => (
+                    <li key={row.label}>
+                      {row.label}:{' '}
+                      <strong className="text-text-primary">{row.value}</strong>
+                    </li>
+                  ))}
                 </ul>
 
                 <p>
@@ -492,136 +533,107 @@ export default function BeakerApplyPage() {
                   collectively as the &ldquo;Parties.&rdquo;
                 </p>
 
-                {/* ── Section 1 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">1) Purpose and Relationship</h3>
-                <p><strong>1.1 Purpose.</strong> Affiliate will promote PodLab&rsquo;s services and/or products (&ldquo;Offerings&rdquo;) using approved marketing methods in exchange for commissions under this Agreement.</p>
-                <p><strong>1.2 Independent Contractor.</strong> Affiliate is an independent contractor, not an employee, partner, joint venturer, fiduciary, agent, or legal representative of PodLab. Affiliate has no authority to bind PodLab, incur obligations, or make representations on PodLab&rsquo;s behalf.</p>
-                <p><strong>1.3 No Exclusivity (Company).</strong> PodLab may work with other affiliates and partners, including those competing with Affiliate.</p>
+                {/* Clause text is rendered from lib/affiliate-agreement.ts — the same
+                    source the executed PDF renders from, so the document on file and
+                    the document on screen cannot drift apart. */}
+                {agreementSections.map((section) => (
+                  <div key={section.n} className="space-y-2">
+                    <h3 className="text-base font-bold text-text-primary mt-6">
+                      {section.n}) {section.heading}
+                    </h3>
+                    {section.clauses.map((clause, i) => (
+                      <p key={clause.n || i}>
+                        {clause.n && <strong>{clause.n} </strong>}
+                        {clause.title && <strong>{clause.title}. </strong>}
+                        {clause.text}
+                      </p>
+                    ))}
+                  </div>
+                ))}
 
-                {/* ── Section 2 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">2) Definitions</h3>
-                <p><strong>2.1</strong> &ldquo;Qualified Sale&rdquo; means a completed transaction for Offerings that: is tracked to Affiliate via PodLab&rsquo;s designated tracking method (UTM link, referral code, or platform attribution); is paid in full and not refunded, reversed, disputed, or charged back within the Hold Period; is not generated through Prohibited Traffic or Prohibited Conduct (Section 6); is not a self-referral unless expressly permitted in writing by PodLab.</p>
-                <p><strong>2.2</strong> &ldquo;Commission&rdquo; means the percentage of Net Revenue (Section 4.3) paid to Affiliate for Qualified Sales.</p>
-                <p><strong>2.3</strong> &ldquo;Confidential Information&rdquo; means any non-public PodLab information, including but not limited to: pricing, margins, proposals, scripts, SOPs, workflows, templates, vendor lists, client lists, lead lists, pipeline data, strategies, campaign performance data, conversion data, customer data, financials, training materials, and any information marked confidential or that reasonably should be understood to be confidential.</p>
-                <p><strong>2.4</strong> &ldquo;Restricted Customers/Leads&rdquo; means any person or entity that, at any time during the Term and for 12 months after termination, is or was: a PodLab client, customer, subscriber, member, lead, prospect, inbound inquiry, booked call, or pipeline contact; or introduced to Affiliate by PodLab; or identified through PodLab Confidential Information.</p>
+                {/* ── Exhibit A ── */}
+                <div className="mt-8 pt-6 border-t border-border space-y-4">
+                  <h3 className="text-lg font-bold text-text-primary">
+                    EXHIBIT A — COMMISSION SCHEDULE
+                  </h3>
+                  <p className="text-xs text-text-tertiary">
+                    Incorporated into this Agreement under Section 4.1. Prepared for{' '}
+                    {form.firstName} {form.lastName}
+                    {beakerId ? ` (${beakerId})` : ''} as of {todayString()}.
+                  </p>
 
-                {/* ── Section 3 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">3) Enrollment and Approval</h3>
-                <p><strong>3.1 Approval Required.</strong> Affiliate may only promote PodLab after written confirmation of acceptance into the affiliate program.</p>
-                <p><strong>3.2 Accurate Information.</strong> Affiliate represents that all information provided to PodLab is truthful and up to date. PodLab may suspend commissions until identity/payment details are verified.</p>
+                  <h4 className="font-bold text-text-primary mt-4">A-1. Per-Offering Commission</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-bg-secondary text-text-primary text-xs">
+                          <th className="p-2 font-bold">OFFERING</th>
+                          <th className="p-2 font-bold">LIST PRICE</th>
+                          <th className="p-2 font-bold">STANDARD ({pct(BASE_RATE)})</th>
+                          <th className="p-2 font-bold">
+                            FIRST SALE ({pct(BASE_RATE * FIRST_SALE_MULTIPLIER)})
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {LAB_COMMISSIONS.map((lab) => (
+                          <tr key={lab.lab} className="border-b border-border">
+                            <td className="p-2 font-bold text-text-primary">{lab.lab}</td>
+                            <td className="p-2">{lab.price}</td>
+                            <td className="p-2">{commissionFor(lab, BASE_RATE)}</td>
+                            <td className="p-2 text-accent font-bold">
+                              {firstSaleFor(lab, BASE_RATE)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
 
-                {/* ── Section 4 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">4) Commission Structure and Payment</h3>
-                <p><strong>4.1 Commission Rate.</strong> Affiliate will earn 10% of Net Revenue for each Qualified Sale, unless PodLab provides a different rate in writing.</p>
-                <p><strong>4.2 Promo Bonus.</strong> Unless otherwise stated in writing, PodLab will apply a promo bonus of: Double Commission on First Sale (meaning the first Qualified Sale credited to Affiliate earns 2× the Commission Rate; subsequent sales revert to the standard Commission Rate).</p>
-                <p><strong>4.3 Net Revenue.</strong> &ldquo;Net Revenue&rdquo; equals amounts actually received by PodLab for the applicable sale minus: refunds, chargebacks, disputes, credits, taxes, payment processing fees, affiliate network fees (if any), and any discounts or incentives applied.</p>
-                <p><strong>4.4 Hold Period.</strong> Commissions become payable only after 45 days from the date PodLab receives payment (the &ldquo;Hold Period&rdquo;) to account for refunds/chargebacks and fraud screening.</p>
-                <p><strong>4.5 Payment Schedule.</strong> Commissions are paid monthly within 15 days after the end of each month, for commissions that have cleared the Hold Period.</p>
-                <p><strong>4.6 Minimum Payout Threshold.</strong> PodLab may apply a minimum payout threshold of $100 (or pay out any amount at PodLab&rsquo;s discretion).</p>
-                <p><strong>4.7 Payout Method.</strong> Affiliate will be paid via <strong className="text-text-primary">{form.payoutMethod}</strong> to: <strong className="text-text-primary">{form.payoutDetails}</strong>.</p>
-                <p><strong>4.8 Taxes.</strong> Affiliate is solely responsible for all taxes arising from commissions. PodLab may require tax forms (e.g., W-9 or W-8) as a condition of payment. If Affiliate fails to provide required tax documentation, PodLab may withhold or suspend payments to the extent permitted by law.</p>
-                <p><strong>4.9 Adjustments / Clawbacks.</strong> PodLab may deduct from future payouts any amounts previously paid for sales later determined not to be Qualified Sales (including refunds, disputes, fraud, or tracking manipulation). If deductions are insufficient, Affiliate must repay the balance within 10 days of written notice.</p>
-                <p><strong>4.10 Tracking; Final Authority.</strong> PodLab&rsquo;s tracking systems, records, and determinations of Qualified Sales and commissions are final, except for demonstrable system error supported by evidence. Affiliate must dispute any commission issue within 30 days of the relevant statement, or it is waived.</p>
+                  <h4 className="font-bold text-text-primary mt-4">A-2. Recurring Commission</h4>
+                  <p>
+                    Offerings billed monthly pay commission every month the client remains active
+                    and current. ExpansionLab at {recurringLab?.price} pays{' '}
+                    <strong className="text-text-primary">
+                      {recurringLab ? commissionFor(recurringLab, BASE_RATE) : ''}
+                    </strong>{' '}
+                    for the life of the engagement, subject to the same Hold Period and clawback
+                    terms as one-time commissions.
+                  </p>
 
-                {/* ── Section 5 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">5) Marketing Materials, Brand, and Permissions</h3>
-                <p><strong>5.1 Approved Assets Only.</strong> Affiliate may use only PodLab-approved creative, copy, and claims. Affiliate must not alter PodLab assets without written approval.</p>
-                <p><strong>5.2 Limited License.</strong> PodLab grants Affiliate a limited, revocable, non-transferable, non-sublicensable license to use PodLab trademarks and marketing materials solely to promote Offerings during the Term, in compliance with this Agreement.</p>
-                <p><strong>5.3 No Ownership.</strong> Affiliate gains no ownership rights in PodLab intellectual property, branding, or assets.</p>
-                <p><strong>5.4 Revocation.</strong> PodLab may revoke usage rights at any time. Affiliate must immediately remove PodLab assets upon request or termination.</p>
+                  <h4 className="font-bold text-text-primary mt-4">A-3. Volume Tiers</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-bg-secondary text-text-primary text-xs">
+                          <th className="p-2 font-bold">LIFETIME QUALIFIED SALES</th>
+                          <th className="p-2 font-bold">COMMISSION RATE</th>
+                          <th className="p-2 font-bold">TIER</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {VOLUME_TIERS.map((tier) => (
+                          <tr key={tier.label} className="border-b border-border">
+                            <td className="p-2">
+                              {tier.threshold === 0 ? '0–4 sales' : `${tier.threshold}+ sales`}
+                            </td>
+                            <td className="p-2 font-bold text-text-primary">
+                              {tier.rate === null ? 'Negotiated' : pct(tier.rate)}
+                            </td>
+                            <td className="p-2">{tier.label}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
 
-                {/* ── Section 6 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">6) Prohibited Conduct</h3>
-                <p><strong>6.1 Misrepresent.</strong> Make false, misleading, or unsubstantiated claims about PodLab, outcomes, earnings, timelines, &ldquo;guarantees,&rdquo; or services.</p>
-                <p><strong>6.2 Spam / Unlawful Outreach.</strong> Send spam (email/SMS/DM), violate CAN-SPAM, TCPA, GDPR/UK GDPR, CCPA/CPRA, or any applicable privacy/marketing law.</p>
-                <p><strong>6.3 Trademark Bidding / Impersonation.</strong> Bid on PodLab brand terms or misspellings in paid search without written approval. Register domains/social handles resembling PodLab or impersonate PodLab.</p>
-                <p><strong>6.4 Cookie Stuffing / Tracking Manipulation.</strong> Use forced clicks, cookie stuffing, hidden iframes, deceptive redirects, link cloaking designed to mislead, attribution fraud, or any traffic manipulation.</p>
-                <p><strong>6.5 Incentivized or Misleading Promotions.</strong> Offer unauthorized rebates, cash-back, giveaways, or incentives tied to purchasing PodLab services unless approved in writing.</p>
-                <p><strong>6.6 Prohibited Content.</strong> Promote PodLab alongside illegal, hateful, pornographic, or otherwise brand-damaging content, or content that violates platform policies.</p>
-                <p><strong>6.7 Confidential Info Leaks.</strong> Disclose Confidential Information to any third party. Violation of this Section is material breach and may result in immediate termination and forfeiture of unpaid commissions.</p>
-
-                {/* ── Section 7 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">7) Compliance: FTC and Platform Rules</h3>
-                <p><strong>7.1 FTC Disclosure Required.</strong> Affiliate must clearly and conspicuously disclose the affiliate relationship in all promotions (e.g., &ldquo;I may earn a commission if you purchase through my link&rdquo;). Disclosures must be unavoidable and platform-appropriate.</p>
-                <p><strong>7.2 Platform Policies.</strong> Affiliate must comply with all policies of any platform used (Meta, YouTube, TikTok, Apple Podcasts, etc.).</p>
-                <p><strong>7.3 Proof of Compliance.</strong> PodLab may request screenshots, links, or recordings showing disclosures. Failure to provide may result in suspension of payments.</p>
-
-                {/* ── Section 8 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">8) Term and Termination</h3>
-                <p><strong>8.1 Term.</strong> This Agreement starts on the Effective Date and continues until terminated.</p>
-                <p><strong>8.2 Termination for Convenience.</strong> Either Party may terminate at any time with 7 days&rsquo; written notice.</p>
-                <p><strong>8.3 Immediate Termination for Cause.</strong> PodLab may terminate immediately if Affiliate breaches this Agreement, violates law, harms PodLab&rsquo;s reputation, or engages in Prohibited Conduct.</p>
-                <p><strong>8.4 Effect of Termination.</strong> Affiliate must immediately stop using PodLab assets and cease representing any relationship. Affiliate remains eligible for commissions only on Qualified Sales that occur before termination and clear the Hold Period, unless termination was for cause, in which case PodLab may withhold unpaid commissions to the extent permitted by law and consistent with fraud prevention.</p>
-
-                {/* ── Section 9 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">9) Confidentiality (NDA)</h3>
-                <p><strong>9.1 Confidentiality Obligation.</strong> Affiliate agrees to hold all Confidential Information in strict confidence, use it only to perform under this Agreement, and not disclose it to any third party without PodLab&rsquo;s prior written consent.</p>
-                <p><strong>9.2 Standard of Care.</strong> Affiliate must protect Confidential Information using at least the same degree of care used to protect Affiliate&rsquo;s own confidential information, and no less than reasonable care.</p>
-                <p><strong>9.3 Exclusions.</strong> Confidential Information does not include information that Affiliate can prove: is or becomes public through no breach by Affiliate; was lawfully known to Affiliate before disclosure by PodLab; is independently developed without use of PodLab Confidential Information; is lawfully obtained from a third party without breach of any duty.</p>
-                <p><strong>9.4 Compelled Disclosure.</strong> If legally compelled to disclose Confidential Information, Affiliate must provide prompt notice (if permitted) to allow PodLab to seek protective relief, and disclose only what is legally required.</p>
-                <p><strong>9.5 Return/Destruction.</strong> Upon request or termination, Affiliate must immediately return or destroy all Confidential Information (including copies, notes, screenshots, downloads) and certify compliance in writing.</p>
-                <p><strong>9.6 Injunctive Relief.</strong> Affiliate acknowledges that breach of this NDA would cause irreparable harm. PodLab may seek immediate injunctive relief (without posting bond where permitted), in addition to any other remedies.</p>
-                <p><strong>9.7 Survival.</strong> Confidentiality obligations survive termination for 5 years, and as to trade secrets, for as long as they remain trade secrets under applicable law.</p>
-
-                {/* ── Section 10 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">10) Non-Compete + Non-Solicit</h3>
-                <p><strong>10.1 Restricted Business.</strong> &ldquo;Restricted Business&rdquo; means podcast production services, podcast growth/monetization services, podcast agency services, and materially similar services to PodLab Offerings.</p>
-                <p><strong>10.2 Non-Solicitation of Restricted Customers/Leads.</strong> During the Term and for 12 months after termination, Affiliate will not, directly or indirectly: solicit, entice, divert, or attempt to divert any Restricted Customers/Leads away from PodLab; or sell or provide Restricted Business services to any Restricted Customers/Leads; or assist any third party in doing so.</p>
-                <p><strong>10.3 Non-Interference with Business Relationships.</strong> During the Term and for 12 months after termination, Affiliate will not interfere with PodLab&rsquo;s relationships with vendors, contractors, or partners learned through PodLab.</p>
-                <p><strong>10.4 Non-Compete.</strong> During the Term and for 12 months after termination, Affiliate will not, to the maximum extent permitted by applicable law, directly or indirectly engage in Restricted Business where such engagement is based on, derived from, or materially aided by PodLab Confidential Information.</p>
-                <p><strong>10.5 Carve-Out.</strong> Nothing prevents Affiliate from: engaging in general marketing activities unrelated to Restricted Business; or performing services for third parties in non-competing markets, provided Affiliate does not use PodLab Confidential Information and does not solicit Restricted Customers/Leads.</p>
-                <p><strong>10.6 No Use of PodLab Playbook.</strong> Even if a jurisdiction limits non-competes, Affiliate agrees they may not use PodLab Confidential Information to replicate PodLab&rsquo;s business model, pricing structure, scripts, SOPs, or systems in a competing offering.</p>
-                <p><strong>10.7 Blue-Pencil / Reformation.</strong> If any restriction is found overly broad, a court may modify it to the minimum extent necessary to make it enforceable, and the modified restriction will be enforced.</p>
-                <p><strong>10.8 Separate Covenants.</strong> Each restriction in this Section is independent. If one is unenforceable, the others remain enforceable.</p>
-                <p><strong>10.9 Acknowledgment.</strong> Affiliate acknowledges these restrictions are reasonable in scope, duration, and purpose to protect PodLab&rsquo;s legitimate business interests.</p>
-
-                {/* ── Section 11 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">11) Non-Disparagement</h3>
-                <p>Affiliate agrees not to make any false or malicious statements (public or private) that would reasonably harm PodLab&rsquo;s reputation. This does not prohibit truthful statements required by law.</p>
-
-                {/* ── Section 12 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">12) Intellectual Property, Content, and Ownership</h3>
-                <p><strong>12.1 Affiliate IP.</strong> Affiliate retains ownership of pre-existing materials created independently of PodLab.</p>
-                <p><strong>12.2 PodLab IP.</strong> All PodLab materials remain PodLab&rsquo;s sole property.</p>
-                <p><strong>12.3 Feedback License.</strong> If Affiliate provides feedback, ideas, or suggestions, Affiliate grants PodLab a perpetual, worldwide, royalty-free license to use them without obligation.</p>
-                <p><strong>12.4 No Recording/Redistribution.</strong> Affiliate must not record, redistribute, or sell PodLab materials, calls, trainings, templates, or internal resources without explicit written consent.</p>
-
-                {/* ── Section 13 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">13) Data Privacy and Security</h3>
-                <p><strong>13.1 Minimum Security.</strong> Affiliate must use reasonable administrative, technical, and physical safeguards to protect any PodLab-related information.</p>
-                <p><strong>13.2 No Data Harvesting.</strong> Affiliate may not scrape PodLab sites or collect personal data outside lawful means.</p>
-                <p><strong>13.3 Incident Notification.</strong> Affiliate must notify PodLab within 48 hours of any suspected data breach involving PodLab information.</p>
-
-                {/* ── Section 14 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">14) Representations and Warranties</h3>
-                <p>Affiliate represents and warrants: they will comply with all applicable laws and regulations; they have the right to enter into this Agreement; they will not violate any third-party rights; all promotions will be truthful and not deceptive; they will not infringe IP or use unlicensed materials.</p>
-
-                {/* ── Section 15 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">15) Indemnification</h3>
-                <p><strong>15.1 Affiliate Indemnity.</strong> Affiliate will indemnify, defend, and hold harmless PodLab and its owners, managers, employees, contractors, and agents from any claims, damages, liabilities, penalties, costs, and attorneys&rsquo; fees arising from or related to: Affiliate&rsquo;s marketing, content, statements, or representations; violation of law; IP infringement by Affiliate materials; breach of this Agreement.</p>
-                <p><strong>15.2 Company Indemnity (Limited).</strong> PodLab will indemnify Affiliate for third-party claims that PodLab&rsquo;s provided marketing assets (as supplied) infringe a third party&rsquo;s IP, provided Affiliate used them as approved.</p>
-
-                {/* ── Section 16 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">16) Limitation of Liability</h3>
-                <p>To the maximum extent permitted by law: PodLab is not liable for indirect, incidental, special, consequential, or punitive damages. PodLab&rsquo;s total liability under this Agreement will not exceed the commissions paid to Affiliate in the 3 months preceding the event giving rise to the claim.</p>
-
-                {/* ── Section 17 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">17) Dispute Resolution, Governing Law, and Attorneys&rsquo; Fees</h3>
-                <p><strong>17.1 Governing Law.</strong> This Agreement is governed by the laws of the State of Nevada, without regard to conflict of laws principles.</p>
-                <p><strong>17.2 Good Faith Resolution.</strong> The Parties agree to attempt good-faith resolution within 30 days before filing any formal action, except for injunctive relief.</p>
-                <p><strong>17.3 Injunctive Relief.</strong> PodLab may seek immediate injunctive relief for breaches of Sections 9–10 in any court of competent jurisdiction.</p>
-                <p><strong>17.4 Venue.</strong> Unless prohibited by law, any action will be brought in Clark County, Nevada.</p>
-                <p><strong>17.5 Attorneys&rsquo; Fees.</strong> The prevailing Party is entitled to reasonable attorneys&rsquo; fees and costs.</p>
-
-                {/* ── Section 18 ── */}
-                <h3 className="text-base font-bold text-text-primary mt-6">18) Miscellaneous</h3>
-                <p><strong>18.1 Entire Agreement.</strong> This is the entire agreement and supersedes prior discussions.</p>
-                <p><strong>18.2 Amendments.</strong> Any amendment must be in writing signed by both Parties. PodLab may update program policies with notice; continued participation constitutes acceptance.</p>
-                <p><strong>18.3 Assignment.</strong> Affiliate may not assign this Agreement without PodLab&rsquo;s written consent. PodLab may assign to an affiliate or successor entity.</p>
-                <p><strong>18.4 Severability.</strong> If any provision is unenforceable, the remainder remains effective.</p>
-                <p><strong>18.5 Waiver.</strong> No waiver is effective unless in writing; waiver of one breach is not waiver of another.</p>
-                <p><strong>18.6 Notices.</strong> Notices will be sent to the emails listed above (and are deemed delivered when sent, absent bounceback).</p>
-                <p><strong>18.7 Counterparts; E-Signature.</strong> This Agreement may be signed electronically and in counterparts, each deemed an original.</p>
+                  <h4 className="font-bold text-text-primary mt-4">A-4. Notes</h4>
+                  <ul className="list-disc pl-6 space-y-1 text-xs">
+                    {exhibitANotes().map((note, i) => (
+                      <li key={i}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
 
                 {/* ── Signatures ── */}
                 <div className="border-t border-border mt-8 pt-6 space-y-4">
@@ -653,7 +665,22 @@ export default function BeakerApplyPage() {
                     className="mt-1 w-5 h-5 accent-accent rounded"
                   />
                   <span className="text-sm text-text-secondary">
-                    I have read and agree to all terms of this Affiliate Agreement
+                    I have read and agree to all terms of this Affiliate Agreement, including the
+                    NDA in Section 9 and the Commission Schedule in Exhibit A
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={electronicConsent}
+                    onChange={(e) => setElectronicConsent(e.target.checked)}
+                    className="mt-1 w-5 h-5 accent-accent rounded"
+                  />
+                  <span className="text-sm text-text-secondary">
+                    I consent to sign electronically and agree my typed name below is my legal
+                    signature under the ESIGN Act and Nevada UETA. A PDF copy will be emailed to me;
+                    I may request a free paper copy from info@podlablv.com.
                   </span>
                 </label>
 
@@ -769,13 +796,36 @@ export default function BeakerApplyPage() {
               </div>
 
               {/* download */}
-              <div className="text-center">
-                <button
-                  onClick={() => window.print()}
-                  className="px-8 py-3 rounded-xl border border-accent text-accent hover:bg-accent hover:text-black transition-colors font-bold"
-                >
-                  Download Agreement (Print)
-                </button>
+              <div className="text-center space-y-3">
+                {agreementUrl ? (
+                  <>
+                    <a
+                      href={agreementUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block px-8 py-3 rounded-xl bg-accent text-black hover:bg-accent-hover transition-colors font-bold"
+                    >
+                      Download Signed Agreement (PDF)
+                    </a>
+                    <p className="text-xs text-text-tertiary">
+                      A copy is also on its way to {form.email}. This download link expires in 30
+                      days — the emailed PDF does not.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setStep(2)}
+                      className="px-8 py-3 rounded-xl border border-accent text-accent hover:bg-accent hover:text-black transition-colors font-bold"
+                    >
+                      View Agreement
+                    </button>
+                    <p className="text-xs text-text-tertiary">
+                      Your agreement is signed and on file. The PDF copy is still generating — check
+                      your inbox shortly, or email info@podlablv.com and we&rsquo;ll send it.
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           )}
