@@ -76,12 +76,21 @@ export async function notifySlack(message: SlackMessage): Promise<void> {
 
 // ─── Email (Resend) ──────────────────────────────────────────────────────────
 
+interface EmailAttachment {
+  filename: string
+  /** Raw bytes; base64-encoded here so callers never think about transport. */
+  content: Buffer
+}
+
 interface NotifyEmailOpts {
   text?: string
   replyTo?: string
   fromName?: string
   unsubscribeUrl?: string
   tags?: { name: string; value: string }[]
+  attachments?: EmailAttachment[]
+  /** Blind-copy the team on a message addressed to someone else. */
+  bcc?: string[]
 }
 
 /**
@@ -152,6 +161,15 @@ export async function notifyEmail(
         html,
         text,
         headers: requestHeaders,
+        ...(opts.bcc?.length ? { bcc: opts.bcc } : {}),
+        ...(opts.attachments?.length
+          ? {
+              attachments: opts.attachments.map((a) => ({
+                filename: a.filename,
+                content: a.content.toString('base64'),
+              })),
+            }
+          : {}),
         ...(opts.tags ? { tags: opts.tags } : {}),
       }),
     })
