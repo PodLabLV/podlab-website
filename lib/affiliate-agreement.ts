@@ -23,6 +23,13 @@ import {
   usd,
 } from './affiliate-terms';
 
+export interface CoSigner {
+  name: string;
+  email: string;
+  /** Shown under the signature line, e.g. "Co-Owner, Valentine Strategy". */
+  title?: string;
+}
+
 export interface AgreementParty {
   firstName: string;
   lastName: string;
@@ -34,6 +41,30 @@ export interface AgreementParty {
   beakerId: string;
   /** Human-readable effective date, e.g. "August 19, 2026". */
   effectiveDate: string;
+  /**
+   * Second signatory on the SAME agreement — one Beaker ID, one commission
+   * stream. Not a second affiliate: two affiliates need two agreements, or
+   * attribution and payout both become ambiguous.
+   */
+  coSigner?: CoSigner;
+}
+
+/**
+ * Negotiated terms that depart from the standard program, rendered as Exhibit B.
+ *
+ * Kept out of the main clause list on purpose. The standard agreement must stay
+ * byte-identical for every affiliate who signs it — an exception belongs in an
+ * exhibit that names itself as the exception, not smuggled into Section 4 where
+ * nobody diffing two contracts would spot it.
+ */
+export interface Addendum {
+  /** Plain-language summary printed above the clauses. */
+  intro: string;
+  clauses: Clause[];
+}
+
+export interface AgreementOptions {
+  addendum?: Addendum;
 }
 
 export interface Clause {
@@ -53,6 +84,11 @@ export interface Section {
 /** Signing evidence captured at submission, printed on the executed PDF. */
 export interface SigningEvidence {
   typedSignature: string;
+  /**
+   * Co-signer's typed signature. Separate field, never defaulted to their name:
+   * printing a name on a signature line nobody typed manufactures a signature.
+   */
+  coSignerSignature?: string;
   signedAt: string;
   ip?: string;
   userAgent?: string;
@@ -76,10 +112,10 @@ export function partyDisplayName(p: AgreementParty): string {
 
 /* ── The agreement ─────────────────────────────────────────────────── */
 
-export function buildAgreement(p: AgreementParty): Section[] {
+export function buildAgreement(p: AgreementParty, opts: AgreementOptions = {}): Section[] {
   const holdDays = HOLD_PERIOD_DAYS;
 
-  return [
+  const sections: Section[] = [
     {
       n: 1,
       heading: 'Purpose and Relationship',
@@ -601,6 +637,29 @@ export function buildAgreement(p: AgreementParty): Section[] {
       ],
     },
   ];
+
+  // An exception is worthless if the standard terms silently override it, so
+  // say plainly which document wins. Appended to Miscellaneous rather than
+  // given its own section, to keep section numbering stable across affiliates.
+  if (opts.addendum) {
+    const misc = sections.find((sec) => sec.n === 18);
+    misc?.clauses.push({
+      n: '18.8',
+      title: 'Addendum',
+      text: 'Exhibit B (Addendum — Negotiated Terms) is incorporated into and forms part of this Agreement. Where Exhibit B conflicts with any other provision of this Agreement or Exhibit A, Exhibit B controls.',
+    });
+  }
+
+  if (p.coSigner) {
+    const misc = sections.find((sec) => sec.n === 18);
+    misc?.clauses.push({
+      n: '18.9',
+      title: 'Joint Signatories',
+      text: `This Agreement is signed by both ${partyDisplayName(p)} and ${p.coSigner.name}, who are jointly and severally bound by it. Commissions are attributed to a single Beaker ID ("${p.beakerId}") and paid to the payout destination in Section 4.7; PodLab has no obligation to split or apportion payments between them.`,
+    });
+  }
+
+  return sections;
 }
 
 /** Recital paragraphs shown above Section 1. */

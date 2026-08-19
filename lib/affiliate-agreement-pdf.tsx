@@ -23,6 +23,8 @@ import {
 import fs from 'node:fs';
 import path from 'node:path';
 import {
+  Addendum,
+  AgreementOptions,
   AgreementParty,
   SigningEvidence,
   buildAgreement,
@@ -240,20 +242,43 @@ function ExhibitA({ party }: { party: AgreementParty }) {
   );
 }
 
+function ExhibitB({ party, addendum }: { party: AgreementParty; addendum: Addendum }) {
+  return (
+    <>
+      <Text style={styles.exhibitTitle}>EXHIBIT B — ADDENDUM (NEGOTIATED TERMS)</Text>
+      <Text style={styles.docSubtitle}>
+        Incorporated under Section 18.8. Where this Exhibit conflicts with the Agreement or Exhibit
+        A, this Exhibit controls. Specific to {partyDisplayName(party)} ({party.beakerId}).
+      </Text>
+      <View style={styles.accentRule} />
+      <Text style={[styles.clause, { marginBottom: 10 }]}>{addendum.intro}</Text>
+      {addendum.clauses.map((c, i) => (
+        <Text key={c.n || i} style={styles.clause}>
+          {c.n ? <Text style={styles.bold}>{c.n} </Text> : null}
+          {c.title ? <Text style={styles.bold}>{c.title}. </Text> : null}
+          {c.text}
+        </Text>
+      ))}
+    </>
+  );
+}
+
 function Signatures({
   party,
   evidence,
+  hasAddendum,
 }: {
   party: AgreementParty;
   evidence: SigningEvidence;
+  hasAddendum: boolean;
 }) {
   return (
     <>
       <Text style={styles.exhibitTitle}>SIGNATURES</Text>
       <View style={styles.accentRule} />
       <Text style={styles.clause}>
-        By signing below, the Parties agree to be bound by this Agreement and Exhibit A as of the
-        Effective Date.
+        By signing below, the Parties agree to be bound by this Agreement, Exhibit A
+        {hasAddendum ? ', and Exhibit B' : ''} as of the Effective Date.
       </Text>
 
       <View style={styles.sigBlock}>
@@ -277,6 +302,22 @@ function Signatures({
         <Text style={{ color: MUTED }}>Date: {party.effectiveDate}</Text>
         <Text style={{ color: MUTED }}>Email: {party.email}</Text>
       </View>
+
+      {party.coSigner ? (
+        <View style={styles.sigBlock}>
+          <Text style={styles.sigLabel}>
+            AFFILIATE CO-SIGNER — {party.coSigner.name.toUpperCase()}
+          </Text>
+          <Text style={styles.sigName}>{evidence.coSignerSignature || ' '}</Text>
+          <View style={styles.sigRule} />
+          <Text>
+            {party.coSigner.name}
+            {party.coSigner.title ? `, ${party.coSigner.title}` : ''}
+          </Text>
+          <Text style={{ color: MUTED }}>Date: {party.effectiveDate}</Text>
+          <Text style={{ color: MUTED }}>Email: {party.coSigner.email}</Text>
+        </View>
+      ) : null}
 
       <View style={styles.evidenceBox}>
         <Text style={[styles.sigLabel, { marginBottom: 5 }]}>ELECTRONIC SIGNATURE RECORD</Text>
@@ -319,11 +360,13 @@ function Signatures({
 export function AgreementDocument({
   party,
   evidence,
+  options = {},
 }: {
   party: AgreementParty;
   evidence: SigningEvidence;
+  options?: AgreementOptions;
 }) {
-  const sections = buildAgreement(party);
+  const sections = buildAgreement(party, options);
   const recitals = buildRecitals(party);
   const partyRows = buildPartyBlock(party);
   const logoData = logo();
@@ -388,9 +431,17 @@ export function AgreementDocument({
         <Footer evidence={evidence} party={party} />
       </Page>
 
+      {/* ── Exhibit B (only for negotiated deals) ── */}
+      {options.addendum ? (
+        <Page size="LETTER" style={styles.page}>
+          <ExhibitB party={party} addendum={options.addendum} />
+          <Footer evidence={evidence} party={party} />
+        </Page>
+      ) : null}
+
       {/* ── Signatures ── */}
       <Page size="LETTER" style={styles.page}>
-        <Signatures party={party} evidence={evidence} />
+        <Signatures party={party} evidence={evidence} hasAddendum={Boolean(options.addendum)} />
         <Footer evidence={evidence} party={party} />
       </Page>
     </Document>
@@ -400,8 +451,11 @@ export function AgreementDocument({
 export async function renderAgreementPdf(
   party: AgreementParty,
   evidence: SigningEvidence,
+  options: AgreementOptions = {},
 ): Promise<Buffer> {
-  return renderToBuffer(<AgreementDocument party={party} evidence={evidence} />);
+  return renderToBuffer(
+    <AgreementDocument party={party} evidence={evidence} options={options} />,
+  );
 }
 
 /** Storage path / email filename. Stable per affiliate + signing timestamp. */
