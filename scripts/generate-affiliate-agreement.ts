@@ -35,6 +35,7 @@ interface Brief {
   effectiveDate?: string;
   coSigner?: { name: string; email: string; title?: string };
   addendum?: AgreementOptions['addendum'];
+  partner?: AgreementOptions['partner'];
   /** Present only when transcribing a signature already given. */
   signature?: {
     typedSignature: string;
@@ -126,7 +127,10 @@ async function main() {
     version: AGREEMENT_VERSION,
   };
 
-  const options: AgreementOptions = brief.addendum ? { addendum: brief.addendum } : {};
+  const options: AgreementOptions = {
+    ...(brief.addendum ? { addendum: brief.addendum } : {}),
+    ...(brief.partner ? { partner: brief.partner } : {}),
+  };
 
   const pdf = await renderAgreementPdf(party, evidence, options);
 
@@ -146,6 +150,7 @@ async function main() {
     version: AGREEMENT_VERSION,
     signed,
     hasAddendum: Boolean(brief.addendum),
+    partner: brief.partner?.name ?? null,
     coSigner: party.coSigner?.name ?? null,
   }, null, 2));
 }

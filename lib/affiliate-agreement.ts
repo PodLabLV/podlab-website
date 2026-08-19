@@ -65,6 +65,11 @@ export interface Addendum {
 
 export interface AgreementOptions {
   addendum?: Addendum;
+  /**
+   * Co-branding partner for the document header. Typed loosely here so the
+   * agreement data module stays free of rendering concerns.
+   */
+  partner?: { name: string; logo: string };
 }
 
 export interface Clause {
