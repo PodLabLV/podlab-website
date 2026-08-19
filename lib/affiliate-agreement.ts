@@ -63,8 +63,31 @@ export interface Addendum {
   clauses: Clause[];
 }
 
+/**
+ * Someone who signs on PodLab's side of the page without becoming a party to
+ * PodLab's obligations — a collaborator on the deal, acknowledged on the
+ * document.
+ *
+ * The distinction is the whole point. A second company's signature on a
+ * contract invites the argument that it shares liability for what the contract
+ * promises, so §18.10 states in terms that it does not. Whatever PodLab and the
+ * collaborator have agreed between themselves stays out of this document.
+ */
+export interface Collaborator {
+  name: string;
+  org: string;
+  title?: string;
+  email?: string;
+}
+
 export interface AgreementOptions {
   addendum?: Addendum;
+  collaborator?: Collaborator;
+  /**
+   * Co-branding partner for the document header. Typed loosely here so the
+   * agreement data module stays free of rendering concerns.
+   */
+  partner?: { name: string; logo: string };
 }
 
 export interface Clause {
@@ -89,6 +112,8 @@ export interface SigningEvidence {
    * printing a name on a signature line nobody typed manufactures a signature.
    */
   coSignerSignature?: string;
+  /** Collaborating party's typed signature. Same rule: never defaulted. */
+  collaboratorSignature?: string;
   signedAt: string;
   ip?: string;
   userAgent?: string;
@@ -647,6 +672,15 @@ export function buildAgreement(p: AgreementParty, opts: AgreementOptions = {}): 
       n: '18.8',
       title: 'Addendum',
       text: 'Exhibit B (Addendum — Negotiated Terms) is incorporated into and forms part of this Agreement. Where Exhibit B conflicts with any other provision of this Agreement or Exhibit A, Exhibit B controls.',
+    });
+  }
+
+  if (opts.collaborator) {
+    const misc = sections.find((sec) => sec.n === 18);
+    misc?.clauses.push({
+      n: '18.10',
+      title: 'Collaborating Party',
+      text: `${opts.collaborator.name} of ${opts.collaborator.org} signs this Agreement as a collaborating party on ${COMPANY.shortName}'s side, acknowledging the arrangement described in it. ${opts.collaborator.org} is not a party to this Agreement and assumes no obligation under it. ${COMPANY.legalName} remains solely responsible to Affiliate for all commissions, payments, and deliverables, and any arrangement between ${COMPANY.shortName} and ${opts.collaborator.org} is separate and does not affect Affiliate's rights.`,
     });
   }
 

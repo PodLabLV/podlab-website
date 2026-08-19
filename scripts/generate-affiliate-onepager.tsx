@@ -23,6 +23,7 @@ import React from 'react';
 import { renderToBuffer, Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import fs from 'node:fs';
 import path from 'node:path';
+import { BrandPartner, PODLAB_LOGO, loadLogo } from '../lib/pdf-brand';
 import {
   AGREEMENT_VERSION,
   BASE_RATE,
@@ -50,7 +51,10 @@ const WASH = '#F6F6F6';
 // No lineHeight on `page` — see the note in affiliate-agreement-pdf.tsx.
 const s = StyleSheet.create({
   page: { paddingTop: 28, paddingBottom: 26, paddingHorizontal: 38, fontSize: 8, color: INK, fontFamily: 'Helvetica' },
-  logo: { width: 88, marginBottom: 8 },
+  logo: { width: 88 },
+  lockup: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
+  lockupDivider: { width: 0.75, height: 22, backgroundColor: RULE },
+  partnerLogo: { width: 80 },
   title: { fontSize: 17, fontFamily: 'Helvetica-Bold', letterSpacing: -0.2 },
   sub: { fontSize: 8, color: MUTED, marginTop: 3 },
   rule: { height: 2.5, width: 40, backgroundColor: GREEN, marginTop: 7, marginBottom: 10 },
@@ -80,21 +84,11 @@ const s = StyleSheet.create({
   foot: { position: 'absolute', bottom: 16, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between', fontSize: 6, color: MUTED, borderTopWidth: 0.5, borderTopColor: RULE, paddingTop: 4 },
 });
 
-let logoCache: Buffer | null | undefined;
-function logo(): Buffer | null {
-  if (logoCache !== undefined) return logoCache;
-  try {
-    logoCache = fs.readFileSync(path.join(process.cwd(), 'public', 'podlab-logo-print.png'));
-  } catch {
-    logoCache = null;
-  }
-  return logoCache;
-}
-
 interface Personal {
   name?: string;
   beakerId?: string;
   hasAddendum?: boolean;
+  partner?: BrandPartner;
 }
 
 /** Column-width-safe variant of firstSaleFor, for this sheet's narrow table. */
@@ -103,7 +97,8 @@ function firstSaleShort(lab: (typeof LAB_COMMISSIONS)[number]): string {
 }
 
 function Sheet({ who }: { who: Personal }) {
-  const logoData = logo();
+  const logoData = loadLogo(PODLAB_LOGO);
+  const partnerLogo = who.partner ? loadLogo(who.partner.logo) : null;
   const recurring = LAB_COMMISSIONS.find((l) => l.recurring);
 
   return (
@@ -115,12 +110,22 @@ function Sheet({ who }: { who: Personal }) {
       <Page size="LETTER" style={s.page}>
         <View style={s.foot} fixed>
           <Text>
-            {COMPANY.legalName} · Summary of the Beaker Affiliate Agreement {AGREEMENT_VERSION} · questions: {COMPANY.email}
+            {COMPANY.legalName}
+            {who.partner ? ` in partnership with ${who.partner.name}` : ''} · Summary of the Beaker
+            Affiliate Agreement {AGREEMENT_VERSION} · questions: {COMPANY.email}
           </Text>
           <Text>Summary only — the signed agreement governs.</Text>
         </View>
 
-        {logoData ? <Image style={s.logo} src={{ data: logoData, format: 'png' }} /> : null}
+        <View style={s.lockup}>
+          {logoData ? <Image style={s.logo} src={{ data: logoData, format: 'png' }} /> : null}
+          {partnerLogo ? (
+            <>
+              <View style={s.lockupDivider} />
+              <Image style={s.partnerLogo} src={{ data: partnerLogo, format: 'png' }} />
+            </>
+          ) : null}
+        </View>
         <Text style={s.title}>The Beaker Program at a Glance</Text>
         <Text style={s.sub}>
           {who.name
@@ -274,6 +279,7 @@ async function main() {
     who.name = [brief.firstName, brief.lastName].filter(Boolean).join(' ').trim() || undefined;
     who.beakerId = brief.beakerId;
     who.hasAddendum = Boolean(brief.addendum);
+    who.partner = brief.partner;
   }
 
   const pdf = await renderToBuffer(<Sheet who={who} />);
