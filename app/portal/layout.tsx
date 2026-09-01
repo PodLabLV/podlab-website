@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { PortalProvider, usePortal } from '@/lib/portal-data';
+import NotificationBell from '@/components/portal/NotificationBell';
 
 // SVG marks, not emoji - this sits in front of clients.
 const portalNav = [
@@ -28,13 +29,19 @@ interface UserInfo {
   initials: string;
 }
 
+const adminNav = {
+  href: '/portal/admin',
+  label: 'Admin',
+  d: 'M12 3l8 4v6c0 4-3.5 7-8 8-4.5-1-8-4-8-8V7zM9 12l2 2 4-4',
+};
+
 function PortalShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [checking, setChecking] = useState(true);
-  const { client } = usePortal();
+  const { client, isStaff } = usePortal();
   const businessName = client?.business_name ?? '';
 
   useEffect(() => {
@@ -109,11 +116,14 @@ function PortalShell({ children }: { children: React.ReactNode }) {
               Client Portal
             </span>
           </Link>
+          <div className="ml-auto hidden lg:block">
+            <NotificationBell />
+          </div>
         </div>
 
         {/* Nav links */}
         <nav className="flex-1 px-3 py-6 space-y-1">
-          {portalNav.map((item) => {
+          {[...portalNav, ...(isStaff ? [adminNav] : [])].map((item) => {
             const isActive =
               item.href === '/portal'
                 ? pathname === '/portal'
@@ -180,6 +190,9 @@ function PortalShell({ children }: { children: React.ReactNode }) {
           <span className="font-display text-white text-xs uppercase tracking-wider">
             Client Portal
           </span>
+          <div className="ml-auto">
+            <NotificationBell />
+          </div>
         </div>
 
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">{children}</div>

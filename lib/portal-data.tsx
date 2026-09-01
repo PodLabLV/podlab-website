@@ -217,6 +217,16 @@ export interface PortalFormSubmission {
   created_at: string;
 }
 
+export interface PortalNotification {
+  id: string;
+  event_id: string | null;
+  title: string;
+  detail: string | null;
+  href: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
 export interface PortalForm {
   id: string;
   form_key: string;
@@ -317,6 +327,8 @@ interface PortalData {
   actionItems: PortalActionItem[];
   intakeItems: PortalIntakeItem[];
   answers: Record<string, string>;
+  notifications: PortalNotification[];
+  markRead: (ids: string[] | 'all') => void;
   forms: PortalForm[];
   formFields: PortalFormField[];
   formSubmissions: PortalFormSubmission[];
@@ -353,6 +365,8 @@ const EMPTY: PortalData = {
   actionItems: [],
   intakeItems: [],
   answers: {},
+  notifications: [],
+  markRead: () => {},
   forms: [],
   formFields: [],
   formSubmissions: [],
@@ -392,6 +406,7 @@ const LIST_KEYS = {
   asset_versions: 'assetVersions',
   asset_comments: 'assetComments',
   form_submissions: 'formSubmissions',
+  notifications: 'notifications',
 } as const;
 
 type ListKey = (typeof LIST_KEYS)[keyof typeof LIST_KEYS];
@@ -452,6 +467,17 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     setData((prev) => ({ ...prev, comments: [comment, ...prev.comments] }));
   }, []);
 
+  /** Optimistic: the bell clears immediately, the route catches up. */
+  const markRead = useCallback((ids: string[] | 'all') => {
+    const now = new Date().toISOString();
+    setData((prev) => ({
+      ...prev,
+      notifications: prev.notifications.map((n) =>
+        ids === 'all' || ids.includes(n.id) ? { ...n, read_at: n.read_at ?? now } : n,
+      ),
+    }));
+  }, []);
+
   const setAnswer = useCallback((itemId: string, value: string) => {
     setData((prev) => ({ ...prev, answers: { ...prev.answers, [itemId]: value } }));
   }, []);
@@ -492,7 +518,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       const [assets, projects, invoices, activity, metrics, comments, actions, session,
              intake, intakeAnswers, phases, events, subscriptions, payments,
              scripts, scriptVersions, scriptComments, scriptApprovals,
-             assetVersions, assetComments, forms, formFields, formSubs, formAnswers] =
+             assetVersions, assetComments, forms, formFields, formSubs, formAnswers,
+             notifications] =
         await Promise.all([
           db.from('portal_assets').select('*').order('sort_order'),
           db.from('portal_projects').select('*').order('sort_order'),
@@ -518,6 +545,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           db.from('portal_form_fields').select('*').order('sort_order'),
           db.from('portal_form_submissions').select('*').order('created_at', { ascending: false }),
           db.from('portal_form_answers').select('submission_id, field_id, value'),
+          db.from('portal_notifications').select('*')
+            .order('created_at', { ascending: false }).limit(50),
         ]);
 
       if (cancelled) return;
@@ -544,6 +573,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         actionItems: (actions.data as PortalActionItem[]) ?? [],
         accessToken: session.data.session?.access_token ?? null,
         intakeItems: (intake.data as PortalIntakeItem[]) ?? [],
+        notifications: (notifications.data as PortalNotification[]) ?? [],
+        markRead,
         forms: (forms.data as PortalForm[]) ?? [],
         formFields: (formFields.data as PortalFormField[]) ?? [],
         formSubmissions: (formSubs.data as PortalFormSubmission[]) ?? [],
@@ -571,7 +602,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [setActionItem, addComment, setAnswer, setPhaseStatus]);
+  }, [setActionItem, addComment, setAnswer, setPhaseStatus, markRead]);
 
   /**
    * One channel, every table. The provider stays the shared cache and each

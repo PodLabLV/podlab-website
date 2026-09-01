@@ -3,7 +3,8 @@
 **Written:** August 31, 2026
 **Repo:** `sites/podlab-site`
 **Supabase project:** `tncipuxobcbkwkmpcevt` (shared with `crm.podlablv.com`)
-**Status of this doc:** Build plan. Nothing in Part 4 exists yet except where marked EXISTS.
+**Status of this doc:** Phases 0-6 are BUILT (branch `portal-phase-0`, Aug 31 2026).
+No migration has been applied — the portal is inert until the apply bundle runs.
 **Companion:** [`PORTAL-EXPERIENCE.md`](./PORTAL-EXPERIENCE.md) — this doc is data and
 modules; that one is design tokens, the science/game layer, and what the client feels.
 
@@ -685,6 +686,30 @@ Work:
 ---
 
 ### Phase 6 — Reporting, Notifications, Admin console
+
+> **BUILT — Aug 31, 2026.** `20260906_portal_notifications.sql`, three API
+> routes, `NotificationBell`, the admin console. Migration not yet applied.
+>
+> **Notifications are derived by trigger, not written by routes.** Every module
+> already writes the event log through `recordEvent()`; a second call would drift
+> the first time someone added a module and forgot one. A trigger cannot forget.
+> One row per event per member, so a founder marking something read does not
+> clear their ops manager's bell.
+>
+> **The admin console reads through `/api/portal/admin` on the service role**,
+> never `usePortal`. Staff hold no `portal_client_users` rows, so the browser
+> client genuinely cannot see another client's data — that is the correct
+> posture, and this route is the sanctioned way around it after `resolveStaff`.
+>
+> **No ad-platform integration.** `POST /api/portal/metrics` is the ingest —
+> shared-secret, fails closed, upserts by (client, period, metric_key). Which
+> platforms, which accounts, and which attribution model are business decisions;
+> inventing them in code would produce numbers nobody could defend.
+> Requires `METRICS_INGEST_SECRET`.
+>
+> **Still no staff upload UI** (the Phase 3 gap). The admin console reads and
+> triages; the deliverable-upload and script-posting forms are the obvious next
+> increment on top of routes that already exist.
 
 **Reporting.** `portal_report_metrics` EXISTS and is empty on purpose. Feed it on a Vercel
 cron from the ad platforms, keyed by `period_label`. The Reports page UI already renders a
