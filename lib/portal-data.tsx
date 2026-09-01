@@ -68,6 +68,35 @@ export interface PortalInvoice {
   amount_cents: number;
   status: string | null;
   receipt_url: string | null;
+  due_on: string | null;
+  paid_at: string | null;
+  currency: string | null;
+  amount_paid_cents: number | null;
+  /** Stripe-hosted payment page. The only "pay now" path — we never take a card. */
+  hosted_invoice_url: string | null;
+  pdf_url: string | null;
+}
+
+export interface PortalSubscription {
+  id: string;
+  product_label: string | null;
+  amount_cents: number;
+  interval: string | null;
+  status: string | null;
+  current_period_end: string | null;
+  cancel_at: string | null;
+  started_on: string | null;
+}
+
+export interface PortalPayment {
+  id: string;
+  invoice_id: string | null;
+  kind: string | null;
+  amount_cents: number;
+  status: string | null;
+  method_label: string | null;
+  failure_reason: string | null;
+  occurred_at: string | null;
 }
 
 export interface PortalActivity {
@@ -157,6 +186,8 @@ interface PortalData {
   assets: PortalAsset[];
   projects: PortalProject[];
   invoices: PortalInvoice[];
+  subscriptions: PortalSubscription[];
+  payments: PortalPayment[];
   activity: PortalActivity[];
   events: PortalEvent[];
   metrics: PortalMetric[];
@@ -181,6 +212,8 @@ const EMPTY: PortalData = {
   assets: [],
   projects: [],
   invoices: [],
+  subscriptions: [],
+  payments: [],
   activity: [],
   events: [],
   metrics: [],
@@ -214,6 +247,8 @@ const LIST_KEYS = {
   action_items: 'actionItems',
   delivery_phases: 'phases',
   events: 'events',
+  subscriptions: 'subscriptions',
+  payments: 'payments',
 } as const;
 
 type ListKey = (typeof LIST_KEYS)[keyof typeof LIST_KEYS];
@@ -312,7 +347,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       }
 
       const [assets, projects, invoices, activity, metrics, comments, actions, session,
-             intake, intakeAnswers, phases, events] =
+             intake, intakeAnswers, phases, events, subscriptions, payments] =
         await Promise.all([
           db.from('portal_assets').select('*').order('sort_order'),
           db.from('portal_projects').select('*').order('sort_order'),
@@ -326,6 +361,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           db.from('portal_intake_answers').select('item_id, value'),
           db.from('portal_delivery_phases').select('*').order('sort_order'),
           db.from('portal_events').select('*').order('created_at', { ascending: false }).limit(100),
+          db.from('portal_subscriptions').select('*').order('created_at', { ascending: false }),
+          db.from('portal_payments').select('*').order('occurred_at', { ascending: false }).limit(100),
         ]);
 
       if (cancelled) return;
@@ -337,6 +374,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         assets: (assets.data as PortalAsset[]) ?? [],
         projects: (projects.data as PortalProject[]) ?? [],
         invoices: (invoices.data as PortalInvoice[]) ?? [],
+        subscriptions: (subscriptions.data as PortalSubscription[]) ?? [],
+        payments: (payments.data as PortalPayment[]) ?? [],
         activity: (activity.data as PortalActivity[]) ?? [],
         events: (events.data as PortalEvent[]) ?? [],
         metrics: (metrics.data as PortalMetric[]) ?? [],

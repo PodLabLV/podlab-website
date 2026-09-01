@@ -299,6 +299,17 @@ refresh; a staff account can switch clients; every existing route writes `portal
 
 ### Phase 1 — Payments
 
+> **BUILT — Aug 31, 2026.** `20260901_portal_payments.sql`, the rewritten
+> `app/api/webhooks/stripe/route.ts`, and `app/portal/invoices/page.tsx`.
+> Migration not yet applied.
+>
+> **Required before this works:** `STRIPE_WEBHOOK_SECRET` must be set in Vercel.
+> It is currently set in no environment, and the old route verified signatures
+> only `if (STRIPE_WEBHOOK_SECRET)` — so production was accepting unsigned POSTs
+> and creating Monday records from them. The route now fails closed, which means
+> it returns 500 until the secret exists. That is deliberate: inert beats forgeable
+> on an endpoint that writes financial records.
+
 `portal_invoices` EXISTS but is empty and thin. Extend it, add two siblings, and rewrite
 the Stripe webhook to actually feed it.
 
