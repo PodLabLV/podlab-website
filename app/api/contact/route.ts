@@ -102,6 +102,9 @@ export async function POST(request: NextRequest) {
       name: name,
       raw: body,
       source: 'contact',
+      company,
+      phone,
+      message,
     }).catch((err) => console.error('Form tracking error:', err))
 
     return NextResponse.json({ success: true })

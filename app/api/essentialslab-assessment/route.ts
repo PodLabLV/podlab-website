@@ -270,6 +270,7 @@ To unsubscribe, reply to this email with "unsubscribe".`
       name: firstName,
       raw: body,
       source: 'essentialslab',
+      company: businessName,
     }).catch((err) => console.error('Form tracking error:', err))
 
     return NextResponse.json({ success: true, clientId })

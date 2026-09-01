@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { recordSubmission } from '@/lib/portal/forms'
 
 const MONDAY_API_TOKEN = process.env.MONDAY_API_TOKEN!
-const MONDAY_BOARD_ID = '18400694687'
+const MONDAY_BOARD_ID = process.env.MONDAY_BOARD_ID || '18400694687'
 const TYPEFORM_WEBHOOK_SECRET = process.env.TYPEFORM_WEBHOOK_SECRET
 
 // Typeform sends HMAC-SHA256 signature as "sha256=<hex>" in Typeform-Signature header

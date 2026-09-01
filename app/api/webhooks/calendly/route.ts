@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const MONDAY_API_TOKEN = process.env.MONDAY_API_TOKEN!
-const MONDAY_BOARD_ID = '18400694687'
+const MONDAY_BOARD_ID = process.env.MONDAY_BOARD_ID || '18400694687'
 
 function getSupabase() {
   return createClient(

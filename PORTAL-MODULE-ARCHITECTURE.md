@@ -644,6 +644,27 @@ to read one pattern.
 
 ### Phase 5 — CRM Sync
 
+> **BUILT — Aug 31, 2026.** `20260905_portal_crm_sync.sql`, `lib/portal/crm.ts`,
+> CRM sync folded into `recordSubmission`. Migration not yet applied.
+>
+> **Wired through `recordSubmission`, not by re-editing the seven routes.** They
+> already call it from Phase 4, so every capture now reaches the CRM without a
+> second pass over live revenue paths.
+>
+> **No unique index on email — it would fail.** `crm.leads` already contains a
+> duplicated address (`charles@nanocove.com`), and 752 of its 893 rows have no
+> email at all. Matching happens in app code against the oldest match, over a
+> plain index.
+>
+> **An existing lead's pipeline position is never overwritten.** Someone at
+> DISCOVERY CALL BOOKED who fills in a contact form keeps that stage. We fill
+> blank fields and append a dated note; stage, owner, tier, and deal value are
+> never touched.
+>
+> **`public.leads` is still written.** The deprecation comment is on the table,
+> but the routes keep writing it through a parity window. Removing that write is
+> a deliberate follow-up, not a side effect of this phase.
+
 **Decision required: `crm.leads` is canonical.** It has 893 rows against `public.leads`'s 81,
 and it backs a shipped app. Everything else becomes a writer or a mirror.
 

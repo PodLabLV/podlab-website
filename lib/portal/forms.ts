@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { upsertCrmLead } from '@/lib/portal/crm';
 
 /**
  * Form tracking.
@@ -30,6 +31,12 @@ export interface SubmissionInput {
   raw?: unknown;
   source?: string;
   status?: 'sent' | 'opened' | 'in progress' | 'submitted' | 'reviewed';
+  // ── CRM sync (Phase 5). All optional; anything absent is simply not set.
+  company?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  message?: string | null;
+  smsConsentAt?: string | null;
 }
 
 /**
@@ -41,17 +48,33 @@ export async function recordSubmission(
   input: SubmissionInput,
 ): Promise<string | null> {
   try {
+    const email = input.email?.trim().toLowerCase() || null;
+
+    // CRM sync FIRST, and deliberately outside the form-row check below: the
+    // CRM is canonical and must receive every capture whether or not the Phase 4
+    // forms migration has been applied.
+    const crmLeadId = await upsertCrmLead(db, {
+      email,
+      name: input.name,
+      company: input.company,
+      phone: input.phone,
+      website: input.website,
+      message: input.message,
+      source: `website:${input.formKey}`,
+      leadMagnet: input.formKey,
+      smsConsentAt: input.smsConsentAt,
+    });
+
     const { data: form } = await db
       .from('portal_forms')
       .select('id')
       .eq('form_key', input.formKey)
       .maybeSingle();
 
-    // No form row means the migration has not been applied yet. Not an error
-    // worth shouting about — the lead still landed everywhere it used to.
+    // No form row means the Phase 4 migration has not been applied yet. Not an
+    // error worth shouting about — the lead reached the CRM above and every
+    // place it used to go.
     if (!form) return null;
-
-    const email = input.email?.trim().toLowerCase() || null;
 
     // Link to a portal client when one already exists for this address.
     let clientId: string | null = null;
@@ -72,6 +95,7 @@ export async function recordSubmission(
       .insert({
         form_id: form.id,
         client_id: clientId,
+        crm_lead_id: crmLeadId,
         email,
         name: input.name ?? null,
         status,

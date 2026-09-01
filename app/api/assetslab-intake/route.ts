@@ -299,6 +299,7 @@ To unsubscribe, reply to this email with "unsubscribe".`
       name: fullName,
       raw: body,
       source: 'assetslab-intake',
+      company: businessName,
     }).catch((err) => console.error('Form tracking error:', err))
 
     return NextResponse.json({ success: true, clientId })
