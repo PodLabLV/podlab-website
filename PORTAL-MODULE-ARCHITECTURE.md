@@ -491,6 +491,18 @@ live; approving v3 locks it and puts an entry on the CRM lead.
 
 ### Phase 3 — Deliverables & Files
 
+> **BUILT — Aug 31, 2026.** `20260903_portal_deliverables.sql`, two API routes,
+> the rebuilt deliverables page, `Discoveries`. Migration not yet applied.
+>
+> **Uploads go browser-to-storage.** `POST /api/portal/deliverables` with
+> `intent: "sign"` returns a signed upload URL; the browser PUTs the file
+> straight to the bucket, then posts again with `storagePath` to register the
+> version. Routing a 400 MB cut through a function would be slower and costlier
+> for no gain. Downloads are signed per click, 5-minute TTL.
+>
+> **No staff upload UI yet** — the routes are done, the admin surface is Phase 6.
+> Until then a version can be registered with a direct POST.
+
 `portal_assets` EXISTS, holding 5 rows of title-plus-URL. It has no versions, no real file
 storage, and no approval.
 

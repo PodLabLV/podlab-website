@@ -6,6 +6,8 @@ import { Card, StatCard, EmptyState } from '@/components/portal/Shared';
 import PeriodicTable from '@/components/portal/PeriodicTable';
 import LabNotebook from '@/components/portal/LabNotebook';
 import ReactionRate from '@/components/portal/ReactionRate';
+import Discoveries from '@/components/portal/Discoveries';
+import { buildDiscoveries } from '@/lib/portal/discoveries';
 import { buildLabTable } from '@/lib/portal/labs-table';
 
 const QUICK_LINKS = [
@@ -23,7 +25,7 @@ const QUICK_LINKS = [
 export default function PortalDashboard() {
   const {
     loading, error, client, assets, projects, phases, events, actionItems,
-    scripts, scriptVersions, scriptApprovals, isStaff,
+    scripts, scriptVersions, scriptApprovals, isStaff, metrics,
   } = usePortal();
 
   if (loading) {
@@ -55,6 +57,13 @@ export default function PortalDashboard() {
     );
   }
 
+  const labs = buildLabTable({
+    planLabel: client.plan_label,
+    projects,
+    assets,
+    phases,
+  });
+
   const ready = assets.filter((a) => (a.status || '').toLowerCase() === 'ready');
   const active = projects.filter((p) => p.progress_pct < 100);
   const firstName = client.first_name || client.business_name;
@@ -77,12 +86,16 @@ export default function PortalDashboard() {
         </Card>
       )}
 
-      <PeriodicTable
-        elements={buildLabTable({
-          planLabel: client.plan_label,
-          projects,
+      <PeriodicTable elements={labs} />
+
+      <Discoveries
+        discoveries={buildDiscoveries({
           assets,
-          phases,
+          scripts,
+          approvals: scriptApprovals,
+          metrics,
+          events,
+          labs,
         })}
       />
 

@@ -46,6 +46,39 @@ export interface PortalAsset {
   status: string | null;
   size_label: string | null;
   sort_order: number;
+  status_detail: string | null;
+  current_version: number | null;
+  approved_at: string | null;
+  approved_by: string | null;
+  updated_at: string | null;
+}
+
+/** Immutable, same rule as script versions. */
+export interface PortalAssetVersion {
+  id: string;
+  asset_id: string;
+  version_no: number;
+  /** Object path in a private bucket — never a URL. Signed on demand. */
+  storage_path: string | null;
+  external_url: string | null;
+  size_bytes: number | null;
+  mime_type: string | null;
+  note: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+}
+
+export interface PortalAssetComment {
+  id: string;
+  version_id: string;
+  asset_id: string;
+  /** Seconds into the video. Null for documents and general notes. */
+  time_seconds: number | null;
+  body: string;
+  author_name: string;
+  author_kind: string | null;
+  status: string | null;
+  created_at: string;
 }
 
 export interface PortalProject {
@@ -244,6 +277,8 @@ interface PortalData {
   events: PortalEvent[];
   metrics: PortalMetric[];
   comments: PortalComment[];
+  assetVersions: PortalAssetVersion[];
+  assetComments: PortalAssetComment[];
   scripts: PortalScript[];
   scriptVersions: PortalScriptVersion[];
   scriptComments: PortalScriptComment[];
@@ -274,6 +309,8 @@ const EMPTY: PortalData = {
   events: [],
   metrics: [],
   comments: [],
+  assetVersions: [],
+  assetComments: [],
   scripts: [],
   scriptVersions: [],
   scriptComments: [],
@@ -313,6 +350,8 @@ const LIST_KEYS = {
   script_versions: 'scriptVersions',
   script_comments: 'scriptComments',
   script_approvals: 'scriptApprovals',
+  asset_versions: 'assetVersions',
+  asset_comments: 'assetComments',
 } as const;
 
 type ListKey = (typeof LIST_KEYS)[keyof typeof LIST_KEYS];
@@ -412,7 +451,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
 
       const [assets, projects, invoices, activity, metrics, comments, actions, session,
              intake, intakeAnswers, phases, events, subscriptions, payments,
-             scripts, scriptVersions, scriptComments, scriptApprovals] =
+             scripts, scriptVersions, scriptComments, scriptApprovals,
+             assetVersions, assetComments] =
         await Promise.all([
           db.from('portal_assets').select('*').order('sort_order'),
           db.from('portal_projects').select('*').order('sort_order'),
@@ -432,6 +472,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           db.from('portal_script_versions').select('*').order('version_no', { ascending: false }),
           db.from('portal_script_comments').select('*').order('created_at'),
           db.from('portal_script_approvals').select('*'),
+          db.from('portal_asset_versions').select('*').order('version_no', { ascending: false }),
+          db.from('portal_asset_comments').select('*').order('created_at'),
         ]);
 
       if (cancelled) return;
@@ -449,6 +491,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         events: (events.data as PortalEvent[]) ?? [],
         metrics: (metrics.data as PortalMetric[]) ?? [],
         comments: (comments.data as PortalComment[]) ?? [],
+        assetVersions: (assetVersions.data as PortalAssetVersion[]) ?? [],
+        assetComments: (assetComments.data as PortalAssetComment[]) ?? [],
         scripts: (scripts.data as PortalScript[]) ?? [],
         scriptVersions: (scriptVersions.data as PortalScriptVersion[]) ?? [],
         scriptComments: (scriptComments.data as PortalScriptComment[]) ?? [],
