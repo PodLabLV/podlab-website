@@ -389,6 +389,24 @@ lead timeline.
 
 ### Phase 2 — Scripts & Revisions
 
+> **BUILT — Aug 31, 2026.** `20260902_portal_scripts.sql`, `lib/portal/scripts.ts`,
+> three API routes, the index + review pages, `Teleprompter`, `ReactionRate`.
+> Migration not yet applied.
+>
+> **Skill write path** — `POST /api/portal/scripts` with a staff bearer token:
+> ```json
+> { "clientId": "uuid", "title": "Founder Story VSL", "kind": "vsl",
+>   "lab": "VideoSalesLab", "source": "vsllab", "body": "markdown...",
+>   "trialGroup": "vsl-open-takes" }
+> ```
+> Returns `{ scriptId, versionId, versionNo }`. Pass `scriptId` instead of
+> `clientId`/`title` to add a version to an existing script. `vsllab`, `hooklab`,
+> `scriptbuilder`, and `realtorlab-pack` can post straight into the client's
+> portal instead of writing a file someone has to email.
+>
+> Reaction Rate ships **staff-only** (open question 2). Flip `visibleToClient`
+> on `<ReactionRate>` in `app/portal/page.tsx` to expose it.
+
 The module you named that has no equivalent today. `portal_comments` is document-level and
 unanchored — it cannot express "tighten line 14."
 

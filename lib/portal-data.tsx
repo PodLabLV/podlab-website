@@ -171,6 +171,58 @@ export interface PortalPhase {
   updated_at: string | null;
 }
 
+export interface PortalScript {
+  id: string;
+  title: string;
+  lab: string | null;
+  kind: string | null;
+  status: string | null;
+  current_version: number;
+  shoot_date: string | null;
+  source: string | null;
+  trial_group: string | null;
+  sort_order: number;
+  updated_at: string | null;
+}
+
+/** Immutable. A revision is a new row, never an edit to this one. */
+export interface PortalScriptVersion {
+  id: string;
+  script_id: string;
+  version_no: number;
+  body: string;
+  word_count: number | null;
+  runtime_seconds: number | null;
+  author_name: string | null;
+  author_kind: string | null;
+  note: string | null;
+  created_at: string;
+}
+
+export interface PortalScriptComment {
+  id: string;
+  version_id: string;
+  script_id: string;
+  parent_id: string | null;
+  block_index: number | null;
+  quoted_text: string | null;
+  body: string;
+  author_name: string;
+  author_kind: string;
+  status: string | null;
+  orphaned: boolean | null;
+  resolved_at: string | null;
+  created_at: string;
+}
+
+export interface PortalScriptApproval {
+  id: string;
+  version_id: string;
+  script_id: string;
+  approved_by_name: string;
+  approved_at: string;
+}
+
 export interface PortalMetric {
   id: string;
   period_label: string;
@@ -192,6 +244,10 @@ interface PortalData {
   events: PortalEvent[];
   metrics: PortalMetric[];
   comments: PortalComment[];
+  scripts: PortalScript[];
+  scriptVersions: PortalScriptVersion[];
+  scriptComments: PortalScriptComment[];
+  scriptApprovals: PortalScriptApproval[];
   actionItems: PortalActionItem[];
   intakeItems: PortalIntakeItem[];
   answers: Record<string, string>;
@@ -218,6 +274,10 @@ const EMPTY: PortalData = {
   events: [],
   metrics: [],
   comments: [],
+  scripts: [],
+  scriptVersions: [],
+  scriptComments: [],
+  scriptApprovals: [],
   actionItems: [],
   intakeItems: [],
   answers: {},
@@ -249,6 +309,10 @@ const LIST_KEYS = {
   events: 'events',
   subscriptions: 'subscriptions',
   payments: 'payments',
+  scripts: 'scripts',
+  script_versions: 'scriptVersions',
+  script_comments: 'scriptComments',
+  script_approvals: 'scriptApprovals',
 } as const;
 
 type ListKey = (typeof LIST_KEYS)[keyof typeof LIST_KEYS];
@@ -347,7 +411,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       }
 
       const [assets, projects, invoices, activity, metrics, comments, actions, session,
-             intake, intakeAnswers, phases, events, subscriptions, payments] =
+             intake, intakeAnswers, phases, events, subscriptions, payments,
+             scripts, scriptVersions, scriptComments, scriptApprovals] =
         await Promise.all([
           db.from('portal_assets').select('*').order('sort_order'),
           db.from('portal_projects').select('*').order('sort_order'),
@@ -363,6 +428,10 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           db.from('portal_events').select('*').order('created_at', { ascending: false }).limit(100),
           db.from('portal_subscriptions').select('*').order('created_at', { ascending: false }),
           db.from('portal_payments').select('*').order('occurred_at', { ascending: false }).limit(100),
+          db.from('portal_scripts').select('*').order('sort_order'),
+          db.from('portal_script_versions').select('*').order('version_no', { ascending: false }),
+          db.from('portal_script_comments').select('*').order('created_at'),
+          db.from('portal_script_approvals').select('*'),
         ]);
 
       if (cancelled) return;
@@ -380,6 +449,10 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         events: (events.data as PortalEvent[]) ?? [],
         metrics: (metrics.data as PortalMetric[]) ?? [],
         comments: (comments.data as PortalComment[]) ?? [],
+        scripts: (scripts.data as PortalScript[]) ?? [],
+        scriptVersions: (scriptVersions.data as PortalScriptVersion[]) ?? [],
+        scriptComments: (scriptComments.data as PortalScriptComment[]) ?? [],
+        scriptApprovals: (scriptApprovals.data as PortalScriptApproval[]) ?? [],
         actionItems: (actions.data as PortalActionItem[]) ?? [],
         accessToken: session.data.session?.access_token ?? null,
         intakeItems: (intake.data as PortalIntakeItem[]) ?? [],

@@ -5,6 +5,7 @@ import { usePortal } from '@/lib/portal-data';
 import { Card, StatCard, EmptyState } from '@/components/portal/Shared';
 import PeriodicTable from '@/components/portal/PeriodicTable';
 import LabNotebook from '@/components/portal/LabNotebook';
+import ReactionRate from '@/components/portal/ReactionRate';
 import { buildLabTable } from '@/lib/portal/labs-table';
 
 const QUICK_LINKS = [
@@ -12,6 +13,7 @@ const QUICK_LINKS = [
   { href: '/portal/actions', label: 'Action Items', body: 'What to do first. Tick them off as you go.' },
   { href: '/portal/intake', label: 'Intake', body: 'What we need from you. Saves as you type.' },
   { href: '/portal/delivery', label: 'Delivery', body: 'Every phase of the build and where it stands.' },
+  { href: '/portal/scripts', label: 'Scripts', body: 'Read, mark up, and validate before we shoot.' },
   { href: '/portal/deliverables', label: 'Deliverables', body: 'Every file we have produced for you.' },
   { href: '/portal/progress', label: 'Progress', body: 'Where each project stands right now.' },
   { href: '/portal/reports', label: 'Reports', body: 'Performance once campaigns are running.' },
@@ -19,7 +21,10 @@ const QUICK_LINKS = [
 ];
 
 export default function PortalDashboard() {
-  const { loading, error, client, assets, projects, phases, events, actionItems } = usePortal();
+  const {
+    loading, error, client, assets, projects, phases, events, actionItems,
+    scripts, scriptVersions, scriptApprovals, isStaff,
+  } = usePortal();
 
   if (loading) {
     return (
@@ -108,6 +113,17 @@ export default function PortalDashboard() {
         </div>
 
         <div>
+          {/* Staff-only until the number has been checked for fairness over one
+              client cycle — PORTAL-EXPERIENCE.md open question 2. */}
+          <div className="mb-6">
+            <ReactionRate
+              scripts={scripts}
+              versions={scriptVersions}
+              approvals={scriptApprovals}
+              isStaff={isStaff}
+            />
+          </div>
+
           <h2 className="font-display text-white text-sm uppercase tracking-wider mb-4">
             Jump To
           </h2>
