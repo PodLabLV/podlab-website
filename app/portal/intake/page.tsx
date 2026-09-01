@@ -2,10 +2,30 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { usePortal } from '@/lib/portal-data';
+import { resolveIntake } from '@/lib/portal/forms';
 import { PageHeader, Card, EmptyState } from '@/components/portal/Shared';
 
 export default function IntakePage() {
-  const { loading, client, intakeItems, answers, setAnswer, accessToken } = usePortal();
+  const {
+    loading, client, intakeItems, answers, setAnswer, accessToken,
+    forms, formFields, formSubmissions, formAnswers,
+  } = usePortal();
+
+  // Dual read: the form engine once the migration has landed, the legacy
+  // portal_intake_* tables until then. See resolveIntake for why.
+  const intakeForm = forms.find((f) => f.form_key === 'client-intake');
+  const submission = formSubmissions.find(
+    (sub) => sub.form_id === intakeForm?.id && sub.client_id === client?.id,
+  );
+  const resolved = resolveIntake({
+    fields: formFields.filter((f) => f.form_id === intakeForm?.id),
+    fieldAnswers: formAnswers,
+    legacyItems: intakeItems,
+    legacyAnswers: answers,
+    submissionId: submission?.id ?? null,
+  });
+  const questions = resolved.questions;
+  const current = resolved.answers;
   const [saving, setSaving] = useState<Record<string, 'saving' | 'saved' | 'error'>>({});
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +45,11 @@ export default function IntakePage() {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${accessToken ?? ''}`,
             },
-            body: JSON.stringify({ itemId, value }),
+            body: JSON.stringify(
+              resolved.usingEngine
+                ? { fieldId: itemId, submissionId: resolved.submissionId, value }
+                : { itemId, value },
+            ),
           });
           if (!res.ok) throw new Error('save failed');
           setSaving((s) => ({ ...s, [itemId]: 'saved' }));
@@ -39,7 +63,7 @@ export default function IntakePage() {
 
   if (loading) return <p className="text-white/40 text-sm">Loading...</p>;
 
-  if (!client || intakeItems.length === 0) {
+  if (!client || questions.length === 0) {
     return (
       <>
         <PageHeader title="Intake" />
@@ -51,10 +75,10 @@ export default function IntakePage() {
     );
   }
 
-  const sections = Array.from(new Set(intakeItems.map((i) => i.section)));
-  const answered = intakeItems.filter((i) => (answers[i.id] ?? '').trim()).length;
-  const requiredLeft = intakeItems.filter(
-    (i) => i.required && !(answers[i.id] ?? '').trim(),
+  const sections = Array.from(new Set(questions.map((i) => i.section || 'General')));
+  const answered = questions.filter((i) => (current[i.id] ?? '').trim()).length;
+  const requiredLeft = questions.filter(
+    (i) => i.required && !(current[i.id] ?? '').trim(),
   ).length;
 
   async function submit() {
@@ -85,7 +109,7 @@ export default function IntakePage() {
       <Card className="sticky top-0 z-10 mb-8 p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="text-sm text-white">
-            {answered} of {intakeItems.length} answered
+            {answered} of {questions.length} answered
             {requiredLeft > 0 && (
               <span className="text-white/40"> · {requiredLeft} required left</span>
             )}
@@ -101,7 +125,7 @@ export default function IntakePage() {
         <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full bg-[#2ADD1B] transition-[width] duration-500"
-            style={{ width: `${(answered / intakeItems.length) * 100}%` }}
+            style={{ width: `${(answered / questions.length) * 100}%` }}
           />
         </div>
         {error && <p className="mt-3 text-xs text-red-400">{error}</p>}
@@ -114,8 +138,8 @@ export default function IntakePage() {
               {section}
             </h2>
             <div className="space-y-4">
-              {intakeItems
-                .filter((i) => i.section === section)
+              {questions
+                .filter((i) => (i.section || 'General') === section)
                 .map((item) => {
                   const value = answers[item.id] ?? '';
                   const state = saving[item.id];

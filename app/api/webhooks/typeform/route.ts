@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { recordSubmission } from '@/lib/portal/forms'
 
 const MONDAY_API_TOKEN = process.env.MONDAY_API_TOKEN!
-const MONDAY_BOARD_ID = '18400694687'
+const MONDAY_BOARD_ID = process.env.MONDAY_BOARD_ID || '18400694687'
 const TYPEFORM_WEBHOOK_SECRET = process.env.TYPEFORM_WEBHOOK_SECRET
 
 // Typeform sends HMAC-SHA256 signature as "sha256=<hex>" in Typeform-Signature header
@@ -160,6 +161,18 @@ export async function POST(request: NextRequest) {
         raw_responses: { name, email, company, revenue, contentChallenge, bestTime },
       })
     }
+  }
+
+  // Form tracking (Phase 4). Additive and non-blocking — the lead has already
+  // reached Monday and the leads table by here.
+  if (email) {
+    await recordSubmission(getSupabase(), {
+      formKey: 'typeform',
+      email,
+      name,
+      raw: response,
+      source: 'typeform-webhook',
+    })
   }
 
   return NextResponse.json({ ok: true, mondayItemId })

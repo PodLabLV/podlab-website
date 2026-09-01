@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
 import { createClient } from '@supabase/supabase-js';
 import { notifyTeam, notifyEmail, buildEmailHtml } from '@/lib/notifications';
+import { recordSubmission } from '@/lib/portal/forms';
 import { consentRecord } from '@/lib/smsConsent';
 import { AGREEMENT_VERSION, COMPANY } from '@/lib/affiliate-terms';
 import type { AgreementParty, SigningEvidence } from '@/lib/affiliate-agreement';
@@ -279,6 +280,15 @@ export async function POST(request: NextRequest) {
       slackColor: '#9b59b6',
       supabaseUrl: 'https://supabase.com/dashboard/project/tncipuxobcbkwkmpcevt/editor',
     }).catch((err) => console.error('Notification error:', err));
+
+    // Form tracking (Phase 4). Additive and non-blocking.
+    recordSubmission(supabase, {
+      formKey: 'affiliate-apply',
+      email: body.email,
+      name: body.fullName ?? body.name,
+      raw: body,
+      source: 'affiliate-apply',
+    }).catch((err) => console.error('Form tracking error:', err));
 
     return NextResponse.json({ success: true, beakerId, agreementUrl });
   } catch (err) {

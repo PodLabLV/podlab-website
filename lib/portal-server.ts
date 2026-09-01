@@ -94,6 +94,94 @@ export async function resolveStaff(
   return { email: data.user.email, name: row?.name ?? data.user.email };
 }
 
+/**
+ * The one write path for "something happened."
+ *
+ * Records the event, pings Slack, and appends to the CRM lead timeline. Every
+ * module calls this instead of hand-rolling the three calls — which is what the
+ * four original routes did, giving three chances to half-happen and a fresh
+ * copy-paste for every new module.
+ *
+ * Never throws. A notification failing must not fail the thing it describes.
+ */
+export interface EventInput {
+  clientId: string;
+  module: string;
+  kind: string;
+  title: string;
+  detail?: string | null;
+  actorName?: string | null;
+  actorKind?: 'client' | 'staff' | 'system';
+  refId?: string | null;
+  /** false keeps it in the staff feed only. Internal notes never broadcast. */
+  visibleToClient?: boolean;
+  /** Set false for routine noise; true for anything a human should look at. */
+  slack?: boolean;
+  /** crm.leads id, when the caller already has it. Looked up otherwise. */
+  crmLeadId?: string | null;
+  businessName?: string | null;
+}
+
+export async function recordEvent(db: SupabaseClient, input: EventInput): Promise<void> {
+  const {
+    clientId, module, kind, title,
+    detail = null, actorName = null, actorKind = 'system', refId = null,
+    visibleToClient = true, slack = false,
+  } = input;
+
+  let crmLeadId = input.crmLeadId ?? null;
+  let businessName = input.businessName ?? null;
+
+  try {
+    const { error } = await db.from('portal_events').insert({
+      client_id: clientId,
+      module,
+      kind,
+      title,
+      detail,
+      actor_name: actorName,
+      actor_kind: actorKind,
+      ref_id: refId,
+      visible_to_client: visibleToClient,
+    });
+    if (error) console.error('[portal] event insert failed', error.message);
+  } catch (err) {
+    console.error('[portal] event insert threw', err);
+  }
+
+  // Only look the client up if the caller could not supply it.
+  if (crmLeadId === null || businessName === null) {
+    try {
+      const { data } = await db
+        .from('portal_clients')
+        .select('business_name, crm_lead_id')
+        .eq('id', clientId)
+        .maybeSingle();
+      crmLeadId ??= data?.crm_lead_id ?? null;
+      businessName ??= data?.business_name ?? null;
+    } catch (err) {
+      console.error('[portal] client lookup threw', err);
+    }
+  }
+
+  if (slack) {
+    await notifySlack(`*${title}* - ${businessName ?? 'client'}${detail ? `\n${detail}` : ''}`);
+  }
+
+  if (crmLeadId) {
+    try {
+      const { error } = await db.schema('crm').from('activities').insert({
+        lead_id: crmLeadId,
+        actor_name: actorName ? `${actorName} (portal)` : 'PodLab portal',
+        text: detail ? `${title} - ${detail}` : title,
+      });
+      if (error) console.error('[portal] crm activity failed', error.message);
+    } catch (err) {
+      console.error('[portal] crm activity threw', err);
+    }
+  }
+}
+
 /** Best-effort Slack ping. A webhook failure must never fail the client's action. */
 export async function notifySlack(text: string): Promise<void> {
   const url = process.env.SLACK_WEBHOOK_URL;

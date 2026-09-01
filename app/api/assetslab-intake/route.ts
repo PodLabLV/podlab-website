@@ -3,6 +3,7 @@ import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
 import { createClient } from '@supabase/supabase-js'
 import { consentRecord, consentTags } from '@/lib/smsConsent'
 import { notifyTeam, notifyEmail, buildEmailHtml } from '@/lib/notifications'
+import { recordSubmission } from '@/lib/portal/forms'
 import { sanitize } from '@/lib/sanitize'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -287,6 +288,19 @@ To unsubscribe, reply to this email with "unsubscribe".`
         tags: [{ name: 'kind', value: 'assetslab_intake' }],
       }
     ).catch((err) => console.error('Customer confirmation email error:', err))
+
+
+    // Form tracking (Phase 4). Additive and non-blocking: the lead has already
+    // landed everywhere it used to by this point, and a reporting row must
+    // never cost one.
+    recordSubmission(supabase, {
+      formKey: 'assetslab-intake',
+      email: email,
+      name: fullName,
+      raw: body,
+      source: 'assetslab-intake',
+      company: businessName,
+    }).catch((err) => console.error('Form tracking error:', err))
 
     return NextResponse.json({ success: true, clientId })
   } catch (error) {

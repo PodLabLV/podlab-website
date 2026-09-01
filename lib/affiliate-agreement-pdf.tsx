@@ -20,11 +20,11 @@ import {
   Text,
   View,
 } from '@react-pdf/renderer';
-import fs from 'node:fs';
-import path from 'node:path';
+import { BrandPartner, PODLAB_LOGO, loadLogo } from './pdf-brand';
 import {
   Addendum,
   AgreementOptions,
+  Collaborator,
   AgreementParty,
   SigningEvidence,
   buildAgreement,
@@ -61,7 +61,10 @@ const styles = StyleSheet.create({
     color: INK,
     fontFamily: 'Helvetica',
   },
-  logo: { width: 116, marginBottom: 16 },
+  logo: { width: 116 },
+  lockup: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
+  lockupDivider: { width: 0.75, height: 26, backgroundColor: RULE },
+  partnerLogo: { width: 104 },
   docTitle: { fontSize: 15, fontFamily: 'Helvetica-Bold', letterSpacing: 0.4 },
   docSubtitle: { fontSize: 8, color: MUTED, marginTop: 3, marginBottom: 10 },
   accentRule: { height: 2.5, width: 44, backgroundColor: GREEN, marginBottom: 12 },
@@ -135,19 +138,8 @@ const styles = StyleSheet.create({
   },
 });
 
-/** Read once per lambda instance, not once per render. */
-let logoCache: Buffer | null | undefined;
 function logo(): Buffer | null {
-  if (logoCache !== undefined) return logoCache;
-  try {
-    logoCache = fs.readFileSync(
-      path.join(process.cwd(), 'public', 'podlab-logo-print.png'),
-    );
-  } catch {
-    // A missing logo must never cost someone their contract.
-    logoCache = null;
-  }
-  return logoCache;
+  return loadLogo(PODLAB_LOGO);
 }
 
 function Footer({ evidence, party }: { evidence: SigningEvidence; party: AgreementParty }) {
@@ -267,10 +259,12 @@ function Signatures({
   party,
   evidence,
   hasAddendum,
+  collaborator,
 }: {
   party: AgreementParty;
   evidence: SigningEvidence;
   hasAddendum: boolean;
+  collaborator?: Collaborator;
 }) {
   return (
     <>
@@ -290,6 +284,25 @@ function Signatures({
         </Text>
         <Text style={{ color: MUTED }}>Date: {party.effectiveDate}</Text>
       </View>
+
+      {collaborator ? (
+        <View style={styles.sigBlock}>
+          <Text style={styles.sigLabel}>
+            COLLABORATING PARTY — {collaborator.org.toUpperCase()}
+          </Text>
+          <Text style={styles.sigName}>{evidence.collaboratorSignature || ' '}</Text>
+          <View style={styles.sigRule} />
+          <Text>
+            {collaborator.name}
+            {collaborator.title ? `, ${collaborator.title}` : ''}, {collaborator.org}
+          </Text>
+          <Text style={{ color: MUTED }}>Date: {party.effectiveDate}</Text>
+          <Text style={[styles.note, { marginTop: 4, marginBottom: 0 }]}>
+            Signs as a collaborating party under Section 18.10. Not a party to this Agreement and
+            assumes no obligation under it.
+          </Text>
+        </View>
+      ) : null}
 
       <View style={styles.sigBlock}>
         <Text style={styles.sigLabel}>AFFILIATE — {partyDisplayName(party).toUpperCase()}</Text>
@@ -370,6 +383,7 @@ export function AgreementDocument({
   const recitals = buildRecitals(party);
   const partyRows = buildPartyBlock(party);
   const logoData = logo();
+  const partnerLogo = options.partner ? loadLogo(options.partner.logo) : null;
 
   return (
     <Document
@@ -380,7 +394,15 @@ export function AgreementDocument({
     >
       {/* ── Agreement body ── */}
       <Page size="LETTER" style={styles.page}>
-        {logoData ? <Image style={styles.logo} src={{ data: logoData, format: 'png' }} /> : null}
+        <View style={styles.lockup}>
+          {logoData ? <Image style={styles.logo} src={{ data: logoData, format: 'png' }} /> : null}
+          {partnerLogo ? (
+            <>
+              <View style={styles.lockupDivider} />
+              <Image style={styles.partnerLogo} src={{ data: partnerLogo, format: 'png' }} />
+            </>
+          ) : null}
+        </View>
         <Text style={styles.docTitle}>AFFILIATE AGREEMENT</Text>
         <Text style={styles.docSubtitle}>
           PodLab Beaker Program · {evidence.version} · Effective {party.effectiveDate}
@@ -441,7 +463,12 @@ export function AgreementDocument({
 
       {/* ── Signatures ── */}
       <Page size="LETTER" style={styles.page}>
-        <Signatures party={party} evidence={evidence} hasAddendum={Boolean(options.addendum)} />
+        <Signatures
+          party={party}
+          evidence={evidence}
+          hasAddendum={Boolean(options.addendum)}
+          collaborator={options.collaborator}
+        />
         <Footer evidence={evidence} party={party} />
       </Page>
     </Document>

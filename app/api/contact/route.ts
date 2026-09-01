@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { consentRecord, consentTags } from '@/lib/smsConsent'
 import { notifyTeam, buildEmailHtml } from '@/lib/notifications'
+import { recordSubmission } from '@/lib/portal/forms'
 import { sanitize } from '@/lib/sanitize'
 import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
 
@@ -90,6 +91,21 @@ export async function POST(request: NextRequest) {
       slackColor: '#e67e22',
       supabaseUrl: 'https://supabase.com/dashboard/project/tncipuxobcbkwkmpcevt/editor',
     }).catch((err) => console.error('Notification error:', err))
+
+
+    // Form tracking (Phase 4). Additive and non-blocking: the lead has already
+    // landed everywhere it used to by this point, and a reporting row must
+    // never cost one.
+    recordSubmission(supabase, {
+      formKey: 'contact',
+      email: email,
+      name: name,
+      raw: body,
+      source: 'contact',
+      company,
+      phone,
+      message,
+    }).catch((err) => console.error('Form tracking error:', err))
 
     return NextResponse.json({ success: true })
   } catch (error) {
