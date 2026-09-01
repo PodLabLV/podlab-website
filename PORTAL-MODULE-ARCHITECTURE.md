@@ -562,6 +562,23 @@ picker, leaves a note at 0:42, and approves — all of it on the CRM timeline.
 
 ### Phase 4 — Forms
 
+> **BUILT — Aug 31, 2026.** `20260904_portal_forms.sql`, `lib/portal/forms.ts`,
+> the staff tracking page, and `recordSubmission` wired into all seven public
+> routes. Migration not yet applied.
+>
+> **Additive on purpose.** The seven routes keep every existing write —
+> `public.clients`, `public.leads`, Monday, email — untouched. `recordSubmission`
+> runs alongside them and cannot throw or block; a reporting row must never cost
+> a lead. Repointing them off `public.leads` is Phase 5's job.
+>
+> **Shape change, not a rename.** `portal_intake_items` is per-CLIENT; form
+> fields are per-FORM with per-person data on the submission. The migration
+> dedupes the 25 intake rows on (section, prompt) rather than copying them.
+>
+> **Dual read during transition.** The intake page reads the form engine once a
+> submission exists and the legacy tables until then, so a client never meets a
+> blank intake between a deploy and a migration.
+
 Generalize `portal_intake_items` / `portal_intake_answers` (which already work, with
 autosave) into a form engine, then point the seven public forms at it so "track forms" is
 one query.

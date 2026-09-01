@@ -193,6 +193,37 @@ export interface PortalIntakeAnswer {
   value: string | null;
 }
 
+export interface PortalFormField {
+  id: string;
+  form_id: string;
+  section: string | null;
+  prompt: string;
+  help: string | null;
+  kind: string;
+  options: string[] | null;
+  required: boolean;
+  sort_order: number;
+}
+
+export interface PortalFormSubmission {
+  id: string;
+  form_id: string;
+  client_id: string | null;
+  email: string | null;
+  name: string | null;
+  status: string | null;
+  source: string | null;
+  submitted_at: string | null;
+  created_at: string;
+}
+
+export interface PortalForm {
+  id: string;
+  form_key: string;
+  title: string;
+  audience: string | null;
+}
+
 export interface PortalPhase {
   id: string;
   title: string;
@@ -286,6 +317,10 @@ interface PortalData {
   actionItems: PortalActionItem[];
   intakeItems: PortalIntakeItem[];
   answers: Record<string, string>;
+  forms: PortalForm[];
+  formFields: PortalFormField[];
+  formSubmissions: PortalFormSubmission[];
+  formAnswers: Record<string, string>;
   phases: PortalPhase[];
   isStaff: boolean;
   setAnswer: (itemId: string, value: string) => void;
@@ -318,6 +353,10 @@ const EMPTY: PortalData = {
   actionItems: [],
   intakeItems: [],
   answers: {},
+  forms: [],
+  formFields: [],
+  formSubmissions: [],
+  formAnswers: {},
   phases: [],
   isStaff: false,
   setAnswer: () => {},
@@ -352,6 +391,7 @@ const LIST_KEYS = {
   script_approvals: 'scriptApprovals',
   asset_versions: 'assetVersions',
   asset_comments: 'assetComments',
+  form_submissions: 'formSubmissions',
 } as const;
 
 type ListKey = (typeof LIST_KEYS)[keyof typeof LIST_KEYS];
@@ -452,7 +492,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       const [assets, projects, invoices, activity, metrics, comments, actions, session,
              intake, intakeAnswers, phases, events, subscriptions, payments,
              scripts, scriptVersions, scriptComments, scriptApprovals,
-             assetVersions, assetComments] =
+             assetVersions, assetComments, forms, formFields, formSubs, formAnswers] =
         await Promise.all([
           db.from('portal_assets').select('*').order('sort_order'),
           db.from('portal_projects').select('*').order('sort_order'),
@@ -474,6 +514,10 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           db.from('portal_script_approvals').select('*'),
           db.from('portal_asset_versions').select('*').order('version_no', { ascending: false }),
           db.from('portal_asset_comments').select('*').order('created_at'),
+          db.from('portal_forms').select('*'),
+          db.from('portal_form_fields').select('*').order('sort_order'),
+          db.from('portal_form_submissions').select('*').order('created_at', { ascending: false }),
+          db.from('portal_form_answers').select('submission_id, field_id, value'),
         ]);
 
       if (cancelled) return;
@@ -500,6 +544,14 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         actionItems: (actions.data as PortalActionItem[]) ?? [],
         accessToken: session.data.session?.access_token ?? null,
         intakeItems: (intake.data as PortalIntakeItem[]) ?? [],
+        forms: (forms.data as PortalForm[]) ?? [],
+        formFields: (formFields.data as PortalFormField[]) ?? [],
+        formSubmissions: (formSubs.data as PortalFormSubmission[]) ?? [],
+        formAnswers: Object.fromEntries(
+          ((formAnswers.data as Array<{ field_id: string; value: string | null }>) ?? []).map(
+            (a) => [a.field_id, a.value ?? ''],
+          ),
+        ),
         answers: Object.fromEntries(
           ((intakeAnswers.data as PortalIntakeAnswer[]) ?? []).map((a) => [a.item_id, a.value ?? '']),
         ),
@@ -533,6 +585,18 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       if (change.table === 'clients') {
         if (!change.record || !prev.client) return prev;
         return { ...prev, client: { ...prev.client, ...(change.record as Partial<PortalClient>) } };
+      }
+
+      // Form answers are keyed by field_id, same shape as intake answers.
+      if (change.table === 'form_answers') {
+        const row = (change.record ?? change.old) as
+          | { field_id?: string; value?: string | null }
+          | null;
+        if (!row?.field_id) return prev;
+        const formAnswers = { ...prev.formAnswers };
+        if (change.op === 'DELETE') delete formAnswers[row.field_id];
+        else formAnswers[row.field_id] = row.value ?? '';
+        return { ...prev, formAnswers };
       }
 
       // Intake answers are keyed by item_id, not held as a list.
