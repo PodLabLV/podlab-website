@@ -41,16 +41,25 @@ begin
 
   v_topic := 'portal:' || v_client_id::text;
 
-  if tg_op = 'INSERT' then
-    perform realtime.broadcast_changes(
-      v_topic, tg_op, tg_op, tg_table_name, tg_table_schema, new, null);
-  elsif tg_op = 'UPDATE' then
-    perform realtime.broadcast_changes(
-      v_topic, tg_op, tg_op, tg_table_name, tg_table_schema, new, old);
-  else
-    perform realtime.broadcast_changes(
-      v_topic, tg_op, tg_op, tg_table_name, tg_table_schema, null, old);
-  end if;
+  -- A broadcast failure must NEVER fail the write underneath it. These triggers
+  -- sit on portal_clients and portal_delivery_phases, which crm.on_lead_won()
+  -- writes to inside its own transaction: an uncaught raise here would turn a
+  -- CLOSED WON stage change in crm.podlablv.com into a failed transaction.
+  -- Same rule notifySlack() already follows in lib/portal-server.ts.
+  begin
+    if tg_op = 'INSERT' then
+      perform realtime.broadcast_changes(
+        v_topic, tg_op, tg_op, tg_table_name, tg_table_schema, new, null);
+    elsif tg_op = 'UPDATE' then
+      perform realtime.broadcast_changes(
+        v_topic, tg_op, tg_op, tg_table_name, tg_table_schema, new, old);
+    else
+      perform realtime.broadcast_changes(
+        v_topic, tg_op, tg_op, tg_table_name, tg_table_schema, null, old);
+    end if;
+  exception when others then
+    raise warning '[portal] broadcast failed on %: %', tg_table_name, sqlerrm;
+  end;
 
   return null;
 end $$;
@@ -70,12 +79,16 @@ begin
     return null;
   end if;
 
-  perform realtime.broadcast_changes(
-    'portal:' || new.client_id::text,
-    tg_op, tg_op, tg_table_name, tg_table_schema,
-    new,
-    case when tg_op = 'UPDATE' then old else null end
-  );
+  begin
+    perform realtime.broadcast_changes(
+      'portal:' || new.client_id::text,
+      tg_op, tg_op, tg_table_name, tg_table_schema,
+      new,
+      case when tg_op = 'UPDATE' then old else null end
+    );
+  exception when others then
+    raise warning '[portal] event broadcast failed: %', sqlerrm;
+  end;
   return null;
 end $$;
 
@@ -90,11 +103,15 @@ begin
   if tg_op = 'DELETE' then
     return null;
   end if;
-  perform realtime.broadcast_changes(
-    'portal:' || new.id::text,
-    tg_op, tg_op, tg_table_name, tg_table_schema, new,
-    case when tg_op = 'UPDATE' then old else null end
-  );
+  begin
+    perform realtime.broadcast_changes(
+      'portal:' || new.id::text,
+      tg_op, tg_op, tg_table_name, tg_table_schema, new,
+      case when tg_op = 'UPDATE' then old else null end
+    );
+  exception when others then
+    raise warning '[portal] client broadcast failed: %', sqlerrm;
+  end;
   return null;
 end $$;
 
