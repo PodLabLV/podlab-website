@@ -21,6 +21,7 @@ import {
   type ReactNode,
 } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import { usePortalRealtime, type PortalChange } from '@/lib/portal/realtime';
 
 export interface PortalClient {
   id: string;
@@ -74,6 +75,24 @@ export interface PortalActivity {
   kind: string | null;
   title: string;
   happened_at: string | null;
+}
+
+/**
+ * The event log (20260831b). One table every module writes; the Lab Notebook,
+ * the activity feed, and the CRM timeline all read from it. Rows with
+ * visible_to_client = false never reach the browser — RLS drops them on read
+ * and the broadcast trigger refuses to put them on the wire.
+ */
+export interface PortalEvent {
+  id: string;
+  module: string;
+  kind: string;
+  title: string;
+  detail: string | null;
+  actor_name: string | null;
+  actor_kind: string | null;
+  ref_id: string | null;
+  created_at: string;
 }
 
 export interface PortalComment {
@@ -139,6 +158,7 @@ interface PortalData {
   projects: PortalProject[];
   invoices: PortalInvoice[];
   activity: PortalActivity[];
+  events: PortalEvent[];
   metrics: PortalMetric[];
   comments: PortalComment[];
   actionItems: PortalActionItem[];
@@ -162,6 +182,7 @@ const EMPTY: PortalData = {
   projects: [],
   invoices: [],
   activity: [],
+  events: [],
   metrics: [],
   comments: [],
   actionItems: [],
@@ -178,6 +199,56 @@ const EMPTY: PortalData = {
 
 /** Display-only hint. Every write re-checks staff status server-side. */
 const STAFF_EMAILS = ['info@podlablv.com'];
+
+/**
+ * Which broadcast table patches which slice of state. Table names arrive from
+ * the bus already stripped of their portal_ prefix.
+ */
+const LIST_KEYS = {
+  assets: 'assets',
+  projects: 'projects',
+  invoices: 'invoices',
+  activity: 'activity',
+  report_metrics: 'metrics',
+  comments: 'comments',
+  action_items: 'actionItems',
+  delivery_phases: 'phases',
+  events: 'events',
+} as const;
+
+type ListKey = (typeof LIST_KEYS)[keyof typeof LIST_KEYS];
+
+interface Row {
+  id: string;
+  sort_order?: number;
+  created_at?: string;
+  happened_at?: string;
+}
+
+/**
+ * Apply one broadcast change to a list, keeping it in the order the initial
+ * fetch used: by sort_order where the table has one, newest-first where it does
+ * not. Re-sorting locally rather than refetching is what makes an update land
+ * in well under a second.
+ */
+function applyToList<T extends Row>(list: T[], change: PortalChange): T[] {
+  const incoming = change.record as unknown as T | null;
+  const gone = change.old as unknown as T | null;
+
+  if (change.op === 'DELETE') {
+    return gone ? list.filter((r) => r.id !== gone.id) : list;
+  }
+  if (!incoming) return list;
+
+  const without = list.filter((r) => r.id !== incoming.id);
+  const next = [...without, incoming];
+
+  if (incoming.sort_order !== undefined) {
+    return next.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  }
+  const stamp = (r: T) => r.happened_at ?? r.created_at ?? '';
+  return next.sort((a, b) => stamp(b).localeCompare(stamp(a)));
+}
 
 const PortalContext = createContext<PortalData>(EMPTY);
 
@@ -241,7 +312,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       }
 
       const [assets, projects, invoices, activity, metrics, comments, actions, session,
-             intake, intakeAnswers, phases] =
+             intake, intakeAnswers, phases, events] =
         await Promise.all([
           db.from('portal_assets').select('*').order('sort_order'),
           db.from('portal_projects').select('*').order('sort_order'),
@@ -254,6 +325,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           db.from('portal_intake_items').select('*').order('sort_order'),
           db.from('portal_intake_answers').select('item_id, value'),
           db.from('portal_delivery_phases').select('*').order('sort_order'),
+          db.from('portal_events').select('*').order('created_at', { ascending: false }).limit(100),
         ]);
 
       if (cancelled) return;
@@ -266,6 +338,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         projects: (projects.data as PortalProject[]) ?? [],
         invoices: (invoices.data as PortalInvoice[]) ?? [],
         activity: (activity.data as PortalActivity[]) ?? [],
+        events: (events.data as PortalEvent[]) ?? [],
         metrics: (metrics.data as PortalMetric[]) ?? [],
         comments: (comments.data as PortalComment[]) ?? [],
         actionItems: (actions.data as PortalActionItem[]) ?? [],
@@ -291,6 +364,42 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [setActionItem, addComment, setAnswer, setPhaseStatus]);
+
+  /**
+   * One channel, every table. The provider stays the shared cache and each
+   * module hook will split off as that module lands — doing both in one change
+   * would make a live-update bug indistinguishable from a refactor bug.
+   */
+  const applyChange = useCallback((change: PortalChange) => {
+    setData((prev) => {
+      // The client's own row: merge, never replace, so a partial payload cannot
+      // blank out fields the initial fetch had.
+      if (change.table === 'clients') {
+        if (!change.record || !prev.client) return prev;
+        return { ...prev, client: { ...prev.client, ...(change.record as Partial<PortalClient>) } };
+      }
+
+      // Intake answers are keyed by item_id, not held as a list.
+      if (change.table === 'intake_answers') {
+        const row = (change.record ?? change.old) as PortalIntakeAnswer | null;
+        if (!row?.item_id) return prev;
+        const answers = { ...prev.answers };
+        if (change.op === 'DELETE') delete answers[row.item_id];
+        else answers[row.item_id] = row.value ?? '';
+        return { ...prev, answers };
+      }
+
+      const key = LIST_KEYS[change.table as keyof typeof LIST_KEYS] as ListKey | undefined;
+      if (!key) return prev;
+
+      return {
+        ...prev,
+        [key]: applyToList(prev[key] as unknown as Row[], change),
+      } as PortalData;
+    });
+  }, []);
+
+  usePortalRealtime(data.client?.id, applyChange);
 
   return <PortalContext.Provider value={data}>{children}</PortalContext.Provider>;
 }

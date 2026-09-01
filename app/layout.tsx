@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
-import { Inter, Michroma } from 'next/font/google';
+import { Inter, Michroma, JetBrains_Mono } from 'next/font/google';
 import Script from 'next/script';
 import ChatBot from '@/components/ChatBot';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const michroma = Michroma({ weight: '400', subsets: ['latin'], variable: '--font-michroma' });
+// Declared in tailwind.config.ts and globals.css since March but never loaded, so every
+// font-mono class was silently falling back to the system monospace.
+const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains' });
 
 // Tracking IDs
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-PMJQL5VL';
@@ -118,7 +121,7 @@ export default function RootLayout({
           </Script>
         )}
       </head>
-      <body className={`${inter.variable} ${michroma.variable}`}>
+      <body className={`${inter.variable} ${michroma.variable} ${jetbrains.variable}`}>
         {/* GTM noscript fallback */}
         <noscript>
           <iframe

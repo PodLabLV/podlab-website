@@ -295,3 +295,71 @@ h1, h2, h3, h4, h5, h6,
   border-color: rgba(42, 221, 27, 0.15);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
+
+/* ============================================================
+   PORTAL — experience layer
+   Spec: PORTAL-EXPERIENCE.md
+   Scoped to .portal-root so none of this touches the marketing site.
+   ============================================================ */
+
+/* Graph-paper ground. The lab cue that costs nothing and reads immediately.
+   Same technique as the site's body::before newsprint texture, different grid. */
+.portal-root {
+  position: relative;
+}
+
+.portal-root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.portal-root > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Realtime arrival. When a row lands over the broadcast channel it flashes its
+   signal colour and settles, so "live" is legible rather than spooky — the
+   client sees THAT something changed, not just a different number. */
+@keyframes portal-arrive {
+  0%   { background-color: rgba(34, 211, 238, 0.15); }
+  100% { background-color: transparent; }
+}
+
+.portal-arrive {
+  animation: portal-arrive 600ms ease-out;
+}
+
+/* Stir loop. Replaces the generic ring spinner — same footprint, lab read. */
+@keyframes portal-stir {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.portal-stir {
+  animation: portal-stir 1.4s cubic-bezier(0.6, 0.05, 0.4, 0.95) infinite;
+}
+
+/* Tabular figures everywhere a measurement is rendered, so columns align. */
+.portal-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Non-negotiable. Every animation above degrades to a static state. */
+@media (prefers-reduced-motion: reduce) {
+  .portal-arrive,
+  .portal-stir {
+    animation: none !important;
+  }
+  .portal-stir {
+    opacity: 0.6;
+  }
+}
