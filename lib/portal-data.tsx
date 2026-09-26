@@ -105,7 +105,7 @@ export interface PortalInvoice {
   paid_at: string | null;
   currency: string | null;
   amount_paid_cents: number | null;
-  /** Stripe-hosted payment page. The only "pay now" path — we never take a card. */
+  /** Processor-hosted payment page (Whop pay_online_url). The only "pay now" path — we never take a card. */
   hosted_invoice_url: string | null;
   pdf_url: string | null;
 }
