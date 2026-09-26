@@ -2,6 +2,7 @@ import Navigation from '@/components/Navigation';
 import { Check } from 'lucide-react';
 import type { Metadata } from 'next';
 import { offerFor } from '@/lib/checkout';
+import PurchaseTracking from './PurchaseTracking';
 
 // Where Whop sends a buyer after paying (redirect_url on each site checkout
 // link). The payment itself is recorded by the CRM's webhook, not here — this
@@ -25,6 +26,9 @@ export default async function ThankYouPage({
   return (
     <div className="min-h-screen">
       <Navigation />
+      {offer && (
+        <PurchaseTracking offerKey={offer.key} name={offer.name} value={offer.value} depositTier={offer.depositTier} />
+      )}
       <main className="pt-32 pb-24 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-accent/15 mb-6">
