@@ -26,7 +26,7 @@ export default function TermsOfServicePage() {
         <section className="relative z-10 pt-32 pb-24 px-6">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-black mb-4 font-display">TERMS OF SERVICE</h1>
-            <p className="text-text-secondary mb-12">Last updated: August 13, 2026</p>
+            <p className="text-text-secondary mb-12">Last updated: September 27, 2026</p>
 
             <div className="glass-card p-8 md:p-12 space-y-10 text-text-secondary leading-relaxed">
 
@@ -72,7 +72,7 @@ export default function TermsOfServicePage() {
               <div>
                 <h2 className="text-2xl font-bold text-white mb-4">4. Payments & Refunds</h2>
                 <p className="mb-3">
-                  All payments are processed securely through Stripe. By making a payment, you agree to Stripe&apos;s terms of service.
+                  All payments are processed securely through Whop. By making a payment, you agree to Whop&apos;s terms of service.
                 </p>
                 <ul className="list-disc ml-6 space-y-2">
                   <li><strong className="text-white">Deposits:</strong> A deposit is required to begin any Lab engagement. Deposits are non-refundable once work has commenced.</li>
@@ -145,7 +145,7 @@ export default function TermsOfServicePage() {
               <div>
                 <h2 className="text-2xl font-bold text-white mb-4">10. Third-Party Services</h2>
                 <p>
-                  Our site integrates with third-party services including Calendly, YouTube, Stripe, and social media platforms. Your use of these services is subject to their respective terms. PodLab is not responsible for third-party service availability, content, or practices.
+                  Our site integrates with third-party services including Calendly, YouTube, Whop, and social media platforms. Your use of these services is subject to their respective terms. PodLab is not responsible for third-party service availability, content, or practices.
                 </p>
               </div>
 

@@ -26,7 +26,7 @@ export default function PrivacyPolicyPage() {
         <section className="relative z-10 pt-32 pb-24 px-6">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-black mb-4 font-display">PRIVACY POLICY</h1>
-            <p className="text-text-secondary mb-12">Last updated: August 13, 2026</p>
+            <p className="text-text-secondary mb-12">Last updated: September 27, 2026</p>
 
             <div className="glass-card p-8 md:p-12 space-y-10 text-text-secondary leading-relaxed">
 
@@ -89,7 +89,7 @@ export default function PrivacyPolicyPage() {
                 <h2 className="text-2xl font-bold text-white mb-4">5. How We Share Your Information</h2>
                 <p className="mb-3">We do not sell your personal information. We may share data with:</p>
                 <ul className="list-disc ml-6 space-y-2">
-                  <li><strong className="text-white">Service providers:</strong> Vercel (hosting), Supabase (database), Calendly (scheduling), Stripe (payments), Resend (email), Google (analytics), Microsoft (analytics), Meta (advertising)</li>
+                  <li><strong className="text-white">Service providers:</strong> Vercel (hosting), Supabase (database), Calendly (scheduling), Whop (payments), Resend (email), Google (analytics), Microsoft (analytics), Meta (advertising)</li>
                   <li><strong className="text-white">Business operations:</strong> Our internal team for client management and project delivery</li>
                   <li><strong className="text-white">Legal requirements:</strong> When required by law, subpoena, or legal process</li>
                 </ul>

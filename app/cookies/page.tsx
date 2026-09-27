@@ -26,7 +26,7 @@ export default function CookiePolicyPage() {
         <section className="relative z-10 pt-32 pb-24 px-6">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-black mb-4 font-display">COOKIE POLICY</h1>
-            <p className="text-text-secondary mb-12">Last updated: April 2, 2026</p>
+            <p className="text-text-secondary mb-12">Last updated: September 27, 2026</p>
 
             <div className="glass-card p-8 md:p-12 space-y-10 text-text-secondary leading-relaxed">
 
@@ -81,7 +81,7 @@ export default function CookiePolicyPage() {
                 <ul className="list-disc ml-6 space-y-2">
                   <li><strong className="text-white">Calendly:</strong> When you interact with our scheduling widget, Calendly may set cookies to manage your booking session</li>
                   <li><strong className="text-white">YouTube:</strong> Embedded videos may set cookies to track viewing preferences and analytics</li>
-                  <li><strong className="text-white">Stripe:</strong> When processing payments, Stripe sets cookies for fraud prevention and session management</li>
+                  <li><strong className="text-white">Whop:</strong> Checkout pages are hosted by Whop on whop.com, which sets its own cookies there for fraud prevention and session management</li>
                 </ul>
                 <p className="mt-3">
                   These third-party services have their own cookie and privacy policies. We encourage you to review them.
