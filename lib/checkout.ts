@@ -25,7 +25,7 @@ export const SITE_OFFERS: Record<string, SiteOffer> = {
     name: 'AssetsLab',
     price: '$1,500',
     value: 1500,
-    checkoutUrl: 'https://whop.com/checkout/ch_vKwqXjJiKs1cunl/',
+    checkoutUrl: 'https://whop.com/checkout/ch_6RQ8UheiWXe5IOW/',
     kickoffUrl: 'https://calendly.com/podlablv/assets-lab-strategy',
     nextStep: 'Book your Strategy Sprint kickoff. We run the clarity assessment on that call and start building your foundation.',
   },
@@ -60,7 +60,7 @@ Object.assign(SITE_OFFERS, {
     name: 'Standard Edit',
     price: '$500',
     value: 500,
-    checkoutUrl: 'https://whop.com/checkout/ch_Wthet9BLfGKYRoI/',
+    checkoutUrl: 'https://whop.com/checkout/ch_AfLsN7tL7bhqgDP/',
     nextStep: 'Your edit is back in 5 business days, with 1 round of changes. The clock started when your payment cleared.',
   },
   'premium-edit-faqs': {
