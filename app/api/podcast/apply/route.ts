@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
 import { createClient } from '@supabase/supabase-js';
 import { notifyTeam, buildEmailHtml } from '@/lib/notifications';
+import { recordSubmission } from '@/lib/portal/forms';
 
 export async function OPTIONS(request: NextRequest) {
   return handleCors(request) || NextResponse.json({}, { headers: corsHeaders(request) })
@@ -108,6 +109,15 @@ export async function POST(request: NextRequest) {
       slackColor: '#3498db',
       supabaseUrl: 'https://supabase.com/dashboard/project/tncipuxobcbkwkmpcevt/editor',
     }).catch((err) => console.error('Notification error:', err));
+
+    // Form tracking (Phase 4). Additive and non-blocking.
+    recordSubmission(supabase, {
+      formKey: 'podcast-apply',
+      email: body.email,
+      name: body.name,
+      raw: body,
+      source: 'podcast-apply',
+    }).catch((err) => console.error('Form tracking error:', err));
 
     return NextResponse.json({ success: true });
   } catch (err) {

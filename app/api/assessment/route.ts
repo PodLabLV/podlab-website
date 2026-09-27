@@ -3,6 +3,7 @@ import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
 import { createClient } from '@supabase/supabase-js'
 import { consentRecord, consentTags } from '@/lib/smsConsent'
 import { notifyTeam, notifyEmail, buildEmailHtml } from '@/lib/notifications'
+import { recordSubmission } from '@/lib/portal/forms'
 import { buildResultsEmailHtml } from '@/lib/results-email'
 import { sanitize } from '@/lib/sanitize'
 import { generateRoadmap } from '@/lib/roadmap-generator'
@@ -569,6 +570,18 @@ To unsubscribe, reply to this email with "unsubscribe".`
         }),
       }).catch((err) => console.error('Instantly lead add error:', err))
     }
+
+
+    // Form tracking (Phase 4). Additive and non-blocking: the lead has already
+    // landed everywhere it used to by this point, and a reporting row must
+    // never cost one.
+    recordSubmission(supabase, {
+      formKey: 'bottleneck',
+      email: email,
+      name: firstName,
+      raw: body,
+      source: 'bottleneck',
+    }).catch((err) => console.error('Form tracking error:', err))
 
     return NextResponse.json({
       success: true,

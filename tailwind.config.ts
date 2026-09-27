@@ -27,11 +27,22 @@ const config: Config = {
         
         // Borders (subtle lines)
         border: "#2a2a2a",
+
+        // Portal signal colours. Green stopped being the default paint and
+        // started meaning "finished" — which is what makes an amber item pull
+        // the eye. Semantics are fixed: running = PodLab is working,
+        // waiting = the client is the blocker, done = complete, failed = broken.
+        signal: {
+          running: "#22D3EE",  // cyan
+          waiting: "#FFB020",  // amber
+          done:    "#2ADD1B",  // the existing accent green
+          failed:  "#F0483E",
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['var(--font-michroma)', 'Michroma', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        mono: ['var(--font-jetbrains)', 'JetBrains Mono', 'monospace'],
       },
       spacing: {
         '18': '4.5rem',

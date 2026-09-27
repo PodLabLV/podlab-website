@@ -1,8 +1,19 @@
 # PodLab Client Portal — Build Summary
 
+> **⚠️ STALE — historical record only. Do not build from this document.**
+>
+> This describes the March 17, 2026 mock-data build. Its central claim is no longer
+> true: the portal reads **live Supabase**, not mock data. The August 2026 migrations
+> (`20260811`, `20260811b`, `20260813`) added RLS-scoped tables, auth, service-role
+> write routes, and a CRM trigger — none of which are described below.
+>
+> **Current state and the forward plan live in
+> [`PORTAL-MODULE-ARCHITECTURE.md`](./PORTAL-MODULE-ARCHITECTURE.md).**
+> Kept for the design-system notes in "Design System Applied", which are still accurate.
+
 **Built:** March 17, 2026  
 **Status:** ✅ Clean build (`npm run build` passes)  
-**Data:** All mock/demo — ready to wire Supabase later
+**Data:** All mock/demo — superseded, see banner above
 
 ---
 

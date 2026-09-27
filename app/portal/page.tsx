@@ -1,14 +1,21 @@
 'use client';
 
 import Link from 'next/link';
-import { usePortal, formatDate } from '@/lib/portal-data';
+import { usePortal } from '@/lib/portal-data';
 import { Card, StatCard, EmptyState } from '@/components/portal/Shared';
+import PeriodicTable from '@/components/portal/PeriodicTable';
+import LabNotebook from '@/components/portal/LabNotebook';
+import ReactionRate from '@/components/portal/ReactionRate';
+import Discoveries from '@/components/portal/Discoveries';
+import { buildDiscoveries } from '@/lib/portal/discoveries';
+import { buildLabTable } from '@/lib/portal/labs-table';
 
 const QUICK_LINKS = [
   { href: '/portal/document', label: 'Clarity Document', body: 'Read your strategy document and request changes.' },
   { href: '/portal/actions', label: 'Action Items', body: 'What to do first. Tick them off as you go.' },
   { href: '/portal/intake', label: 'Intake', body: 'What we need from you. Saves as you type.' },
   { href: '/portal/delivery', label: 'Delivery', body: 'Every phase of the build and where it stands.' },
+  { href: '/portal/scripts', label: 'Scripts', body: 'Read, mark up, and validate before we shoot.' },
   { href: '/portal/deliverables', label: 'Deliverables', body: 'Every file we have produced for you.' },
   { href: '/portal/progress', label: 'Progress', body: 'Where each project stands right now.' },
   { href: '/portal/reports', label: 'Reports', body: 'Performance once campaigns are running.' },
@@ -16,10 +23,18 @@ const QUICK_LINKS = [
 ];
 
 export default function PortalDashboard() {
-  const { loading, error, client, assets, projects, activity, actionItems } = usePortal();
+  const {
+    loading, error, client, assets, projects, phases, events, actionItems,
+    scripts, scriptVersions, scriptApprovals, isStaff, metrics,
+  } = usePortal();
 
   if (loading) {
-    return <p className="text-white/40 text-sm">Loading your portal...</p>;
+    return (
+      <div className="flex items-center gap-3 text-white/40 text-sm">
+        <span className="portal-stir inline-block h-4 w-4 rounded-full border border-white/10 border-t-[#2ADD1B]" />
+        Loading your portal...
+      </div>
+    );
   }
 
   if (error) {
@@ -41,6 +56,13 @@ export default function PortalDashboard() {
       />
     );
   }
+
+  const labs = buildLabTable({
+    planLabel: client.plan_label,
+    projects,
+    assets,
+    phases,
+  });
 
   const ready = assets.filter((a) => (a.status || '').toLowerCase() === 'ready');
   const active = projects.filter((p) => p.progress_pct < 100);
@@ -64,6 +86,19 @@ export default function PortalDashboard() {
         </Card>
       )}
 
+      <PeriodicTable elements={labs} />
+
+      <Discoveries
+        discoveries={buildDiscoveries({
+          assets,
+          scripts,
+          approvals: scriptApprovals,
+          metrics,
+          events,
+          labs,
+        })}
+      />
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Deliverables Ready" value={String(ready.length)} />
         <StatCard label="Active Projects" value={String(active.length)} />
@@ -79,33 +114,29 @@ export default function PortalDashboard() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <h2 className="font-display text-white text-sm uppercase tracking-wider mb-4">
-            Recent Activity
-          </h2>
-          {activity.length === 0 ? (
-            <EmptyState
-              title="Nothing logged yet"
-              body="Activity shows up here as we deliver files, publish reports, and complete milestones."
-            />
-          ) : (
-            <Card className="divide-y divide-white/5">
-              {activity.slice(0, 6).map((a) => (
-                <div key={a.id} className="p-4 flex items-start gap-4">
-                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#2ADD1B] shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm">{a.title}</p>
-                    <p className="text-white/30 text-xs mt-1">
-                      {a.kind ? `${a.kind} · ` : ''}
-                      {a.happened_at ? formatDate(a.happened_at) : ''}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </Card>
-          )}
+          <div className="mb-4 flex items-baseline justify-between gap-4">
+            <h2 className="font-display text-white text-sm uppercase tracking-wider">
+              Lab Notebook
+            </h2>
+            <p className="font-mono text-[10px] uppercase tracking-wider text-white/30">
+              Live
+            </p>
+          </div>
+          <LabNotebook events={events} />
         </div>
 
         <div>
+          {/* Staff-only until the number has been checked for fairness over one
+              client cycle — PORTAL-EXPERIENCE.md open question 2. */}
+          <div className="mb-6">
+            <ReactionRate
+              scripts={scripts}
+              versions={scriptVersions}
+              approvals={scriptApprovals}
+              isStaff={isStaff}
+            />
+          </div>
+
           <h2 className="font-display text-white text-sm uppercase tracking-wider mb-4">
             Jump To
           </h2>

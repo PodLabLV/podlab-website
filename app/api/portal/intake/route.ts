@@ -12,7 +12,13 @@ export async function POST(req: Request) {
   const caller = await resolveCaller(req, db);
   if (!caller) return NextResponse.json({ error: 'Not authorized' }, { status: 401 });
 
-  let payload: { itemId?: string; value?: string; submit?: boolean };
+  let payload: {
+    itemId?: string;
+    value?: string;
+    submit?: boolean;
+    fieldId?: string;
+    submissionId?: string;
+  };
   try {
     payload = await req.json();
   } catch {
@@ -38,10 +44,55 @@ export async function POST(req: Request) {
       ),
       logToCrm(db, caller, `Submitted the portal intake (${count ?? 0} answers).`),
     ]);
+    await db
+      .from('portal_form_submissions')
+      .update({ status: 'submitted', submitted_at: new Date().toISOString() })
+      .eq('client_id', caller.clientId)
+      .neq('status', 'submitted');
+
     return NextResponse.json({ ok: true, answered: count ?? 0 });
   }
 
-  const { itemId, value } = payload;
+  const { itemId, value, fieldId, submissionId } = payload;
+
+  // Form-engine path (Phase 4). The page sends fieldId once the migration has
+  // landed and a submission exists; until then it sends itemId and the legacy
+  // tables answer. A dual write beats a hard cutover here — the legacy tables
+  // hold live questions, and a client should never meet a blank intake between
+  // a deploy and a migration.
+  if (fieldId && submissionId) {
+    if ((value ?? '').length > MAX) {
+      return NextResponse.json({ error: `Keep it under ${MAX} characters.` }, { status: 400 });
+    }
+
+    // Scoped by client so a guessed submission id from another account saves nothing.
+    const { data: sub } = await db
+      .from('portal_form_submissions')
+      .select('id')
+      .eq('id', submissionId)
+      .eq('client_id', caller.clientId)
+      .maybeSingle();
+
+    if (!sub) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+    const { error: fErr } = await db.from('portal_form_answers').upsert(
+      {
+        submission_id: submissionId,
+        field_id: fieldId,
+        client_id: caller.clientId,
+        value: value ?? '',
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'submission_id,field_id' },
+    );
+
+    if (fErr) {
+      console.error('[portal] form answer save failed', fErr.message);
+      return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true });
+  }
+
   if (!itemId) return NextResponse.json({ error: 'Bad request' }, { status: 400 });
   if ((value ?? '').length > MAX) {
     return NextResponse.json({ error: `Keep it under ${MAX} characters.` }, { status: 400 });
