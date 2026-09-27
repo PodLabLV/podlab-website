@@ -26,7 +26,7 @@ export default function RefundPolicyPage() {
         <section className="relative z-10 pt-32 pb-24 px-6">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-black mb-4 font-display">REFUND POLICY</h1>
-            <p className="text-text-secondary mb-12">Last updated: April 2, 2026</p>
+            <p className="text-text-secondary mb-12">Last updated: September 27, 2026</p>
 
             <div className="glass-card p-8 md:p-12 space-y-10 text-text-secondary leading-relaxed">
 
@@ -118,7 +118,7 @@ export default function RefundPolicyPage() {
                   <li>Email <a href="mailto:info@podlablv.com" className="text-accent hover:underline">info@podlablv.com</a> with your cancellation request</li>
                   <li>Include your name, the service you&apos;re canceling, and the reason for cancellation</li>
                   <li>We will review your request and respond within 5 business days</li>
-                  <li>If a refund is approved, it will be processed to your original payment method via Stripe within 10 business days</li>
+                  <li>If a refund is approved, it will be processed to your original payment method via Whop within 10 business days</li>
                 </ol>
               </div>
 
@@ -132,7 +132,7 @@ export default function RefundPolicyPage() {
               <div>
                 <h2 className="text-2xl font-bold text-white mb-4">8. Payment Processing</h2>
                 <p>
-                  All payments and refunds are processed through Stripe. Refund timing depends on your bank or credit card provider — typically 5–10 business days after we initiate the refund. PodLab is not responsible for delays caused by your financial institution.
+                  All payments and refunds are processed through Whop. Refund timing depends on your bank or credit card provider — typically 5–10 business days after we initiate the refund. PodLab is not responsible for delays caused by your financial institution.
                 </p>
               </div>
 
