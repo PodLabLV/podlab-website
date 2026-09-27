@@ -1,9 +1,9 @@
 -- ============================================================
 -- Portal Phase 1 — Payments
 --
--- portal_invoices has existed since 20260811 and holds zero rows, because the
--- Stripe webhook writes to Monday.com and stops. Real money has moved and none
--- of it is visible in the portal. This makes that table the record.
+-- portal_invoices has existed since 20260811. This makes it, and the two
+-- tables below, the client-facing record of money. (Written for Stripe;
+-- rewritten processor-neutral for Whop before it was ever applied.)
 --
 -- Three shapes:
 --   portal_invoices      — what was billed (extended below)
@@ -20,20 +20,22 @@
 -- Safe + additive. Every statement is idempotent.
 -- ============================================================
 
--- ── 1. Stripe identity on the client ─────────────────────────────────
--- Matching by customer id is exact; matching by email is a guess that breaks
--- the moment someone pays from a personal address. Store the id at provisioning.
-alter table public.portal_clients
-  add column if not exists stripe_customer_id text;
-
-create unique index if not exists portal_clients_stripe_customer_idx
-  on public.portal_clients (stripe_customer_id)
-  where stripe_customer_id is not null;
+-- ── 1. Processor identity ────────────────────────────────────────────
+-- REWRITTEN 2026-09-27, before this file was ever applied: Whop replaced
+-- Stripe. Every processor id is now `processor` + `external_id`, so the next
+-- processor change is a data change, not a migration. There is no customer-id
+-- column on portal_clients any more: the CRM matches a payment to its client
+-- through portal_clients.crm_lead_id, and it is the CRM's Whop webhook that
+-- writes these tables (podlab-crm, src/app/api/webhooks/whop).
+--
+-- podlab-crm phase103 already added the invoice columns below in production;
+-- every statement here is `if not exists`, so this file is a no-op for them.
 
 -- ── 2. Invoices, extended ────────────────────────────────────────────
 alter table public.portal_invoices
-  add column if not exists stripe_invoice_id  text,
-  add column if not exists stripe_customer_id text,
+  add column if not exists processor          text,
+  add column if not exists external_id        text,
+  add column if not exists crm_link_id        uuid,
   add column if not exists subscription_id    uuid,
   add column if not exists currency           text default 'usd',
   add column if not exists due_on             date,
@@ -44,20 +46,21 @@ alter table public.portal_invoices
   add column if not exists attempt_count      int default 0,
   add column if not exists updated_at         timestamptz default now();
 
--- The webhook upserts on this. Partial, because rows seeded by hand have no
--- Stripe id and several nulls must not collide.
-create unique index if not exists portal_invoices_stripe_idx
-  on public.portal_invoices (stripe_invoice_id)
-  where stripe_invoice_id is not null;
+-- The webhook writes on this. Partial, because rows seeded by hand have no
+-- processor id and several nulls must not collide. Same name as phase103.
+create unique index if not exists portal_invoices_external_idx
+  on public.portal_invoices (processor, external_id)
+  where external_id is not null;
 
 comment on column public.portal_invoices.hosted_invoice_url is
-  'Stripe-hosted payment page. The portal renders status; Stripe renders the card form. No card data ever touches this database.';
+  'Processor-hosted payment page (Whop pay_online_url). The portal renders status; the processor renders the card form. No card data ever touches this database.';
 
 -- ── 3. Subscriptions ─────────────────────────────────────────────────
 create table if not exists public.portal_subscriptions (
   id                     uuid primary key default gen_random_uuid(),
   client_id              uuid not null references public.portal_clients(id) on delete cascade,
-  stripe_subscription_id text unique,
+  processor              text not null default 'whop',
+  external_id            text,                    -- Whop membership id
   product_label          text,
   amount_cents           int  not null default 0,
   interval               text default 'month',
@@ -66,7 +69,8 @@ create table if not exists public.portal_subscriptions (
   cancel_at              timestamptz,
   started_on             date,
   created_at             timestamptz default now(),
-  updated_at             timestamptz default now()
+  updated_at             timestamptz default now(),
+  unique (processor, external_id)
 );
 
 -- ── 4. Payments ──────────────────────────────────────────────────────
@@ -74,8 +78,8 @@ create table if not exists public.portal_payments (
   id                       uuid primary key default gen_random_uuid(),
   client_id                uuid not null references public.portal_clients(id) on delete cascade,
   invoice_id               uuid references public.portal_invoices(id) on delete set null,
-  stripe_payment_intent_id text,
-  stripe_charge_id         text,
+  processor                text not null default 'whop',
+  external_id              text,                  -- Whop payment id
   kind                     text default 'payment',    -- payment | refund | dispute
   amount_cents             int  not null,
   status                   text default 'succeeded',  -- succeeded | failed | pending
@@ -85,11 +89,11 @@ create table if not exists public.portal_payments (
   created_at               timestamptz default now()
 );
 
--- A payment intent can legitimately produce several rows (a failed attempt then
--- a success), so the uniqueness is per intent AND status, not per intent.
-create unique index if not exists portal_payments_intent_idx
-  on public.portal_payments (stripe_payment_intent_id, status)
-  where stripe_payment_intent_id is not null;
+-- A payment can legitimately produce several rows (a failed attempt then a
+-- success), so the uniqueness is per payment AND status, not per payment.
+create unique index if not exists portal_payments_external_idx
+  on public.portal_payments (processor, external_id, status)
+  where external_id is not null;
 
 create index if not exists portal_subscriptions_client_idx on public.portal_subscriptions(client_id);
 create index if not exists portal_payments_client_idx      on public.portal_payments(client_id, occurred_at desc);

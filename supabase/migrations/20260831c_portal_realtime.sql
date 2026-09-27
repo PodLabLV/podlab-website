@@ -22,6 +22,7 @@
 -- expression, because both arms of a CASE are still evaluated for type.
 create or replace function public.portal_broadcast()
 returns trigger
+language plpgsql
 security definer
 set search_path = ''
 as $$
@@ -71,6 +72,7 @@ end $$;
 -- never leave the database on a client channel.
 create or replace function public.portal_broadcast_event()
 returns trigger
+language plpgsql
 security definer
 set search_path = ''
 as $$
@@ -96,6 +98,7 @@ end $$;
 -- portal_clients keys on id, not client_id.
 create or replace function public.portal_broadcast_client()
 returns trigger
+language plpgsql
 security definer
 set search_path = ''
 as $$

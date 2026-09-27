@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
  * (client, period, metric_key).
  *
  * Machine-to-machine, so it takes a shared secret rather than a user session,
- * and it FAILS CLOSED when that secret is unset — the same rule the Stripe
+ * and it FAILS CLOSED when that secret is unset — the same rule the Whop
  * webhook follows. An open endpoint that writes a client's reported ROI is not
  * something to leave lying around.
  *
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
   }
 
   const provided = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
-  // Constant-time compare, same as the Stripe route.
+  // Constant-time compare, same as podlab-crm's Whop webhook.
   if (provided.length !== secret.length) {
     return NextResponse.json({ error: 'Not authorized' }, { status: 401 });
   }
