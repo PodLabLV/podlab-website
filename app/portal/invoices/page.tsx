@@ -8,7 +8,14 @@
  * "Peer Review" or "Hypothesis" — here it reads Paid, Due, and Overdue, because
  * a client should never have to decode a metaphor to find out what they owe.
  *
- * We never take a card. "Pay now" is a link to Stripe's hosted invoice page.
+ * We never take a card. "Pay now" is a link to the processor's hosted invoice
+ * page — Whop's pay_online_url since 2026-09-26 (Whop replaced Stripe).
+ *
+ * WHO WRITES THESE ROWS: the CRM (podlab-crm). A rep sends an "Email invoice"
+ * from a deal card; the CRM mirrors it here for the client whose
+ * portal_clients.crm_lead_id is that deal, and the CRM's Whop webhook moves it
+ * Due → Overdue → Paid / Void. See podlab-crm docs/WHOP-SETUP.md (phase 4) and
+ * supabase/phase103-whop-invoices.sql, which added the columns read here.
  */
 
 import { usePortal, formatMoney, formatDate } from '@/lib/portal-data';
