@@ -15,7 +15,7 @@ export interface SiteOffer {
   value: number;           // dollars charged now — the conversion value
   depositTier?: 'essentials' | 'elite'; // EssentialsLab's existing deposit_paid tier
   checkoutUrl: string;
-  kickoffUrl: string;      // Calendly event the buyer books next
+  kickoffUrl?: string;     // Calendly event the buyer books next; none = no call needed
   nextStep: string;
 }
 
@@ -50,6 +50,46 @@ export const SITE_OFFERS: Record<string, SiteOffer> = {
     nextStep: 'Book your clarity call. We lock your film day in the Las Vegas studio; the second $2,500 is due on film day.',
   },
 };
+
+// finish.podlablv.com (PodLab × 4Better, "Your footage is in"). Moved off
+// 4 Better, LLC's QuickBooks links 2026-09-27. Turnarounds are the ones that
+// page promises; the edits need no call — the footage is already shot.
+Object.assign(SITE_OFFERS, {
+  'standard-edit': {
+    key: 'standard-edit',
+    name: 'Standard Edit',
+    price: '$500',
+    value: 500,
+    checkoutUrl: 'https://whop.com/checkout/ch_Wthet9BLfGKYRoI/',
+    nextStep: 'Your edit is back in 5 business days, with 1 round of changes. The clock started when your payment cleared.',
+  },
+  'premium-edit-faqs': {
+    key: 'premium-edit-faqs',
+    name: 'Premium Edit + 3 FAQ Videos',
+    price: '$1,000',
+    value: 1000,
+    checkoutUrl: 'https://whop.com/checkout/ch_LRnz6PJs6Dpq26S/',
+    nextStep: 'Your four videos are back in 7 business days, with 2 rounds of changes. The clock started when your payment cleared.',
+  },
+  'essentialslab-core': {
+    key: 'essentialslab-core',
+    name: 'EssentialsLab',
+    price: '$3,000',
+    value: 3000,
+    checkoutUrl: 'https://whop.com/checkout/ch_a6ywdIoXyieKMKQ/',
+    kickoffUrl: 'https://calendly.com/podlablv/essentialslab-clarity-call',
+    nextStep: 'Paid in full. Book your clarity call to lock your film day in the Las Vegas studio; you go live 10 days after it.',
+  },
+  'essentialslab-elite': {
+    key: 'essentialslab-elite',
+    name: 'EssentialsLab ELITE',
+    price: '$5,000',
+    value: 5000,
+    checkoutUrl: 'https://whop.com/checkout/ch_sHMjdG2IxGer8aW/',
+    kickoffUrl: 'https://calendly.com/podlablv/essentialslab-clarity-call',
+    nextStep: 'Paid in full. Book your clarity call to lock your film day in the Las Vegas studio; you go live 10 days after it.',
+  },
+} satisfies Record<string, SiteOffer>);
 
 export function offerFor(key: string | undefined | null): SiteOffer | null {
   return (key && SITE_OFFERS[key]) || null;

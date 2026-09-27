@@ -20,8 +20,12 @@ export default async function ThankYouPage({
 }) {
   const { offer: key } = await searchParams;
   const offer = offerFor(key);
-  const kickoff = offer?.kickoffUrl || 'https://calendly.com/podlablv/strategy-call';
-  const embed = `${kickoff}?hide_gdpr_banner=1&background_color=0a0a0a&text_color=ffffff&primary_color=2add1b`;
+  // A known offer with no kickoff (the edits) needs no call; an unknown offer
+  // still gets the strategy call so nobody lands on a dead end.
+  const kickoff = offer ? offer.kickoffUrl : 'https://calendly.com/podlablv/strategy-call';
+  const embed = kickoff
+    ? `${kickoff}?hide_gdpr_banner=1&background_color=0a0a0a&text_color=ffffff&primary_color=2add1b`
+    : null;
 
   return (
     <div className="min-h-screen">
@@ -45,18 +49,22 @@ export default async function ThankYouPage({
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto mt-12 glass-card overflow-hidden">
-          <iframe
-            src={embed}
-            title="Book your kickoff call"
-            className="w-full"
-            style={{ height: 720, border: 0 }}
-            loading="lazy"
-          />
-        </div>
-        <p className="text-center text-sm text-text-secondary mt-4">
-          Calendar not loading? <a href={kickoff} target="_blank" rel="noopener noreferrer" className="text-accent">Open it in a new tab</a>
-        </p>
+        {embed && kickoff && (
+          <>
+            <div className="max-w-4xl mx-auto mt-12 glass-card overflow-hidden">
+              <iframe
+                src={embed}
+                title="Book your kickoff call"
+                className="w-full"
+                style={{ height: 720, border: 0 }}
+                loading="lazy"
+              />
+            </div>
+            <p className="text-center text-sm text-text-secondary mt-4">
+              Calendar not loading? <a href={kickoff} target="_blank" rel="noopener noreferrer" className="text-accent">Open it in a new tab</a>
+            </p>
+          </>
+        )}
       </main>
     </div>
   );
