@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, MessageSquare, User, Target, Lightbulb, Check, FileText } from 'lucide-react';
 import type { Metadata } from 'next';
+import { SITE_OFFERS } from '@/lib/checkout';
 
 export const metadata: Metadata = {
   title: 'AssetsLab — Strategic Clarity for Founders',
@@ -242,15 +243,25 @@ export default function AssetsLabPage() {
                   <span className="text-text-secondary">Training session included</span>
                 </li>
               </ul>
-              <a
-                href="https://calendly.com/podlablv/strategy-call"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"
-              >
-                Get Started
-                <ArrowRight className="h-5 w-5" />
-              </a>
+              {/* Buy now → Whop; the call stays for anyone who wants to talk first */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a
+                  href={SITE_OFFERS.assetslab.checkoutUrl}
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-black font-bold rounded-lg hover:bg-accent-hover hover:-translate-y-1 transition-all"
+                >
+                  Buy AssetsLab — {SITE_OFFERS.assetslab.price}
+                  <ArrowRight className="h-5 w-5" />
+                </a>
+                <a
+                  href="https://calendly.com/podlablv/strategy-call"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-4 border border-white/20 text-white font-semibold rounded-lg hover:border-accent hover:text-accent transition-all"
+                >
+                  Talk to us first
+                </a>
+              </div>
+              <p className="text-xs text-text-secondary mt-4">Secure checkout by Whop. You&apos;ll book your kickoff right after paying.</p>
             </div>
           </div>
         </section>
