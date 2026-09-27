@@ -113,6 +113,23 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = getSupabase();
+
+    // Beaker IDs are unique in the database (beaker_applications_beaker_id_key)
+    // but the form slugs first-last and never checked, so a second Jordan
+    // Smith used to get "Failed to save application". Suffix -2, -3… instead,
+    // and use the final ID for everything below — the row, the PDF, the links.
+    const requestedId = String(beakerId).trim().toLowerCase();
+    let finalBeakerId = requestedId;
+    for (let n = 2; n < 50; n++) {
+      const { data: taken } = await supabase
+        .from('beaker_applications').select('id').ilike('beaker_id', finalBeakerId).limit(1);
+      if (!taken || taken.length === 0) break;
+      finalBeakerId = `${requestedId}-${n}`;
+    }
+    // The client built its tracking links before submitting; point them at
+    // the ID that was actually issued.
+    const finalUtmLinks = finalBeakerId === requestedId ? utmLinks
+      : JSON.parse(JSON.stringify(utmLinks ?? null).split(`utm_campaign=${requestedId}`).join(`utm_campaign=${finalBeakerId}`));
     const signedAt = contractSignedDate || new Date().toISOString();
     const ip = clientIp(request);
     const userAgent = request.headers.get('user-agent');
@@ -135,11 +152,11 @@ export async function POST(request: NextRequest) {
         how_heard: howHeard?.trim() || null,
         payout_method: payoutMethod,
         payout_details: payoutDetails.trim(),
-        beaker_id: beakerId,
+        beaker_id: finalBeakerId,
         contract_signed: true,
         contract_signed_date: signedAt,
         typed_signature: typedSignature.trim(),
-        utm_links: utmLinks,
+        utm_links: finalUtmLinks,
         status: 'pending',
       });
 
@@ -163,7 +180,7 @@ export async function POST(request: NextRequest) {
         signed_user_agent: userAgent,
         ...consent,
       })
-      .eq('beaker_id', beakerId)
+      .eq('beaker_id', finalBeakerId)
       .eq('email', email.trim().toLowerCase());
 
     if (evidenceError) {
@@ -186,7 +203,7 @@ export async function POST(request: NextRequest) {
       businessAddress: businessAddress.trim(),
       payoutMethod,
       payoutDetails: payoutDetails.trim(),
-      beakerId,
+      beakerId: finalBeakerId,
       effectiveDate,
     };
 
@@ -206,7 +223,7 @@ export async function POST(request: NextRequest) {
     try {
       const pdf = await renderAgreementPdf(party, evidence);
       const fileName = agreementFileName(party, evidence);
-      storagePath = `${beakerId}/${fileName}`;
+      storagePath = `${finalBeakerId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from(AGREEMENT_BUCKET)
@@ -227,18 +244,18 @@ export async function POST(request: NextRequest) {
         await supabase
           .from('beaker_applications')
           .update({ agreement_pdf_path: storagePath })
-          .eq('beaker_id', beakerId)
+          .eq('beaker_id', finalBeakerId)
           .eq('email', party.email);
       }
 
-      const homepageLink = `https://podlablv.com/?utm_source=beaker&utm_medium=referral&utm_campaign=${beakerId}`;
+      const homepageLink = `https://podlablv.com/?utm_source=beaker&utm_medium=referral&utm_campaign=${finalBeakerId}`;
 
       await notifyEmail(
         party.email,
         `Your PodLab Affiliate Agreement — signed copy attached`,
         buildAffiliateWelcomeEmail({
           firstName: firstName.trim(),
-          beakerId,
+          beakerId: finalBeakerId,
           homepageLink,
           payoutMethod,
           effectiveDate,
@@ -254,7 +271,7 @@ export async function POST(request: NextRequest) {
     } catch (pdfErr) {
       // A signed agreement with no PDF is recoverable by hand; a 500 that makes
       // someone re-sign is not. Log loudly and let the success response stand.
-      console.error('Agreement PDF/delivery failed for', beakerId, pdfErr);
+      console.error('Agreement PDF/delivery failed for', finalBeakerId, pdfErr);
     }
 
     const notifFields: Record<string, string> = {
@@ -266,7 +283,7 @@ export async function POST(request: NextRequest) {
       'How They Connect': howConnect,
       'Why Joining': whyJoin,
       'Payout Method': payoutMethod,
-      'Beaker ID': beakerId,
+      'Beaker ID': finalBeakerId,
       'Agreement Version': AGREEMENT_VERSION,
       'Signed PDF': storagePath ? 'attached + archived' : 'GENERATION FAILED — check logs',
     };
@@ -280,7 +297,7 @@ export async function POST(request: NextRequest) {
       supabaseUrl: 'https://supabase.com/dashboard/project/tncipuxobcbkwkmpcevt/editor',
     }).catch((err) => console.error('Notification error:', err));
 
-    return NextResponse.json({ success: true, beakerId, agreementUrl });
+    return NextResponse.json({ success: true, beakerId: finalBeakerId, agreementUrl });
   } catch (err) {
     console.error('Affiliate apply error:', err);
     return NextResponse.json(

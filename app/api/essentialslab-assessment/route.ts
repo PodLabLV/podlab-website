@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { beakerColumn } from '@/lib/beaker-ref'
 import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
 import { createClient } from '@supabase/supabase-js'
 import { consentRecord, consentTags } from '@/lib/smsConsent'
@@ -117,6 +118,7 @@ export async function POST(request: NextRequest) {
     const consent = consentRecord(phone, body.sms_consent, 'website/essentialslab-assessment')
 
     const { error: leadError } = await supabase.from('leads').insert({
+      ...beakerColumn(request),
       client_id: clientId,
       first_name: firstName,
       last_name: lastName,

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { beakerColumn } from '@/lib/beaker-ref'
 import { createClient } from '@supabase/supabase-js'
 import { consentRecord, consentTags } from '@/lib/smsConsent'
 import { notifyTeam, buildEmailHtml } from '@/lib/notifications'
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
     const consent = consentRecord(phone, body.sms_consent, 'website/contact')
 
     const { error: dbError } = await supabase.from('leads').insert({
+      ...beakerColumn(request),
       first_name: name.trim(),
       email: email.trim().toLowerCase(),
       phone: phone?.trim() || null,

@@ -223,6 +223,8 @@ export default function BeakerApplyPage() {
       // Null when PDF generation or upload failed — the agreement is still
       // signed and stored, so step 3 falls back to print rather than erroring.
       setAgreementUrl(data.agreementUrl ?? null);
+      // The server suffixes a taken ID (-2, -3…); show the one actually issued.
+      if (data.beakerId) setBeakerId(data.beakerId);
       setStep(3);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: unknown) {

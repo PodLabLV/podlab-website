@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { beakerColumn } from '@/lib/beaker-ref'
 import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
 import { createClient } from '@supabase/supabase-js'
 import { notifyTeam, buildEmailHtml } from '@/lib/notifications'
@@ -192,6 +193,7 @@ export async function POST(request: NextRequest) {
 
         await supabase.from('leads').upsert(
           {
+            ...beakerColumn(request),
             email: emailNorm,
             first_name: visitorInfo.name || null,
             company: visitorInfo.company || null,
