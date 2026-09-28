@@ -12,7 +12,6 @@ import {
   LAB_COMMISSIONS,
   MINIMUM_PAYOUT_USD,
   PAYOUT_DAYS_AFTER_MONTH_END,
-  PAYOUT_METHODS as TERM_PAYOUT_METHODS,
   VOLUME_TIERS,
   commissionFor,
   firstSaleFor,
@@ -37,16 +36,6 @@ const BUSINESS_TYPES = [
 ];
 
 const AUDIENCE_SIZES = ['Under 1K', '1K-5K', '5K-25K', '25K-100K', '100K+'];
-
-// Sourced from the terms module so the dropdown can never offer a method the
-// contract's payout clause doesn't recognise.
-const PAYOUT_METHODS = TERM_PAYOUT_METHODS;
-
-const PAYOUT_PLACEHOLDERS: Record<string, string> = {
-  'Apple Pay': 'Apple Pay Email',
-  Zelle: 'Zelle Phone or Email',
-  'Wire Transfer': 'Bank Details (routing + account)',
-};
 
 const STATS = [
   { value: pct(BASE_RATE * FIRST_SALE_MULTIPLIER), label: 'First-Sale Commission' },
@@ -83,8 +72,6 @@ interface FormData {
   howConnect: string;
   whyJoin: string;
   howHeard: string;
-  payoutMethod: string;
-  payoutDetails: string;
 }
 
 const emptyForm: FormData = {
@@ -100,8 +87,6 @@ const emptyForm: FormData = {
   howConnect: '',
   whyJoin: '',
   howHeard: '',
-  payoutMethod: '',
-  payoutDetails: '',
 };
 
 /* ───────────── helpers ───────────── */
@@ -162,8 +147,6 @@ export default function BeakerApplyPage() {
       'audienceSize',
       'howConnect',
       'whyJoin',
-      'payoutMethod',
-      'payoutDetails',
     ];
     for (const k of required) {
       if (!form[k].trim()) {
@@ -259,8 +242,7 @@ export default function BeakerApplyPage() {
     company: form.company,
     email: form.email,
     businessAddress: form.businessAddress,
-    payoutMethod: form.payoutMethod,
-    payoutDetails: form.payoutDetails,
+    payoutMethod: 'Whop',
     beakerId,
     effectiveDate: todayString(),
   };
@@ -460,26 +442,12 @@ export default function BeakerApplyPage() {
                   <input className={inputClass} value={form.howHeard} onChange={set('howHeard')} placeholder="(optional)" />
                 </div>
 
-                {/* payout */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className={labelClass}>Preferred Payout Method{reqMark}</label>
-                    <select className={inputClass} value={form.payoutMethod} onChange={set('payoutMethod')}>
-                      <option value="">Select…</option>
-                      {PAYOUT_METHODS.map((m) => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className={labelClass}>Payout Details{reqMark}</label>
-                    <input
-                      className={inputClass}
-                      value={form.payoutDetails}
-                      onChange={set('payoutDetails')}
-                      placeholder={PAYOUT_PLACEHOLDERS[form.payoutMethod] || 'Select payout method first'}
-                    />
-                  </div>
+                {/* payout — Whop only from v2026.09.28 (§4.7); nothing to collect here */}
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-text-secondary leading-relaxed">
+                  <strong className="text-white">How you get paid:</strong> commissions are sent to your own{' '}
+                  <a href="https://whop.com" target="_blank" rel="noopener noreferrer" className="text-accent">Whop</a> account
+                  (free), and you withdraw to your bank from there. After you&apos;re approved you&apos;ll link your Whop username
+                  and upload a W-9 in your affiliate dashboard. We never ask for your bank details.
                 </div>
 
                 {/* submit */}

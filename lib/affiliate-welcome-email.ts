@@ -113,8 +113,9 @@ export function buildAffiliateWelcomeEmail(input: WelcomeEmailInput): string {
           <div style="font-size:13px;font-weight:800;letter-spacing:0.4px;margin-bottom:8px">HOW YOU GET PAID</div>
           <p style="margin:0;font-size:13px;line-height:1.7;color:#333">
             Commissions clear ${HOLD_PERIOD_DAYS} days after PodLab receives payment, then pay out within
-            ${PAYOUT_DAYS_AFTER_MONTH_END} days of month end via <strong>${esc(input.payoutMethod)}</strong>,
-            once your balance reaches ${usd(MINIMUM_PAYOUT_USD)}.
+            ${PAYOUT_DAYS_AFTER_MONTH_END} days of month end to your <strong>Whop</strong> account,
+            once your balance reaches ${usd(MINIMUM_PAYOUT_USD)}. Before your first payout, link your Whop username
+            and upload a W-9 in your affiliate dashboard.
           </p>
         </td></tr>
 

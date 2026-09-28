@@ -288,7 +288,7 @@ const steps = [
   },
   {
     title: "Earn",
-    description: "When your referral completes a Lab and clears the 45-day hold period, you get paid. Monthly payouts via ApplePay, Zelle, or Wire.",
+    description: "When your referral completes a Lab and clears the 45-day hold period, you get paid. Paid monthly to your own Whop account.",
   },
 ];
 

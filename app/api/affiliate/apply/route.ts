@@ -80,8 +80,6 @@ export async function POST(request: NextRequest) {
       audienceSize,
       howConnect,
       whyJoin,
-      payoutMethod,
-      payoutDetails,
       beakerId,
       typedSignature,
     };
@@ -150,8 +148,9 @@ export async function POST(request: NextRequest) {
         how_connect: howConnect.trim(),
         why_join: whyJoin.trim(),
         how_heard: howHeard?.trim() || null,
-        payout_method: payoutMethod,
-        payout_details: payoutDetails.trim(),
+        // Whop only from v2026.09.28 (§4.7): no bank details are collected.
+        payout_method: 'Whop',
+        payout_details: null,
         beaker_id: finalBeakerId,
         contract_signed: true,
         contract_signed_date: signedAt,
@@ -201,8 +200,7 @@ export async function POST(request: NextRequest) {
       company: company?.trim() || undefined,
       email: email.trim().toLowerCase(),
       businessAddress: businessAddress.trim(),
-      payoutMethod,
-      payoutDetails: payoutDetails.trim(),
+      payoutMethod: 'Whop',
       beakerId: finalBeakerId,
       effectiveDate,
     };
@@ -257,7 +255,7 @@ export async function POST(request: NextRequest) {
           firstName: firstName.trim(),
           beakerId: finalBeakerId,
           homepageLink,
-          payoutMethod,
+          payoutMethod: 'Whop',
           effectiveDate,
         }),
         {
@@ -282,7 +280,7 @@ export async function POST(request: NextRequest) {
       'Audience Size': audienceSize,
       'How They Connect': howConnect,
       'Why Joining': whyJoin,
-      'Payout Method': payoutMethod,
+      'Payout Method': 'Whop',
       'Beaker ID': finalBeakerId,
       'Agreement Version': AGREEMENT_VERSION,
       'Signed PDF': storagePath ? 'attached + archived' : 'GENERATION FAILED — check logs',

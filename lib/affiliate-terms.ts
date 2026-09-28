@@ -13,7 +13,7 @@
  */
 
 /** Bump on ANY change to terms or agreement text. Stamped into every PDF. */
-export const AGREEMENT_VERSION = 'v2026.08.19';
+export const AGREEMENT_VERSION = 'v2026.09.28';
 
 export const COMPANY = {
   legalName: 'PodLab LV LLC',
@@ -44,7 +44,10 @@ export const MINIMUM_PAYOUT_USD = 100;
 /** Window to dispute a commission statement before it is waived. */
 export const DISPUTE_WINDOW_DAYS = 30;
 
-export const PAYOUT_METHODS = ['Apple Pay', 'Zelle', 'Wire Transfer'] as const;
+// v2026.09.28: commissions are paid only through Whop, as a transfer to the
+// affiliate's own Whop account (§4.7). Apple Pay / Zelle / wire were retired
+// with it, and PodLab no longer collects bank details.
+export const PAYOUT_METHODS = ['Whop'] as const;
 export type PayoutMethod = (typeof PAYOUT_METHODS)[number];
 
 /* ── What each Lab pays ────────────────────────────────────────────── */

@@ -83,11 +83,11 @@ const FAQ_ITEMS = [
   },
   {
     question: 'When do I get paid?',
-    answer: 'Payouts happen on the 1st of each month via ApplePay, Zelle, or Wire transfer. You need a minimum of $100 in cleared commissions to trigger a payout.',
+    answer: 'Payouts are sent within 15 days after the end of each month, to your own Whop account (you withdraw to your bank from there). You need a minimum of $100 in cleared commissions, a linked Whop account and a W-9 on file.',
   },
   {
     question: "What's the hold period?",
-    answer: 'All commissions have a 45-day hold period from the date of the referred sale. This protects against refunds and chargebacks. After 45 days, commissions move from "Pending" to "Cleared" and become available for payout.',
+    answer: 'All commissions have a 45-day hold period from the date PodLab receives the payment. This protects against refunds and chargebacks. After 45 days, commissions move from "Pending" to "Cleared" and become available for payout.',
   },
   {
     question: 'What if my referral buys multiple Labs?',
