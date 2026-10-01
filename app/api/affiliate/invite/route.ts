@@ -16,9 +16,13 @@ export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token') || '';
   if (!UUID.test(token)) return NextResponse.json({ ok: false, error: "That invite link isn't valid." }, { status: 400 });
 
-  const crm = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-    db: { schema: 'crm' },
-  });
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    console.error('[affiliate/invite] Supabase env missing');
+    return NextResponse.json({ ok: false, error: "We couldn't load your invite. You can still apply below." }, { status: 503 });
+  }
+  const crm = createClient(url, key, { db: { schema: 'crm' } });
   const { data, error } = await crm
     .from('beaker_invites')
     .select('token,email,first_name,last_name,company,opened_at,applied_at')
