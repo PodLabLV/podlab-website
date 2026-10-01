@@ -1,6 +1,11 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // The new podlablv.com (podlab-lab) proxies every route it doesn't own to this
+  // site, but it serves its own /_next — so production builds load their JS,
+  // CSS and fonts from this project's stable alias (CORS is open on Vercel
+  // static files). Same deployment either way; previews and local stay relative.
+  assetPrefix: process.env.VERCEL_ENV === 'production' ? 'https://podlab-site.vercel.app' : undefined,
   // Private client documents are read from disk by /api/portal/document; make sure
   // they ship with that function (they are deliberately not in /public).
   outputFileTracingIncludes: {
