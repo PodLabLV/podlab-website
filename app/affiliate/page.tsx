@@ -7,7 +7,7 @@ import HomePageWrapper from '@/components/HomePageWrapper';
 
 export const metadata: Metadata = {
   title: 'Beaker Affiliate Program | Earn While Helping Founders Scale',
-  description: 'Earn 20% on your first referral, then 10% recurring — helping $1M–$8M founders break through the bottleneck. Join the PodLab Beaker affiliate program.',
+  description: 'Earn 20% on your first referral, then 10% recurring — helping founders doing $250K+ break through the bottleneck. Join the PodLab Beaker affiliate program.',
   openGraph: {
     title: 'PodLab Beaker | Affiliate Program',
     description: 'Earn 20% on your first referral, then 10% recurring. Help founders scale.',
@@ -49,7 +49,7 @@ export default function AffiliatePage() {
               Founders <span className="text-accent drop-shadow-[0_0_25px_rgba(42,221,27,0.5)]">Scale</span>
             </h1>
             <p className="text-2xl md:text-3xl text-text-secondary mb-16 max-w-4xl mx-auto font-light leading-relaxed">
-              <span className="text-white font-semibold">PodLab Beaker</span> is our affiliate program for founders, creators, and connectors who know <span className="text-accent font-bold">$1M–$8M business owners</span> stuck as the bottleneck.
+              <span className="text-white font-semibold">PodLab Beaker</span> is our affiliate program for founders, creators, and connectors who know <span className="text-accent font-bold">business owners doing $250K+</span> stuck as the bottleneck.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-8 mb-12">
               {stats.map((stat) => (
