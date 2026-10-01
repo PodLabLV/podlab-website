@@ -681,7 +681,7 @@ export default function AssessmentPage() {
       sms_consent: Boolean(phone.trim() && smsConsent),
       company: company || undefined,
       website: website || undefined,
-      password: password || undefined,
+
       answers: answersMap,
       categoryScores,
       totalScore,
@@ -706,45 +706,7 @@ export default function AssessmentPage() {
         setAssessmentId(data.assessmentId);
       }
 
-      // Magic-link flow: API returns ready-to-install session tokens for every lead
-      // (password optional). setSession() locally and route to /portal — no email
-      // round-trip, no password required. Falls back to inline results if API
-      // didn't return tokens.
-      if (data.session?.access_token && data.session?.refresh_token) {
-        try {
-          const supabase = getSupabaseBrowser();
-          const { error: sessionError } = await supabase.auth.setSession({
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token,
-          });
-          if (!sessionError) {
-            router.push('/portal');
-            return;
-          }
-          console.warn('setSession failed:', sessionError.message);
-        } catch (sessionErr) {
-          console.error('setSession threw:', sessionErr);
-        }
-      }
-
-      // Fallback: password-based sign-in if magic-link tokens weren't returned
-      if (password && password.length >= 8) {
-        try {
-          const supabase = getSupabaseBrowser();
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: email.toLowerCase().trim(),
-            password,
-          });
-          if (!signInError && signInData?.session) {
-            router.push('/portal');
-            return;
-          }
-          console.warn('Auto sign-in did not establish a session:', signInError?.message);
-        } catch (signInErr) {
-          console.error('Auto sign-in threw:', signInErr);
-        }
-      }
-
+      // Results show inline. Portal access is provisioned separately (security fix 2026-10-01).
       setShowEmailCapture(false);
       setShowResults(true);
     } catch (err: unknown) {
@@ -948,7 +910,8 @@ export default function AssessmentPage() {
                   )}
                 </div>
 
-                {/* Password — Create Account (optional) */}
+                {/* Password fields removed (security fix 2026-10-01): accounts are no longer created from this form. */}
+                {false && (
                 <div className="mt-6 pt-6 border-t border-border">
                   <p className="text-sm font-semibold text-accent mb-1">Save your results <span className="text-text-secondary font-normal">(optional)</span></p>
                   <p className="text-xs text-text-secondary mb-4">Create a password to access your portal anytime — or skip to see your results now.</p>
@@ -1005,6 +968,7 @@ export default function AssessmentPage() {
                     </div>
                   )}
                 </div>
+                )}
 
                 {submitError && (
                   <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">

@@ -1,6 +1,11 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Private client documents are read from disk by /api/portal/document; make sure
+  // they ship with that function (they are deliberately not in /public).
+  outputFileTracingIncludes: {
+    '/api/portal/document': ['./private/clarity/**/*'],
+  },
   images: {
     remotePatterns: [
       {
@@ -37,6 +42,15 @@ const nextConfig: NextConfig = {
         headers: [
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'Content-Security-Policy', value: "frame-ancestors 'self'" },
+        ],
+      },
+      {
+        // Private clarity documents are framed by /portal/document via signed links.
+        source: '/api/portal/document',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Content-Security-Policy', value: "frame-ancestors 'self'" },
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
         ],
       },
     ];
