@@ -56,9 +56,7 @@ export async function POST(request: NextRequest) {
       businessAddress,
       website,
       businessType,
-      audienceSize,
       howConnect,
-      whyJoin,
       howHeard,
       payoutMethod,
       payoutDetails,
@@ -68,7 +66,20 @@ export async function POST(request: NextRequest) {
       typedSignature,
       electronicConsent,
       utmLinks,
+      track: rawTrack,
+      inviteToken,
+      answers: rawAnswers,
     } = body;
+
+    // Two tracks (2026-10-01): "client" only with a live invite token from the
+    // CRM, everything else is "partner". Answers arrive as {q, a} pairs.
+    const answers = Array.isArray(rawAnswers)
+      ? rawAnswers
+          .filter((x: unknown): x is { q: string; a: string } =>
+            Boolean(x) && typeof (x as { q?: unknown }).q === 'string' && typeof (x as { a?: unknown }).a === 'string')
+          .slice(0, 20)
+          .map((x: { q: string; a: string }) => ({ q: x.q.slice(0, 120), a: x.a.trim().slice(0, 2000) }))
+      : [];
 
     // Validate required fields
     const requiredFields: Record<string, unknown> = {
@@ -76,12 +87,6 @@ export async function POST(request: NextRequest) {
       lastName,
       email,
       businessAddress,
-      businessType,
-      audienceSize,
-      howConnect,
-      whyJoin,
-      payoutMethod,
-      payoutDetails,
       beakerId,
       typedSignature,
     };
@@ -113,12 +118,51 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = getSupabase();
+
+    let track: 'partner' | 'client' = 'partner';
+    let invite: { token: string; lead_id: string; email: string } | null = null;
+    if (rawTrack === 'client' && typeof inviteToken === 'string') {
+      const crm = createClient(supabaseUrl, supabaseServiceKey, { db: { schema: 'crm' } });
+      const { data } = await crm
+        .from('beaker_invites')
+        .select('token,lead_id,email,applied_at')
+        .eq('token', inviteToken)
+        .maybeSingle();
+      if (!data || data.applied_at) {
+        return NextResponse.json({ error: 'That invite has already been used or is no longer valid.' }, { status: 400 });
+      }
+      if (data.email.toLowerCase() !== String(email).trim().toLowerCase()) {
+        return NextResponse.json({ error: 'Please apply with the email your invite was sent to.' }, { status: 400 });
+      }
+      track = 'client';
+      invite = data;
+    }
+    if (!answers.some((x: { a: string }) => x.a)) {
+      return NextResponse.json({ error: 'Please answer the questions before submitting.' }, { status: 400 });
+    }
+
+    // Beaker IDs are unique in the database (beaker_applications_beaker_id_key)
+    // but the form slugs first-last and never checked, so a second Jordan
+    // Smith used to get "Failed to save application". Suffix -2, -3… instead,
+    // and use the final ID for everything below — the row, the PDF, the links.
+    const requestedId = String(beakerId).trim().toLowerCase();
+    let finalBeakerId = requestedId;
+    for (let n = 2; n < 50; n++) {
+      const { data: taken } = await supabase
+        .from('beaker_applications').select('id').ilike('beaker_id', finalBeakerId).limit(1);
+      if (!taken || taken.length === 0) break;
+      finalBeakerId = `${requestedId}-${n}`;
+    }
+    // The client built its tracking links before submitting; point them at
+    // the ID that was actually issued.
+    const finalUtmLinks = finalBeakerId === requestedId ? utmLinks
+      : JSON.parse(JSON.stringify(utmLinks ?? null).split(`utm_campaign=${requestedId}`).join(`utm_campaign=${finalBeakerId}`));
     const signedAt = contractSignedDate || new Date().toISOString();
     const ip = clientIp(request);
     const userAgent = request.headers.get('user-agent');
     const consent = consentRecord(phone, body.sms_consent, 'website/affiliate-apply');
 
-    const { error: dbError } = await supabase
+    const { data: inserted, error: dbError } = await supabase
       .from('beaker_applications')
       .insert({
         first_name: firstName.trim(),
@@ -128,20 +172,26 @@ export async function POST(request: NextRequest) {
         company: company?.trim() || null,
         business_address: businessAddress.trim(),
         website: website?.trim() || null,
-        business_type: businessType,
-        audience_size: audienceSize,
-        how_connect: howConnect.trim(),
-        why_join: whyJoin.trim(),
+        business_type: typeof businessType === 'string' ? businessType.slice(0, 80) : null,
+        audience_size: null,
+        how_connect: typeof howConnect === 'string' && howConnect.trim() ? howConnect.trim().slice(0, 2000) : null,
+        why_join: null,
+        track,
+        answers,
+        client_lead_id: invite?.lead_id ?? null,
         how_heard: howHeard?.trim() || null,
-        payout_method: payoutMethod,
-        payout_details: payoutDetails.trim(),
-        beaker_id: beakerId,
+        // Whop only from v2026.09.28 (§4.7): no bank details are collected.
+        payout_method: 'Whop',
+        payout_details: null,
+        beaker_id: finalBeakerId,
         contract_signed: true,
         contract_signed_date: signedAt,
         typed_signature: typedSignature.trim(),
-        utm_links: utmLinks,
+        utm_links: finalUtmLinks,
         status: 'pending',
-      });
+      })
+      .select('id')
+      .single();
 
     if (dbError) {
       console.error('Supabase insert error:', dbError);
@@ -149,6 +199,16 @@ export async function POST(request: NextRequest) {
         { error: 'Failed to save application. Please try again.' },
         { status: 500 },
       );
+    }
+
+    // Close the invite so the link can't be reused, and tie it to the application.
+    if (invite && inserted) {
+      const crm = createClient(supabaseUrl, supabaseServiceKey, { db: { schema: 'crm' } });
+      const { error: inviteError } = await crm
+        .from('beaker_invites')
+        .update({ applied_at: new Date().toISOString(), application_id: inserted.id })
+        .eq('token', invite.token);
+      if (inviteError) console.error('Invite close failed:', inviteError);
     }
 
     // Signing evidence + SMS consent go in a second write on purpose. These
@@ -163,7 +223,7 @@ export async function POST(request: NextRequest) {
         signed_user_agent: userAgent,
         ...consent,
       })
-      .eq('beaker_id', beakerId)
+      .eq('beaker_id', finalBeakerId)
       .eq('email', email.trim().toLowerCase());
 
     if (evidenceError) {
@@ -184,9 +244,8 @@ export async function POST(request: NextRequest) {
       company: company?.trim() || undefined,
       email: email.trim().toLowerCase(),
       businessAddress: businessAddress.trim(),
-      payoutMethod,
-      payoutDetails: payoutDetails.trim(),
-      beakerId,
+      payoutMethod: 'Whop',
+      beakerId: finalBeakerId,
       effectiveDate,
     };
 
@@ -206,7 +265,7 @@ export async function POST(request: NextRequest) {
     try {
       const pdf = await renderAgreementPdf(party, evidence);
       const fileName = agreementFileName(party, evidence);
-      storagePath = `${beakerId}/${fileName}`;
+      storagePath = `${finalBeakerId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from(AGREEMENT_BUCKET)
@@ -227,20 +286,20 @@ export async function POST(request: NextRequest) {
         await supabase
           .from('beaker_applications')
           .update({ agreement_pdf_path: storagePath })
-          .eq('beaker_id', beakerId)
+          .eq('beaker_id', finalBeakerId)
           .eq('email', party.email);
       }
 
-      const homepageLink = `https://podlablv.com/?utm_source=beaker&utm_medium=referral&utm_campaign=${beakerId}`;
+      const homepageLink = `https://podlablv.com/?utm_source=beaker&utm_medium=referral&utm_campaign=${finalBeakerId}`;
 
       await notifyEmail(
         party.email,
         `Your PodLab Affiliate Agreement — signed copy attached`,
         buildAffiliateWelcomeEmail({
           firstName: firstName.trim(),
-          beakerId,
+          beakerId: finalBeakerId,
           homepageLink,
-          payoutMethod,
+          payoutMethod: 'Whop',
           effectiveDate,
         }),
         {
@@ -254,25 +313,23 @@ export async function POST(request: NextRequest) {
     } catch (pdfErr) {
       // A signed agreement with no PDF is recoverable by hand; a 500 that makes
       // someone re-sign is not. Log loudly and let the success response stand.
-      console.error('Agreement PDF/delivery failed for', beakerId, pdfErr);
+      console.error('Agreement PDF/delivery failed for', finalBeakerId, pdfErr);
     }
 
     const notifFields: Record<string, string> = {
       Name: fullName,
       Email: email,
       ...(company ? { Company: company } : {}),
-      'Business Type': businessType,
-      'Audience Size': audienceSize,
-      'How They Connect': howConnect,
-      'Why Joining': whyJoin,
-      'Payout Method': payoutMethod,
-      'Beaker ID': beakerId,
+      Track: track === 'client' ? 'PodLab client (invited)' : 'Partner',
+      ...Object.fromEntries(answers.filter((x: { a: string }) => x.a).map((x: { q: string; a: string }) => [x.q, x.a])),
+      'Payout Method': 'Whop',
+      'Beaker ID': finalBeakerId,
       'Agreement Version': AGREEMENT_VERSION,
       'Signed PDF': storagePath ? 'attached + archived' : 'GENERATION FAILED — check logs',
     };
 
     notifyTeam({
-      title: '🤝 New Beaker Application',
+      title: track === 'client' ? '🤝 Client joined Beaker' : '🤝 New Beaker Application',
       fields: notifFields,
       emailSubject: `🤝 Beaker Application: ${fullName}`,
       emailHtml: buildEmailHtml('🤝 New Beaker Application', notifFields),
@@ -280,7 +337,7 @@ export async function POST(request: NextRequest) {
       supabaseUrl: 'https://supabase.com/dashboard/project/tncipuxobcbkwkmpcevt/editor',
     }).catch((err) => console.error('Notification error:', err));
 
-    return NextResponse.json({ success: true, beakerId, agreementUrl });
+    return NextResponse.json({ success: true, beakerId: finalBeakerId, agreementUrl });
   } catch (err) {
     console.error('Affiliate apply error:', err);
     return NextResponse.json(

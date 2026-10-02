@@ -81,6 +81,7 @@ export default function CookiePolicyPage() {
                 <ul className="list-disc ml-6 space-y-2">
                   <li><strong className="text-white">Calendly:</strong> When you interact with our scheduling widget, Calendly may set cookies to manage your booking session</li>
                   <li><strong className="text-white">YouTube:</strong> Embedded videos may set cookies to track viewing preferences and analytics</li>
+                  <li><strong className="text-white">Referral (beaker_ref):</strong> If you arrive through a PodLab partner&apos;s link, we remember which partner referred you for 90 days so they are credited if you buy. It stores only the partner&apos;s ID, is set on podlablv.com and its subdomains, and is not used for advertising</li>
                   <li><strong className="text-white">Whop:</strong> Checkout pages are hosted by Whop on whop.com, which sets its own cookies there for fraud prevention and session management</li>
                 </ul>
                 <p className="mt-3">

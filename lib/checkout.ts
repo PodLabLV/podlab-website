@@ -8,13 +8,20 @@
 //
 // After paying, Whop redirects to /thank-you?offer=<key>.
 
+// Every Buy button goes through the CRM, which sends the buyer to that offer's
+// Whop checkout — or, when the visitor came in on a Beaker link (beaker_ref
+// cookie, see lib/beaker-ref.ts), to that affiliate's own tagged checkout so
+// the sale is credited. It never blocks a sale: any failure falls back to the
+// default checkout noted beside each offer.
+const buyUrl = (key: string) => `https://crm.podlablv.com/api/buy/${key}`;
+
 export interface SiteOffer {
   key: string;
   name: string;
   price: string;           // what the button says
   value: number;           // dollars charged now — the conversion value
   depositTier?: 'essentials' | 'elite'; // EssentialsLab's existing deposit_paid tier
-  checkoutUrl: string;
+  checkoutUrl: string;     // crm.podlablv.com/api/buy/<key>
   kickoffUrl?: string;     // Calendly event the buyer books next; none = no call needed
   nextStep: string;
 }
@@ -25,7 +32,7 @@ export const SITE_OFFERS: Record<string, SiteOffer> = {
     name: 'AssetsLab',
     price: '$1,500',
     value: 1500,
-    checkoutUrl: 'https://whop.com/checkout/ch_vKwqXjJiKs1cunl/',
+    checkoutUrl: buyUrl('assetslab'), // default Whop checkout: ch_6RQ8UheiWXe5IOW
     kickoffUrl: 'https://calendly.com/podlablv/assets-lab-strategy',
     nextStep: 'Book your Strategy Sprint kickoff. We run the clarity assessment on that call and start building your foundation.',
   },
@@ -35,7 +42,7 @@ export const SITE_OFFERS: Record<string, SiteOffer> = {
     price: '$1,500 deposit',
     value: 1500,
     depositTier: 'essentials',
-    checkoutUrl: 'https://whop.com/checkout/ch_qFgkdDAF6G0PbUn/',
+    checkoutUrl: buyUrl('essentialslab-core-pmt-1'), // default Whop checkout: ch_qFgkdDAF6G0PbUn
     kickoffUrl: 'https://calendly.com/podlablv/essentialslab-clarity-call',
     nextStep: 'Book your clarity call. We lock your film day in the Las Vegas studio; the second $1,500 is due on film day.',
   },
@@ -45,7 +52,7 @@ export const SITE_OFFERS: Record<string, SiteOffer> = {
     price: '$2,500 deposit',
     value: 2500,
     depositTier: 'elite',
-    checkoutUrl: 'https://whop.com/checkout/ch_zpdgiVzal5FEGmn/',
+    checkoutUrl: buyUrl('essentialslab-elite-pmt-1'), // default Whop checkout: ch_zpdgiVzal5FEGmn
     kickoffUrl: 'https://calendly.com/podlablv/essentialslab-clarity-call',
     nextStep: 'Book your clarity call. We lock your film day in the Las Vegas studio; the second $2,500 is due on film day.',
   },
@@ -60,7 +67,7 @@ Object.assign(SITE_OFFERS, {
     name: 'Standard Edit',
     price: '$500',
     value: 500,
-    checkoutUrl: 'https://whop.com/checkout/ch_Wthet9BLfGKYRoI/',
+    checkoutUrl: buyUrl('standard-edit'), // default Whop checkout: ch_AfLsN7tL7bhqgDP
     nextStep: 'Your edit is back in 5 business days, with 1 round of changes. The clock started when your payment cleared.',
   },
   'premium-edit-faqs': {
@@ -68,7 +75,7 @@ Object.assign(SITE_OFFERS, {
     name: 'Premium Edit + 3 FAQ Videos',
     price: '$1,000',
     value: 1000,
-    checkoutUrl: 'https://whop.com/checkout/ch_LRnz6PJs6Dpq26S/',
+    checkoutUrl: buyUrl('premium-edit-faqs'), // default Whop checkout: ch_LRnz6PJs6Dpq26S
     nextStep: 'Your four videos are back in 7 business days, with 2 rounds of changes. The clock started when your payment cleared.',
   },
   'essentialslab-core': {
@@ -76,7 +83,7 @@ Object.assign(SITE_OFFERS, {
     name: 'EssentialsLab',
     price: '$3,000',
     value: 3000,
-    checkoutUrl: 'https://whop.com/checkout/ch_a6ywdIoXyieKMKQ/',
+    checkoutUrl: buyUrl('essentialslab-core'), // default Whop checkout: ch_a6ywdIoXyieKMKQ
     kickoffUrl: 'https://calendly.com/podlablv/essentialslab-clarity-call',
     nextStep: 'Paid in full. Book your clarity call to lock your film day in the Las Vegas studio; you go live 10 days after it.',
   },
@@ -85,7 +92,7 @@ Object.assign(SITE_OFFERS, {
     name: 'EssentialsLab ELITE',
     price: '$5,000',
     value: 5000,
-    checkoutUrl: 'https://whop.com/checkout/ch_sHMjdG2IxGer8aW/',
+    checkoutUrl: buyUrl('essentialslab-elite'), // default Whop checkout: ch_sHMjdG2IxGer8aW
     kickoffUrl: 'https://calendly.com/podlablv/essentialslab-clarity-call',
     nextStep: 'Paid in full. Book your clarity call to lock your film day in the Las Vegas studio; you go live 10 days after it.',
   },

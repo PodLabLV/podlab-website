@@ -36,8 +36,10 @@ export interface AgreementParty {
   company?: string;
   email: string;
   businessAddress: string;
-  payoutMethod: string;
-  payoutDetails: string;
+  /** Always 'Whop' from v2026.09.28; kept for agreements generated earlier. */
+  payoutMethod?: string;
+  /** Retired with Whop payouts — PodLab no longer collects bank details. */
+  payoutDetails?: string;
   beakerId: string;
   /** Human-readable effective date, e.g. "August 19, 2026". */
   effectiveDate: string;
@@ -217,12 +219,12 @@ export function buildAgreement(p: AgreementParty, opts: AgreementOptions = {}): 
         {
           n: '4.7',
           title: 'Payout Method',
-          text: `Affiliate will be paid via ${p.payoutMethod} to: ${maskPayoutDetails(p.payoutMethod, p.payoutDetails)}. Affiliate is responsible for keeping payout details current.`,
+          text: `Commissions are paid through Whop (whop.com), ${COMPANY.shortName}'s payment processor, as a transfer to a Whop account in Affiliate's own name that Affiliate links in the ${COMPANY.shortName} affiliate dashboard. Affiliate must keep that account active and complete any identity verification Whop requires. Affiliate withdraws funds from Whop to Affiliate's own bank or other payout method Whop supports, subject to Whop's terms and any withdrawal fees Whop charges. ${COMPANY.shortName} does not collect or store Affiliate's bank account details. A payout is complete when ${COMPANY.shortName} sends the transfer. Commissions earned before Affiliate links a Whop account accrue and are paid in the first payout run after the account is linked.`,
         },
         {
           n: '4.8',
           title: 'Taxes',
-          text: `Affiliate is solely responsible for all taxes arising from commissions. ${COMPANY.shortName} may require tax forms (e.g., W-9 or W-8) as a condition of payment. If Affiliate fails to provide required tax documentation, ${COMPANY.shortName} may withhold or suspend payments to the extent permitted by law.`,
+          text: `Affiliate is solely responsible for all taxes arising from commissions. ${COMPANY.shortName} may require tax forms (e.g., W-9 or W-8) as a condition of payment. If Affiliate fails to provide required tax documentation, ${COMPANY.shortName} may withhold or suspend payments to the extent permitted by law. Affiliate must provide a completed IRS Form W-9 (or W-8 if not a U.S. person) before the first payout. Commissions accrue but are not paid until it is received.`,
         },
         {
           n: '4.9',

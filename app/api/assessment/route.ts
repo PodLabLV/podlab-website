@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse, after } from 'next/server'
+import { beakerColumn } from '@/lib/beaker-ref'
 import { handleCors, corsHeaders, rateLimit } from '@/lib/api-utils'
 import { createClient } from '@supabase/supabase-js'
 import { consentRecord, consentTags } from '@/lib/smsConsent'
@@ -311,6 +312,7 @@ export async function POST(request: NextRequest) {
     const { error: leadError } = await supabase
       .from('leads')
       .insert({
+        ...beakerColumn(request),
         client_id: clientId,
         first_name: firstName,
         last_name: lastName,
@@ -343,108 +345,15 @@ export async function POST(request: NextRequest) {
       console.warn('Lead insert failed but assessment was saved successfully')
     }
 
-    // 6. Create or fetch Supabase Auth user, then mint a session so EVERY lead
-    //    walks straight into /portal regardless of whether they set a password.
-    //    No password = magic-link-style passwordless session via OTP-verify-on-server.
-    let authUserId: string | null = null
-    let authExisting = false
-    let sessionTokens: { access_token: string; refresh_token: string } | null = null
-
-    try {
-      const userMetadata = {
-        first_name: firstName,
-        last_name: lastName,
-        phone: body.phone || null,
-        company: body.company || null,
-      }
-
-      const createPayload: Parameters<typeof supabase.auth.admin.createUser>[0] = {
-        email: email.toLowerCase().trim(),
-        email_confirm: true,
-        user_metadata: userMetadata,
-      }
-      if (body.password && body.password.length >= 8) {
-        createPayload.password = body.password
-      }
-
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser(createPayload)
-
-      if (authError) {
-        if (
-          authError.message?.includes('already been registered') ||
-          authError.message?.includes('already exists')
-        ) {
-          authExisting = true
-          const { data: listData } = await supabase.auth.admin.listUsers()
-          const existingUser = listData?.users?.find(
-            (u) => u.email?.toLowerCase() === email.toLowerCase().trim()
-          )
-          authUserId = existingUser?.id || null
-
-          if (authUserId) {
-            const updatePayload: Parameters<typeof supabase.auth.admin.updateUserById>[1] = {
-              user_metadata: userMetadata,
-            }
-            if (body.password && body.password.length >= 8) {
-              updatePayload.password = body.password
-            }
-            const { error: updateErr } = await supabase.auth.admin.updateUserById(authUserId, updatePayload)
-            if (updateErr) {
-              console.error('Failed to update existing user:', updateErr.message)
-            }
-          }
-        } else {
-          console.error('Auth user creation failed:', authError.message)
-        }
-      } else {
-        authUserId = authData.user.id
-      }
-
-      if (authUserId) {
-        // Link auth user ID to client record (non-blocking — column may not exist)
-        await supabase
-          .from('clients')
-          .update({ auth_user_id: authUserId })
-          .eq('id', clientId)
-          .then(({ error }) => {
-            if (error) console.warn('Failed to link auth_user_id to client:', error.message)
-          })
-
-        // Mint a session via magic-link OTP. Generate, then verify server-side with
-        // the anon key. The client gets the resulting access/refresh tokens and calls
-        // setSession() to install them — no email round-trip required.
-        try {
-          const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-            type: 'magiclink',
-            email: email.toLowerCase().trim(),
-          })
-
-          if (linkError) {
-            console.error('Magic link generation failed:', linkError.message)
-          } else if (linkData?.properties?.email_otp) {
-            const anonClient = getSupabaseAnon()
-            const { data: verifyData, error: verifyError } = await anonClient.auth.verifyOtp({
-              email: email.toLowerCase().trim(),
-              token: linkData.properties.email_otp,
-              type: 'magiclink',
-            })
-
-            if (verifyError) {
-              console.error('OTP verify failed:', verifyError.message)
-            } else if (verifyData?.session) {
-              sessionTokens = {
-                access_token: verifyData.session.access_token,
-                refresh_token: verifyData.session.refresh_token,
-              }
-            }
-          }
-        } catch (linkErr) {
-          console.error('Session generation error (non-blocking):', linkErr)
-        }
-      }
-    } catch (authErr) {
-      console.error('Auth user creation error (non-blocking):', authErr)
-    }
+    // 6. Accounts are NOT created here (security fix 2026-10-01).
+    //    This route used to create/update an auth user for whatever email was
+    //    submitted — overwriting that user's password if one was sent — and then
+    //    mint a live session and return it to the browser. Anyone who typed an
+    //    existing client's email walked into their portal. Portal access is now
+    //    provisioned deliberately (invite + set-password), never from a public form.
+    const authUserId: string | null = null
+    const authExisting = false
+    const sessionTokens: { access_token: string; refresh_token: string } | null = null
 
     // 7. Send team notification (non-blocking)
     const zoneColor = zone === 'Red' ? '#e74c3c' : zone === 'Yellow' ? '#f39c12' : '#2ADD1B'

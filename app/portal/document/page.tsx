@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePortal, formatDate, type PortalComment } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState, StatusBadge } from '@/components/portal/Shared';
 
@@ -24,6 +24,17 @@ const SECTIONS = [
 
 export default function DocumentPage() {
   const { loading, client, comments, addComment, accessToken } = usePortal();
+  // The document is private: fetch a short-lived signed link for this client.
+  const [docUrl, setDocUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!client?.document_url || !accessToken) return;
+    let alive = true;
+    fetch('/api/portal/document-link', { headers: { Authorization: `Bearer ${accessToken}` }, cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : { url: null }))
+      .then((j: { url: string | null }) => { if (alive) setDocUrl(j.url); })
+      .catch(() => { if (alive) setDocUrl(null); });
+    return () => { alive = false; };
+  }, [client?.document_url, accessToken]);
   const [section, setSection] = useState(SECTIONS[0]);
   const [body, setBody] = useState('');
   const [saving, setSaving] = useState(false);
@@ -85,7 +96,7 @@ export default function DocumentPage() {
               Business DNA — Clarity Document
             </p>
             <a
-              href={client.document_url}
+              href={docUrl ?? '#'}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#2ADD1B] text-xs hover:underline"
@@ -95,7 +106,7 @@ export default function DocumentPage() {
           </div>
           <div className="overflow-x-auto bg-[#111]">
             <iframe
-              src={client.document_url}
+              src={docUrl ?? 'about:blank'}
               title="Clarity Document"
               className="block w-full border-0"
               style={{ minWidth: 880, height: '80vh' }}

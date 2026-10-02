@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import SmsConsent from '@/components/SmsConsent';
 import HomePageWrapper from '@/components/HomePageWrapper';
@@ -12,7 +12,6 @@ import {
   LAB_COMMISSIONS,
   MINIMUM_PAYOUT_USD,
   PAYOUT_DAYS_AFTER_MONTH_END,
-  PAYOUT_METHODS as TERM_PAYOUT_METHODS,
   VOLUME_TIERS,
   commissionFor,
   firstSaleFor,
@@ -28,25 +27,84 @@ import {
 
 /* ───────────── constants ───────────── */
 
-const BUSINESS_TYPES = [
-  'Coach/Consultant',
-  'Agency Owner',
-  'Content Creator',
-  'Connector/Networker',
+// Two tracks (2026-10-01). "partner" = an outside promoter, qualified by who
+// they actually know. "client" = a PodLab client who arrived through the invite
+// emailed after their first payment; their details come pre-filled from the
+// invite token and the form only asks what we can't already know.
+type Track = 'partner' | 'client';
+
+const PARTNER_ROLES = [
+  'Business coach or consultant',
+  'Agency or freelancer',
+  'Banker, lender, CPA or attorney',
+  'Realtor, insurance or financial advisor',
+  'Community, event or podcast host',
+  'Content creator',
   'Other',
 ];
 
-const AUDIENCE_SIZES = ['Under 1K', '1K-5K', '5K-25K', '25K-100K', '100K+'];
+const OWNER_SIZES = ['Under $250K a year', '$250K–$1M', '$1M–$5M', '$5M+', 'A mix'];
 
-// Sourced from the terms module so the dropdown can never offer a method the
-// contract's payout clause doesn't recognise.
-const PAYOUT_METHODS = TERM_PAYOUT_METHODS;
+const INTRO_PACE = ['1–2', '3–5', '6–10', 'More than 10'];
 
-const PAYOUT_PLACEHOLDERS: Record<string, string> = {
-  'Apple Pay': 'Apple Pay Email',
-  Zelle: 'Zelle Phone or Email',
-  'Wire Transfer': 'Bank Details (routing + account)',
+const PARTNER_CHANNELS = [
+  'One-on-one introductions',
+  'My email list or newsletter',
+  'Social media',
+  'Events or workshops I run',
+  'As part of my own client work',
+];
+
+const CLIENT_CHANNELS = [
+  'Networking groups or masterminds',
+  'Industry events',
+  'My own clients, vendors or partners',
+  'Online communities or social media',
+  'Friends and family',
+];
+
+interface Answers {
+  role: string;
+  whoYouKnow: string;
+  ownerSize: string;
+  introPace: string;
+  channels: string[];
+  firstIntro: string;
+  testimonial: string;
+  testimonialOk: boolean;
+}
+
+const emptyAnswers: Answers = {
+  role: '',
+  whoYouKnow: '',
+  ownerSize: '',
+  introPace: '',
+  channels: [],
+  firstIntro: '',
+  testimonial: '',
+  testimonialOk: false,
 };
+
+/** The answers as question/answer pairs, so the CRM can show any version of the form. */
+function answerPairs(track: Track, a: Answers, howHeard: string): { q: string; a: string }[] {
+  if (track === 'client') {
+    return [
+      { q: 'Where they meet other business owners', a: a.channels.join(', ') },
+      { q: 'First person they would introduce', a: a.firstIntro.trim() },
+      { q: 'What they would tell people about PodLab', a: a.testimonial.trim() },
+      { q: 'OK to quote as a testimonial', a: a.testimonial.trim() ? (a.testimonialOk ? 'Yes' : 'No') : '' },
+    ];
+  }
+  return [
+    { q: 'What best describes them', a: a.role },
+    { q: 'The business owners they know', a: a.whoYouKnow.trim() },
+    { q: 'Typical size of those businesses', a: a.ownerSize },
+    { q: 'Introductions they could make in the next 90 days', a: a.introPace },
+    { q: 'How they would introduce PodLab', a: a.channels.join(', ') },
+    { q: 'First person they would introduce', a: a.firstIntro.trim() },
+    { q: 'How they heard about PodLab', a: howHeard.trim() },
+  ];
+}
 
 const STATS = [
   { value: pct(BASE_RATE * FIRST_SALE_MULTIPLIER), label: 'First-Sale Commission' },
@@ -83,8 +141,6 @@ interface FormData {
   howConnect: string;
   whyJoin: string;
   howHeard: string;
-  payoutMethod: string;
-  payoutDetails: string;
 }
 
 const emptyForm: FormData = {
@@ -100,8 +156,6 @@ const emptyForm: FormData = {
   howConnect: '',
   whyJoin: '',
   howHeard: '',
-  payoutMethod: '',
-  payoutDetails: '',
 };
 
 /* ───────────── helpers ───────────── */
@@ -143,6 +197,41 @@ export default function BeakerApplyPage() {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
   const contractRef = useRef<HTMLDivElement>(null);
+  const [track, setTrack] = useState<Track>('partner');
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [inviteNote, setInviteNote] = useState('');
+  const [answers, setAnswers] = useState<Answers>(emptyAnswers);
+
+  // ?invite=<token> from the client invite email: switch to the client track
+  // and pre-fill from the invite. Read from window, not useSearchParams, so the
+  // page doesn't need a Suspense boundary.
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.search).get('invite');
+    if (!token) return;
+    fetch(`/api/affiliate/invite?token=${encodeURIComponent(token)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d.ok) {
+          setInviteNote(d.error || "That invite link didn't work, but you can still apply below.");
+          return;
+        }
+        setTrack('client');
+        setInviteToken(token);
+        setForm((f) => ({
+          ...f,
+          firstName: d.invite.firstName || f.firstName,
+          lastName: d.invite.lastName || f.lastName,
+          email: d.invite.email || f.email,
+          company: d.invite.company || f.company,
+        }));
+      })
+      .catch(() => setInviteNote("That invite link didn't work, but you can still apply below."));
+  }, []);
+
+  const setA = <K extends keyof Answers>(key: K, value: Answers[K]) =>
+    setAnswers((a) => ({ ...a, [key]: value }));
+  const toggleChannel = (c: string) =>
+    setA('channels', answers.channels.includes(c) ? answers.channels.filter((x) => x !== c) : [...answers.channels, c]);
 
   /* ── field helpers ── */
 
@@ -153,23 +242,15 @@ export default function BeakerApplyPage() {
   /* ── step navigation ── */
 
   function goToStep2() {
-    const required: (keyof FormData)[] = [
-      'firstName',
-      'lastName',
-      'email',
-      'businessAddress',
-      'businessType',
-      'audienceSize',
-      'howConnect',
-      'whyJoin',
-      'payoutMethod',
-      'payoutDetails',
-    ];
-    for (const k of required) {
-      if (!form[k].trim()) {
-        setError(`Please fill in all required fields.`);
-        return;
-      }
+    const required: (keyof FormData)[] = ['firstName', 'lastName', 'email', 'businessAddress'];
+    const missing =
+      required.some((k) => !form[k].trim()) ||
+      answers.channels.length === 0 ||
+      (track === 'partner' &&
+        (!answers.role || !answers.whoYouKnow.trim() || !answers.ownerSize || !answers.introPace));
+    if (missing) {
+      setError(`Please fill in all required fields.`);
+      return;
     }
     setError('');
     const id = generateBeakerId(form.firstName, form.lastName);
@@ -205,6 +286,12 @@ export default function BeakerApplyPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          track,
+          inviteToken,
+          answers: answerPairs(track, answers, form.howHeard),
+          // Kept for the CRM's older columns.
+          businessType: track === 'client' ? 'PodLab client' : answers.role,
+          howConnect: track === 'client' ? answers.channels.join(', ') : answers.whoYouKnow.trim(),
           // Only meaningful alongside a number; sending it without one would put
           // a consent record on a contact we can't text anyway.
           sms_consent: Boolean(form.phone.trim() && smsConsent),
@@ -223,6 +310,8 @@ export default function BeakerApplyPage() {
       // Null when PDF generation or upload failed — the agreement is still
       // signed and stored, so step 3 falls back to print rather than erroring.
       setAgreementUrl(data.agreementUrl ?? null);
+      // The server suffixes a taken ID (-2, -3…); show the one actually issued.
+      if (data.beakerId) setBeakerId(data.beakerId);
       setStep(3);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: unknown) {
@@ -257,8 +346,7 @@ export default function BeakerApplyPage() {
     company: form.company,
     email: form.email,
     businessAddress: form.businessAddress,
-    payoutMethod: form.payoutMethod,
-    payoutDetails: form.payoutDetails,
+    payoutMethod: 'Whop',
     beakerId,
     effectiveDate: todayString(),
   };
@@ -271,11 +359,11 @@ export default function BeakerApplyPage() {
   const swipeCopy = [
     {
       title: 'LinkedIn DM',
-      text: `Hey [Name] — I work with a content studio called PodLab that helps $1M–$8M founders turn their expertise into video assets that sell for them 24/7. Thought it might be a fit for you.\n\nHere's a link if you want to check it out: ${homepageLink}`,
+      text: `Hey [Name] — I work with a content studio called PodLab that helps service businesses doing $250K+ a year turn their expertise into video assets that sell for them 24/7. Thought it might be a fit for you.\n\nHere's a link if you want to check it out: ${homepageLink}`,
     },
     {
       title: 'Email',
-      text: `Subject: Quick intro — PodLab\n\nHey [Name],\n\nI wanted to introduce you to PodLab — they work with $1M–$8M service-based founders to create video sales assets that replace the founder in the sales process.\n\nTheir whole model is "record once, sell forever." Thought it might be worth a look:\n${homepageLink}\n\nLet me know if you have questions — happy to connect you directly.\n\nBest,\n${form.firstName}`,
+      text: `Subject: Quick intro — PodLab\n\nHey [Name],\n\nI wanted to introduce you to PodLab — they work with service businesses doing $250K+ a year to create video sales assets that replace the founder in the sales process.\n\nTheir whole model is "record once, sell forever." Thought it might be worth a look:\n${homepageLink}\n\nLet me know if you have questions — happy to connect you directly.\n\nBest,\n${form.firstName}`,
     },
     {
       title: 'Text Message',
@@ -348,11 +436,14 @@ export default function BeakerApplyPage() {
             <div className="animate-fade-in-up">
               <div className="text-center mb-10">
                 <h1 className="text-4xl md:text-5xl font-display font-bold text-text-primary mb-3">
-                  Join the Beaker Program
+                  {track === 'client' ? 'Refer Owners Like You' : 'Join the Beaker Program'}
                 </h1>
                 <p className="text-text-secondary text-lg">
-                  Earn recurring commissions by referring $1M–$8M founders to PodLab.
+                  {track === 'client'
+                    ? 'You know what working with PodLab is like. Introduce owners who need it and get paid when they join.'
+                    : 'Earn commissions by referring service businesses doing $250K+ a year to PodLab.'}
                 </p>
+                {inviteNote && <p className="text-sm text-text-tertiary mt-3">{inviteNote}</p>}
               </div>
 
               {/* quick stats */}
@@ -374,11 +465,11 @@ export default function BeakerApplyPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className={labelClass}>First Name{reqMark}</label>
-                    <input className={inputClass} value={form.firstName} onChange={set('firstName')} placeholder="First name" />
+                    <input className={inputClass} value={form.firstName} onChange={set('firstName')} placeholder="First name" readOnly={Boolean(inviteToken && form.firstName)} />
                   </div>
                   <div>
                     <label className={labelClass}>Last Name{reqMark}</label>
-                    <input className={inputClass} value={form.lastName} onChange={set('lastName')} placeholder="Last name" />
+                    <input className={inputClass} value={form.lastName} onChange={set('lastName')} placeholder="Last name" readOnly={Boolean(inviteToken && form.lastName)} />
                   </div>
                 </div>
 
@@ -386,7 +477,7 @@ export default function BeakerApplyPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className={labelClass}>Email{reqMark}</label>
-                    <input className={inputClass} type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" />
+                    <input className={inputClass} type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" readOnly={Boolean(inviteToken)} />
                   </div>
                   <div>
                     <label className={labelClass}>Phone</label>
@@ -410,74 +501,113 @@ export default function BeakerApplyPage() {
                   <input className={inputClass} value={form.businessAddress} onChange={set('businessAddress')} placeholder="Full address (needed for contract)" />
                 </div>
 
-                {/* website */}
-                <div>
-                  <label className={labelClass}>Website or LinkedIn URL</label>
-                  <input className={inputClass} value={form.website} onChange={set('website')} placeholder="https:// (optional)" />
-                </div>
+                {track === 'partner' ? (
+                  <>
+                    <div>
+                      <label className={labelClass}>Website or LinkedIn URL</label>
+                      <input className={inputClass} value={form.website} onChange={set('website')} placeholder="https:// (optional)" />
+                    </div>
 
-                {/* dropdowns row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className={labelClass}>Business Type{reqMark}</label>
-                    <select className={inputClass} value={form.businessType} onChange={set('businessType')}>
-                      <option value="">Select…</option>
-                      {BUSINESS_TYPES.map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
+                    <div>
+                      <label className={labelClass}>What best describes you?{reqMark}</label>
+                      <select className={inputClass} value={answers.role} onChange={(e) => setA('role', e.target.value)}>
+                        <option value="">Select…</option>
+                        {PARTNER_ROLES.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>Who are the business owners you know?{reqMark}</label>
+                      <textarea
+                        className={inputClass + ' min-h-[100px]'}
+                        value={answers.whoYouKnow}
+                        onChange={(e) => setA('whoYouKnow', e.target.value)}
+                        placeholder="Their industries, and how you know them (your clients, a group you run, past colleagues…)"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className={labelClass}>How big are most of those businesses?{reqMark}</label>
+                        <select className={inputClass} value={answers.ownerSize} onChange={(e) => setA('ownerSize', e.target.value)}>
+                          <option value="">Annual revenue…</option>
+                          {OWNER_SIZES.map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className={labelClass}>Owners you could introduce in the next 90 days{reqMark}</label>
+                        <select className={inputClass} value={answers.introPace} onChange={(e) => setA('introPace', e.target.value)}>
+                          <option value="">Select…</option>
+                          {INTRO_PACE.map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
+
+                <fieldset>
+                  <legend className={labelClass}>
+                    {track === 'client' ? 'Where do you usually meet other business owners?' : 'How would you introduce PodLab?'}
+                    {reqMark} <span className="text-text-tertiary font-normal">(pick any)</span>
+                  </legend>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                    {(track === 'client' ? CLIENT_CHANNELS : PARTNER_CHANNELS).map((c) => (
+                      <label key={c} className="flex items-center gap-2.5 text-sm text-text-secondary cursor-pointer rounded-lg border border-border px-3 py-2.5">
+                        <input type="checkbox" checked={answers.channels.includes(c)} onChange={() => toggleChannel(c)} className="accent-[#2ADD1B]" />
+                        {c}
+                      </label>
+                    ))}
                   </div>
-                  <div>
-                    <label className={labelClass}>Audience Size{reqMark}</label>
-                    <select className={inputClass} value={form.audienceSize} onChange={set('audienceSize')}>
-                      <option value="">Select…</option>
-                      {AUDIENCE_SIZES.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                  </div>
+                </fieldset>
+
+                <div>
+                  <label className={labelClass}>Is there someone you&apos;d introduce first?</label>
+                  <input
+                    className={inputClass}
+                    value={answers.firstIntro}
+                    onChange={(e) => setA('firstIntro', e.target.value)}
+                    placeholder="Name and business (optional)"
+                  />
+                  <p className="text-xs text-text-tertiary mt-1.5">
+                    Only new contacts count. Anyone already talking to PodLab can&apos;t be credited.
+                  </p>
                 </div>
 
-                {/* textareas */}
-                <div>
-                  <label className={labelClass}>
-                    How do you typically connect with $1M–$8M founders?{reqMark}
-                  </label>
-                  <textarea className={inputClass + ' min-h-[100px]'} value={form.howConnect} onChange={set('howConnect')} placeholder="Describe your network and outreach methods…" />
-                </div>
-                <div>
-                  <label className={labelClass}>
-                    Why do you want to join the Beaker program?{reqMark}
-                  </label>
-                  <textarea className={inputClass + ' min-h-[100px]'} value={form.whyJoin} onChange={set('whyJoin')} placeholder="What excites you about partnering with PodLab?" />
-                </div>
-
-                {/* how heard */}
-                <div>
-                  <label className={labelClass}>How did you hear about PodLab?</label>
-                  <input className={inputClass} value={form.howHeard} onChange={set('howHeard')} placeholder="(optional)" />
-                </div>
-
-                {/* payout */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {track === 'client' ? (
                   <div>
-                    <label className={labelClass}>Preferred Payout Method{reqMark}</label>
-                    <select className={inputClass} value={form.payoutMethod} onChange={set('payoutMethod')}>
-                      <option value="">Select…</option>
-                      {PAYOUT_METHODS.map((m) => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className={labelClass}>Payout Details{reqMark}</label>
-                    <input
-                      className={inputClass}
-                      value={form.payoutDetails}
-                      onChange={set('payoutDetails')}
-                      placeholder={PAYOUT_PLACEHOLDERS[form.payoutMethod] || 'Select payout method first'}
+                    <label className={labelClass}>In a sentence, what would you tell them about working with PodLab?</label>
+                    <textarea
+                      className={inputClass + ' min-h-[90px]'}
+                      value={answers.testimonial}
+                      onChange={(e) => setA('testimonial', e.target.value)}
+                      placeholder="(optional)"
                     />
+                    {answers.testimonial.trim() && (
+                      <label className="flex items-start gap-2.5 text-sm text-text-secondary mt-2 cursor-pointer">
+                        <input type="checkbox" checked={answers.testimonialOk} onChange={(e) => setA('testimonialOk', e.target.checked)} className="mt-0.5 accent-[#2ADD1B]" />
+                        PodLab may quote this, with my name, on its website and marketing.
+                      </label>
+                    )}
                   </div>
+                ) : (
+                  <div>
+                    <label className={labelClass}>How did you hear about PodLab?</label>
+                    <input className={inputClass} value={form.howHeard} onChange={set('howHeard')} placeholder="(optional)" />
+                  </div>
+                )}
+
+                {/* payout — Whop only from v2026.09.28 (§4.7); nothing to collect here */}
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-text-secondary leading-relaxed">
+                  <strong className="text-white">How you get paid:</strong> commissions are sent to your own{' '}
+                  <a href="https://whop.com" target="_blank" rel="noopener noreferrer" className="text-accent">Whop</a> account
+                  (free), and you withdraw to your bank from there. After you&apos;re approved you&apos;ll link your Whop username
+                  and upload a W-9 in your affiliate dashboard. We never ask for your bank details.
                 </div>
 
                 {/* submit */}

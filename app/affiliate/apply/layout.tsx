@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Apply to the Beaker Program',
-  description: 'Join PodLab\'s referral program for coaches, consultants, and professionals who serve $1M–$8M service-based founders.',
+  description: 'Join PodLab\'s referral program for coaches, consultants, and professionals who serve service-based founders doing $250K+ a year.',
   openGraph: {
     title: 'Apply to the Beaker Program | PodLab',
     description: 'Earn referral fees by connecting founders with PodLab.',
