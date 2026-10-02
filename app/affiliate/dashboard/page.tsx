@@ -25,11 +25,11 @@ const SWIPE_COPY = {
   social: [
     {
       title: 'LinkedIn Post',
-      content: `If you're a founder doing $1M-$8M and still the bottleneck in your business — you need to see what PodLab is building.\n\nThey turn your expertise into 4K video assets that sell for you 24/7. Not generic content. Strategic founder duplication.\n\nI've seen the results firsthand. DM me for my referral link or check them out: podlablv.com`,
+      content: `If you're a founder doing $250K+ a year and still the bottleneck in your business — you need to see what PodLab is building.\n\nThey turn your expertise into 4K video assets that sell for you 24/7. Not generic content. Strategic founder duplication.\n\nI've seen the results firsthand. DM me for my referral link or check them out: podlablv.com`,
     },
     {
       title: 'Twitter/X Thread Starter',
-      content: `Most $1M-$8M founders are stuck as the bottleneck.\n\nThey know content works but can't find time to create it. @PodLabLV solves this — they duplicate YOU into strategic video assets.\n\nRecord once. Sell forever. 🧪\n\nHere's what they offer 🧵`,
+      content: `Most founders doing $250K+ are stuck as the bottleneck.\n\nThey know content works but can't find time to create it. @PodLabLV solves this — they duplicate YOU into strategic video assets.\n\nRecord once. Sell forever. 🧪\n\nHere's what they offer 🧵`,
     },
     {
       title: 'Instagram Story Script',
@@ -39,7 +39,7 @@ const SWIPE_COPY = {
   email: [
     {
       title: 'Warm Introduction Email',
-      content: `Subject: Thought of you — founder duplication\n\nHey [Name],\n\nI know you've been grinding to grow [Company] and I wanted to share something I think could be a game-changer.\n\nPodLab works with $1M-$8M service-based founders to duplicate their expertise into strategic video assets. Think: your knowledge, your voice, your authority — working 24/7 even when you're not in the room.\n\nThey start with a $1,500 AssetsLab to build your content DNA, then scale from there. No fluff — pure ROI-focused founder duplication.\n\nWorth a look: podlablv.com/assessment?ref=[your-beaker-id]\n\nHappy to intro you directly if you're interested.\n\nBest,\n[Your Name]`,
+      content: `Subject: Thought of you — founder duplication\n\nHey [Name],\n\nI know you've been grinding to grow [Company] and I wanted to share something I think could be a game-changer.\n\nPodLab works with service-based founders doing $250K+ a year to duplicate their expertise into strategic video assets. Think: your knowledge, your voice, your authority — working 24/7 even when you're not in the room.\n\nThey start with a $1,500 AssetsLab to build your content DNA, then scale from there. No fluff — pure ROI-focused founder duplication.\n\nWorth a look: podlablv.com/assessment?ref=[your-beaker-id]\n\nHappy to intro you directly if you're interested.\n\nBest,\n[Your Name]`,
     },
   ],
 };

@@ -56,9 +56,7 @@ export async function POST(request: NextRequest) {
       businessAddress,
       website,
       businessType,
-      audienceSize,
       howConnect,
-      whyJoin,
       howHeard,
       payoutMethod,
       payoutDetails,
@@ -68,7 +66,20 @@ export async function POST(request: NextRequest) {
       typedSignature,
       electronicConsent,
       utmLinks,
+      track: rawTrack,
+      inviteToken,
+      answers: rawAnswers,
     } = body;
+
+    // Two tracks (2026-10-01): "client" only with a live invite token from the
+    // CRM, everything else is "partner". Answers arrive as {q, a} pairs.
+    const answers = Array.isArray(rawAnswers)
+      ? rawAnswers
+          .filter((x: unknown): x is { q: string; a: string } =>
+            Boolean(x) && typeof (x as { q?: unknown }).q === 'string' && typeof (x as { a?: unknown }).a === 'string')
+          .slice(0, 20)
+          .map((x: { q: string; a: string }) => ({ q: x.q.slice(0, 120), a: x.a.trim().slice(0, 2000) }))
+      : [];
 
     // Validate required fields
     const requiredFields: Record<string, unknown> = {
@@ -76,10 +87,6 @@ export async function POST(request: NextRequest) {
       lastName,
       email,
       businessAddress,
-      businessType,
-      audienceSize,
-      howConnect,
-      whyJoin,
       beakerId,
       typedSignature,
     };
@@ -112,6 +119,28 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabase();
 
+    let track: 'partner' | 'client' = 'partner';
+    let invite: { token: string; lead_id: string; email: string } | null = null;
+    if (rawTrack === 'client' && typeof inviteToken === 'string') {
+      const crm = createClient(supabaseUrl, supabaseServiceKey, { db: { schema: 'crm' } });
+      const { data } = await crm
+        .from('beaker_invites')
+        .select('token,lead_id,email,applied_at')
+        .eq('token', inviteToken)
+        .maybeSingle();
+      if (!data || data.applied_at) {
+        return NextResponse.json({ error: 'That invite has already been used or is no longer valid.' }, { status: 400 });
+      }
+      if (data.email.toLowerCase() !== String(email).trim().toLowerCase()) {
+        return NextResponse.json({ error: 'Please apply with the email your invite was sent to.' }, { status: 400 });
+      }
+      track = 'client';
+      invite = data;
+    }
+    if (!answers.some((x: { a: string }) => x.a)) {
+      return NextResponse.json({ error: 'Please answer the questions before submitting.' }, { status: 400 });
+    }
+
     // Beaker IDs are unique in the database (beaker_applications_beaker_id_key)
     // but the form slugs first-last and never checked, so a second Jordan
     // Smith used to get "Failed to save application". Suffix -2, -3… instead,
@@ -133,7 +162,7 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent');
     const consent = consentRecord(phone, body.sms_consent, 'website/affiliate-apply');
 
-    const { error: dbError } = await supabase
+    const { data: inserted, error: dbError } = await supabase
       .from('beaker_applications')
       .insert({
         first_name: firstName.trim(),
@@ -143,10 +172,13 @@ export async function POST(request: NextRequest) {
         company: company?.trim() || null,
         business_address: businessAddress.trim(),
         website: website?.trim() || null,
-        business_type: businessType,
-        audience_size: audienceSize,
-        how_connect: howConnect.trim(),
-        why_join: whyJoin.trim(),
+        business_type: typeof businessType === 'string' ? businessType.slice(0, 80) : null,
+        audience_size: null,
+        how_connect: typeof howConnect === 'string' && howConnect.trim() ? howConnect.trim().slice(0, 2000) : null,
+        why_join: null,
+        track,
+        answers,
+        client_lead_id: invite?.lead_id ?? null,
         how_heard: howHeard?.trim() || null,
         // Whop only from v2026.09.28 (§4.7): no bank details are collected.
         payout_method: 'Whop',
@@ -157,7 +189,9 @@ export async function POST(request: NextRequest) {
         typed_signature: typedSignature.trim(),
         utm_links: finalUtmLinks,
         status: 'pending',
-      });
+      })
+      .select('id')
+      .single();
 
     if (dbError) {
       console.error('Supabase insert error:', dbError);
@@ -165,6 +199,16 @@ export async function POST(request: NextRequest) {
         { error: 'Failed to save application. Please try again.' },
         { status: 500 },
       );
+    }
+
+    // Close the invite so the link can't be reused, and tie it to the application.
+    if (invite && inserted) {
+      const crm = createClient(supabaseUrl, supabaseServiceKey, { db: { schema: 'crm' } });
+      const { error: inviteError } = await crm
+        .from('beaker_invites')
+        .update({ applied_at: new Date().toISOString(), application_id: inserted.id })
+        .eq('token', invite.token);
+      if (inviteError) console.error('Invite close failed:', inviteError);
     }
 
     // Signing evidence + SMS consent go in a second write on purpose. These
@@ -276,10 +320,8 @@ export async function POST(request: NextRequest) {
       Name: fullName,
       Email: email,
       ...(company ? { Company: company } : {}),
-      'Business Type': businessType,
-      'Audience Size': audienceSize,
-      'How They Connect': howConnect,
-      'Why Joining': whyJoin,
+      Track: track === 'client' ? 'PodLab client (invited)' : 'Partner',
+      ...Object.fromEntries(answers.filter((x: { a: string }) => x.a).map((x: { q: string; a: string }) => [x.q, x.a])),
       'Payout Method': 'Whop',
       'Beaker ID': finalBeakerId,
       'Agreement Version': AGREEMENT_VERSION,
@@ -287,7 +329,7 @@ export async function POST(request: NextRequest) {
     };
 
     notifyTeam({
-      title: '🤝 New Beaker Application',
+      title: track === 'client' ? '🤝 Client joined Beaker' : '🤝 New Beaker Application',
       fields: notifFields,
       emailSubject: `🤝 Beaker Application: ${fullName}`,
       emailHtml: buildEmailHtml('🤝 New Beaker Application', notifFields),
