@@ -4,18 +4,19 @@ import Image from "next/image";
 import ImageWithHover from "@/components/ImageWithHover";
 import type { Metadata } from 'next';
 import HomePageWrapper from '@/components/HomePageWrapper';
+import { BASE_RATE, LAB_COMMISSIONS, RECURRING_MAX_MONTHS, commissionFor, maxPerClientFor } from '@/lib/affiliate-terms';
 
 export const metadata: Metadata = {
   title: 'Beaker Affiliate Program | Earn While Helping Founders Scale',
-  description: 'Earn 20% on your first referral, then 10% recurring — helping founders doing $250K+ break through the bottleneck. Join the PodLab Beaker affiliate program.',
+  description: 'Earn 10% on every sale you refer, plus monthly commission for up to 12 months on recurring work. Join the PodLab Beaker affiliate program.',
   openGraph: {
     title: 'PodLab Beaker | Affiliate Program',
-    description: 'Earn 20% on your first referral, then 10% recurring. Help founders scale.',
+    description: '10% on every sale, plus up to 12 months of monthly commission on recurring work. Help service businesses doing $250K+ grow.',
     url: 'https://podlablv.com/affiliate',
   },
   twitter: {
     title: 'PodLab Beaker | Affiliate Program',
-    description: 'Earn 20% on your first referral, then 10% recurring. Help founders scale.',
+    description: '10% on every sale, plus up to 12 months of monthly commission on recurring work. Help service businesses doing $250K+ grow.',
   },
 };
 
@@ -123,7 +124,7 @@ export default function AffiliatePage() {
                       <th className="text-left py-4 px-6 font-semibold">Lab</th>
                       <th className="text-right py-4 px-6 font-semibold">Price</th>
                       <th className="text-right py-4 px-6 font-semibold">10% Commission</th>
-                      <th className="text-right py-4 px-6 font-semibold">20% First Sale</th>
+                      <th className="text-right py-4 px-6 font-semibold">Max per Client</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -132,7 +133,7 @@ export default function AffiliatePage() {
                         <td className="py-4 px-6">{item.lab}</td>
                         <td className="text-right py-4 px-6 text-text-secondary">{item.price}</td>
                         <td className="text-right py-4 px-6 text-text-secondary">{item.standard}</td>
-                        <td className="text-right py-4 px-6 text-accent font-semibold">{item.first}</td>
+                        <td className="text-right py-4 px-6 text-accent font-semibold">{item.max}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -142,10 +143,10 @@ export default function AffiliatePage() {
             <div className="mt-12 glass-card p-8">
               <h3 className="text-2xl font-bold mb-4">Recurring Revenue</h3>
               <p className="text-lg text-text-secondary mb-4">
-                When your referral signs up for ExpansionLab ($5K/month retainer), you earn <strong className="text-accent">$500/month recurring</strong> for as long as they stay active.
+                When your referral signs up for ExpansionLab ($3,000/month), you earn <strong className="text-accent">$300 every month</strong> they stay, for up to {RECURRING_MAX_MONTHS} months. ExpansionLab ELITE ($5,000/month) pays $500 a month on the same terms.
               </p>
               <p className="text-text-secondary mb-8">
-                Example: Refer 3 clients to ExpansionLab → Earn <strong className="text-accent">$1,500/month recurring</strong>
+                Example: Refer 3 clients to ExpansionLab → Earn <strong className="text-accent">$900/month</strong> for up to a year
               </p>
               <h3 className="text-2xl font-bold mb-4">Volume Bonuses</h3>
               <div className="grid md:grid-cols-3 gap-4">
@@ -273,8 +274,8 @@ export default function AffiliatePage() {
 
 const stats = [
   { value: "10%", label: "Commission Rate" },
-  { value: "20%", label: "First Sale Bonus" },
-  { value: "$500/mo", label: "Recurring (ExpansionLab)" },
+  { value: `${RECURRING_MAX_MONTHS} mo`, label: "Recurring Commission" },
+  { value: "$300/mo", label: "Per ExpansionLab Client" },
 ];
 
 const steps = [
@@ -292,14 +293,13 @@ const steps = [
   },
 ];
 
-const commissions = [
-  { lab: "AssetsLab", price: "$1,500", standard: "$150", first: "$300" },
-  { lab: "BrandLab", price: "$3,500", standard: "$350", first: "$700" },
-  { lab: "SiteLab", price: "$3,500", standard: "$350", first: "$700" },
-  { lab: "VideoSalesLab", price: "$10,000", standard: "$1,000", first: "$2,000" },
-  { lab: "ExpansionLab", price: "$5,000/mo", standard: "$500/mo", first: "$1,000 first month" },
-  { lab: "Full Suite", price: "$18,500", standard: "$1,850", first: "$3,700" },
-];
+// From the agreement's own terms, so this table can never disagree with Exhibit A.
+const commissions = LAB_COMMISSIONS.map((lab) => ({
+  lab: lab.lab,
+  price: lab.price,
+  standard: commissionFor(lab, BASE_RATE),
+  max: maxPerClientFor(lab, BASE_RATE),
+}));
 
 const rules = [
   "Spam or unlawful outreach",

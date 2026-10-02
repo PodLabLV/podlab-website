@@ -15,7 +15,7 @@ const CRM_LOGIN = 'https://crm.podlablv.com/login';
 
 const INSIDE = [
   ['Your links', 'Every PodLab page with your Beaker ID on it — anyone who arrives is remembered for 90 days.'],
-  ['Where you stand', 'Your current rate, how many cleared sales to the next tier, and whether your 2× first sale is still ahead.'],
+  ['Where you stand', 'Your current rate and how many cleared sales to the next tier.'],
   ['Your referrals', 'Everyone credited to you, where they are in the pipeline, and what each has earned.'],
   ['Commission statement', 'Every line: net revenue, rate, amount, and the date it clears the 45-day hold.'],
   ['Getting paid', 'Link your Whop account, accept the payout terms, upload your W-9 — then payouts arrive monthly.'],
@@ -59,7 +59,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'What if my referral buys multiple Labs?',
-    answer: 'Your first sale pays 2× your rate (20% at the standard 10%), across every payment of that first deal. Later sales pay your tier rate: 10%, 12% from 5 cleared sales, 15% from 10, negotiated from 20. On ExpansionLab (monthly) the 2× applies to the first month only; every month after pays your rate for as long as they stay.',
+    answer: 'Every sale pays your tier rate: 10%, 12% from 5 cleared sales, 15% from 10, negotiated from 20. Monthly offerings like ExpansionLab pay your rate on each monthly payment for up to 12 months, or until the client cancels.',
   },
   {
     question: 'How do I sign in?',

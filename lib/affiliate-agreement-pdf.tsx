@@ -39,7 +39,8 @@ import {
   LAB_COMMISSIONS,
   VOLUME_TIERS,
   commissionFor,
-  firstSaleFor,
+  maxPerClientFor,
+  RECURRING_MAX_MONTHS,
   pct,
 } from './affiliate-terms';
 
@@ -165,7 +166,7 @@ const COLS = [
   { key: 'lab', width: '30%' },
   { key: 'price', width: '20%' },
   { key: 'standard', width: '25%' },
-  { key: 'first', width: '25%' },
+  { key: 'max', width: '25%' },
 ];
 
 function ExhibitA({ party }: { party: AgreementParty }) {
@@ -184,7 +185,7 @@ function ExhibitA({ party }: { party: AgreementParty }) {
         <Text style={{ width: COLS[0].width }}>OFFERING</Text>
         <Text style={{ width: COLS[1].width }}>LIST PRICE</Text>
         <Text style={{ width: COLS[2].width }}>STANDARD ({pct(BASE_RATE)})</Text>
-        <Text style={{ width: COLS[3].width }}>FIRST SALE ({pct(BASE_RATE * 2)})</Text>
+        <Text style={{ width: COLS[3].width }}>MAX PER CLIENT</Text>
       </View>
       {LAB_COMMISSIONS.map((lab, i) => (
         <View
@@ -195,19 +196,20 @@ function ExhibitA({ party }: { party: AgreementParty }) {
           <Text style={[{ width: COLS[0].width }, styles.bold]}>{lab.lab}</Text>
           <Text style={{ width: COLS[1].width }}>{lab.price}</Text>
           <Text style={{ width: COLS[2].width }}>{commissionFor(lab, BASE_RATE)}</Text>
-          <Text style={{ width: COLS[3].width }}>{firstSaleFor(lab, BASE_RATE)}</Text>
+          <Text style={{ width: COLS[3].width }}>{maxPerClientFor(lab, BASE_RATE)}</Text>
         </View>
       ))}
 
       <Text style={styles.sectionHeading}>A-2. Recurring Commission</Text>
       <Text style={styles.clause}>
-        Offerings billed monthly pay commission every month the client remains active and current.
-        ExpansionLab at {LAB_COMMISSIONS.find((l) => l.recurring)?.price} pays{' '}
+        Offerings billed monthly pay commission on each monthly payment while the client remains
+        active and current, for up to {RECURRING_MAX_MONTHS} months or until the client cancels,
+        whichever comes first. ExpansionLab at {LAB_COMMISSIONS.find((l) => l.recurring)?.price} pays{' '}
         <Text style={styles.bold}>
           {commissionFor(LAB_COMMISSIONS.find((l) => l.recurring)!, BASE_RATE)}
-        </Text>{' '}
-        for the life of the engagement. Recurring commission stops when the client cancels, and is
-        subject to the same Hold Period and clawback terms as one-time commissions.
+        </Text>
+        . Recurring commission is subject to the same Hold Period and clawback terms as one-time
+        commissions.
       </Text>
 
       <Text style={styles.sectionHeading}>A-3. Volume Tiers</Text>

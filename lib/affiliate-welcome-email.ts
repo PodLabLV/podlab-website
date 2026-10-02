@@ -16,7 +16,8 @@ import {
   PAYOUT_DAYS_AFTER_MONTH_END,
   VOLUME_TIERS,
   commissionFor,
-  firstSaleFor,
+  maxPerClientFor,
+  RECURRING_MAX_MONTHS,
   pct,
   usd,
 } from './affiliate-terms';
@@ -48,7 +49,7 @@ export function buildAffiliateWelcomeEmail(input: WelcomeEmailInput): string {
         <td style="padding:9px 12px;border-bottom:1px solid #EAEAEA;font-weight:700;color:${INK}">${esc(lab.lab)}</td>
         <td style="padding:9px 12px;border-bottom:1px solid #EAEAEA;color:${MUTED}">${esc(lab.price)}</td>
         <td style="padding:9px 12px;border-bottom:1px solid #EAEAEA;color:${INK}">${esc(commissionFor(lab, BASE_RATE))}</td>
-        <td style="padding:9px 12px;border-bottom:1px solid #EAEAEA;color:${INK};font-weight:700">${esc(firstSaleFor(lab, BASE_RATE))}</td>
+        <td style="padding:9px 12px;border-bottom:1px solid #EAEAEA;color:${INK};font-weight:700">${esc(maxPerClientFor(lab, BASE_RATE))}</td>
       </tr>`,
   ).join('');
 
@@ -95,12 +96,12 @@ export function buildAffiliateWelcomeEmail(input: WelcomeEmailInput): string {
               <th align="left" style="padding:9px 12px;font-size:11px;letter-spacing:0.4px">OFFERING</th>
               <th align="left" style="padding:9px 12px;font-size:11px;letter-spacing:0.4px">PRICE</th>
               <th align="left" style="padding:9px 12px;font-size:11px;letter-spacing:0.4px">YOU EARN</th>
-              <th align="left" style="padding:9px 12px;font-size:11px;letter-spacing:0.4px">FIRST SALE</th>
+              <th align="left" style="padding:9px 12px;font-size:11px;letter-spacing:0.4px">MAX PER CLIENT</th>
             </tr></thead>
             <tbody>${rows}</tbody>
           </table>
           <p style="margin:14px 0 0;font-size:12.5px;color:${MUTED};line-height:1.6">
-            Your first Qualified Sale pays double. ExpansionLab pays every month the client stays active.
+            ${pct(BASE_RATE)} on every sale. Monthly offerings pay every month the client stays active, for up to ${RECURRING_MAX_MONTHS} months.
           </p>
         </td></tr>
 

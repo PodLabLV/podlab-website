@@ -14,7 +14,7 @@ import {
   AGREEMENT_VERSION,
   COMPANY,
   DISPUTE_WINDOW_DAYS,
-  FIRST_SALE_MULTIPLIER,
+  RECURRING_MAX_MONTHS,
   HOLD_PERIOD_DAYS,
   MINIMUM_PAYOUT_USD,
   PAYOUT_DAYS_AFTER_MONTH_END,
@@ -193,8 +193,8 @@ export function buildAgreement(p: AgreementParty, opts: AgreementOptions = {}): 
         },
         {
           n: '4.2',
-          title: 'First-Sale Bonus',
-          text: `The first Qualified Sale credited to Affiliate earns ${FIRST_SALE_MULTIPLIER}× the applicable Commission Rate. Subsequent sales revert to the standard rate. On a recurring Offering, the bonus applies to the first month's commission only.`,
+          title: 'Recurring Offerings',
+          text: `On an Offering billed monthly, Affiliate earns commission on each monthly payment ${COMPANY.shortName} receives from the referred client, for up to ${RECURRING_MAX_MONTHS} monthly payments or until the client cancels, whichever comes first. Every Qualified Sale, including the first, earns the applicable Commission Rate; there is no first-sale bonus.`,
         },
         {
           n: '4.3',
