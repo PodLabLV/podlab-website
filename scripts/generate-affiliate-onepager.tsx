@@ -28,7 +28,7 @@ import {
   BASE_RATE,
   COMPANY,
   DISPUTE_WINDOW_DAYS,
-  FIRST_SALE_MULTIPLIER,
+  RECURRING_MAX_MONTHS,
   HOLD_PERIOD_DAYS,
   LAB_COMMISSIONS,
   MINIMUM_PAYOUT_USD,
@@ -36,7 +36,7 @@ import {
   PAYOUT_METHODS,
   VOLUME_TIERS,
   commissionFor,
-  firstSaleFor,
+  maxPerClientFor,
   pct,
   usd,
 } from '../lib/affiliate-terms';
@@ -97,9 +97,9 @@ interface Personal {
   hasAddendum?: boolean;
 }
 
-/** Column-width-safe variant of firstSaleFor, for this sheet's narrow table. */
-function firstSaleShort(lab: (typeof LAB_COMMISSIONS)[number]): string {
-  return firstSaleFor(lab, BASE_RATE).replace(' first month', ' (mo. 1)');
+/** Column-width-safe variant of maxPerClientFor, for this sheet's narrow table. */
+function maxShort(lab: (typeof LAB_COMMISSIONS)[number]): string {
+  return maxPerClientFor(lab, BASE_RATE).replace(` over ${RECURRING_MAX_MONTHS} mo`, ` (${RECURRING_MAX_MONTHS} mo)`);
 }
 
 function Sheet({ who }: { who: Personal }) {
@@ -137,23 +137,23 @@ function Sheet({ who }: { who: Personal }) {
               <Text style={{ width: '34%' }}>WHAT YOU REFER</Text>
               <Text style={{ width: '22%' }}>PRICE</Text>
               <Text style={{ width: '22%' }}>YOU EARN</Text>
-              <Text style={{ width: '22%' }}>FIRST SALE</Text>
+              <Text style={{ width: '22%' }}>MAX PER CLIENT</Text>
             </View>
             {LAB_COMMISSIONS.map((lab, i) => (
               <View key={lab.lab} style={i % 2 === 1 ? [s.tr, s.trAlt] : s.tr} wrap={false}>
                 <Text style={[{ width: '34%' }, s.bold]}>{lab.lab}</Text>
                 <Text style={{ width: '22%', color: MUTED }}>{lab.price}</Text>
                 <Text style={{ width: '22%' }}>{commissionFor(lab, BASE_RATE)}</Text>
-                <Text style={[{ width: '22%' }, s.bold]}>{firstSaleShort(lab)}</Text>
+                <Text style={[{ width: '22%' }, s.bold]}>{maxShort(lab)}</Text>
               </View>
             ))}
 
             <View style={s.callout}>
               <Text style={s.p}>
-                <Text style={s.bold}>Your very first sale pays double.</Text> After that you earn{' '}
+                <Text style={s.bold}>{pct(BASE_RATE)} on every sale.</Text> You earn{' '}
                 {pct(BASE_RATE)} of net revenue on everything you refer — and{' '}
                 {recurring ? `${commissionFor(recurring, BASE_RATE)} ` : ''}
-                every single month a client stays on {recurring?.lab}.
+                every month a client stays on {recurring?.lab}, for up to {RECURRING_MAX_MONTHS} months.
               </Text>
             </View>
 

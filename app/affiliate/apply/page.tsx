@@ -7,14 +7,14 @@ import HomePageWrapper from '@/components/HomePageWrapper';
 import {
   AGREEMENT_VERSION,
   BASE_RATE,
-  FIRST_SALE_MULTIPLIER,
+  RECURRING_MAX_MONTHS,
   HOLD_PERIOD_DAYS,
   LAB_COMMISSIONS,
   MINIMUM_PAYOUT_USD,
   PAYOUT_DAYS_AFTER_MONTH_END,
   VOLUME_TIERS,
   commissionFor,
-  firstSaleFor,
+  maxPerClientFor,
   pct,
   usd,
 } from '@/lib/affiliate-terms';
@@ -107,8 +107,8 @@ function answerPairs(track: Track, a: Answers, howHeard: string): { q: string; a
 }
 
 const STATS = [
-  { value: pct(BASE_RATE * FIRST_SALE_MULTIPLIER), label: 'First-Sale Commission' },
-  { value: pct(BASE_RATE), label: 'Standard Commission' },
+  { value: pct(BASE_RATE), label: 'On Every Sale' },
+  { value: `${RECURRING_MAX_MONTHS} mo`, label: 'Recurring Commission' },
   { value: '$150–$1,850', label: 'Per Referral' },
 ];
 
@@ -701,7 +701,7 @@ export default function BeakerApplyPage() {
                           <th className="p-2 font-bold">LIST PRICE</th>
                           <th className="p-2 font-bold">STANDARD ({pct(BASE_RATE)})</th>
                           <th className="p-2 font-bold">
-                            FIRST SALE ({pct(BASE_RATE * FIRST_SALE_MULTIPLIER)})
+                            MAX PER CLIENT
                           </th>
                         </tr>
                       </thead>
@@ -712,7 +712,7 @@ export default function BeakerApplyPage() {
                             <td className="p-2">{lab.price}</td>
                             <td className="p-2">{commissionFor(lab, BASE_RATE)}</td>
                             <td className="p-2 text-accent font-bold">
-                              {firstSaleFor(lab, BASE_RATE)}
+                              {maxPerClientFor(lab, BASE_RATE)}
                             </td>
                           </tr>
                         ))}
@@ -722,12 +722,14 @@ export default function BeakerApplyPage() {
 
                   <h4 className="font-bold text-text-primary mt-4">A-2. Recurring Commission</h4>
                   <p>
-                    Offerings billed monthly pay commission every month the client remains active
-                    and current. ExpansionLab at {recurringLab?.price} pays{' '}
+                    Offerings billed monthly pay commission on each monthly payment while the
+                    client remains active and current, for up to {RECURRING_MAX_MONTHS} months or
+                    until the client cancels, whichever comes first. ExpansionLab at{' '}
+                    {recurringLab?.price} pays{' '}
                     <strong className="text-text-primary">
                       {recurringLab ? commissionFor(recurringLab, BASE_RATE) : ''}
                     </strong>{' '}
-                    for the life of the engagement, subject to the same Hold Period and clawback
+                    a month, subject to the same Hold Period and clawback
                     terms as one-time commissions.
                   </p>
 

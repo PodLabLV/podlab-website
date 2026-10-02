@@ -13,7 +13,7 @@
  */
 
 /** Bump on ANY change to terms or agreement text. Stamped into every PDF. */
-export const AGREEMENT_VERSION = 'v2026.09.28';
+export const AGREEMENT_VERSION = 'v2026.10.02';
 
 export const COMPANY = {
   legalName: 'PodLab LV LLC',
@@ -29,8 +29,14 @@ export const COMPANY = {
 /** Standard commission on Net Revenue of a Qualified Sale. */
 export const BASE_RATE = 0.1;
 
-/** First Qualified Sale pays 2× base. Marketed as "20% first sale". */
-export const FIRST_SALE_MULTIPLIER = 2;
+// v2026.10.02: the first-sale 2× bonus is retired. Every sale pays the
+// affiliate's rate (10% base, then the volume tiers) on every offering.
+
+/**
+ * A recurring offering pays commission on each monthly payment for at most
+ * this many months, or until the client cancels, whichever comes first.
+ */
+export const RECURRING_MAX_MONTHS = 12;
 
 /** Days after PodLab receives payment before a commission is payable. */
 export const HOLD_PERIOD_DAYS = 45;
@@ -54,7 +60,7 @@ export type PayoutMethod = (typeof PAYOUT_METHODS)[number];
 
 export interface LabCommission {
   lab: string;
-  /** Display price, e.g. "$1,500" or "$5,000/mo". */
+  /** Display price, e.g. "$1,500" or "$3,000/mo". */
   price: string;
   /** Numeric contract value used to compute commission. */
   value: number;
@@ -62,13 +68,20 @@ export interface LabCommission {
   recurring?: boolean;
 }
 
+// Current list prices (Offers & Pricing, 2026-10-01). The first recurring row
+// is the one the agreement and the page quote as the recurring example.
 export const LAB_COMMISSIONS: LabCommission[] = [
   { lab: 'AssetsLab', price: '$1,500', value: 1500 },
   { lab: 'BrandLab', price: '$3,500', value: 3500 },
   { lab: 'SiteLab', price: '$3,500', value: 3500 },
   { lab: 'VideoSalesLab', price: '$10,000', value: 10000 },
-  { lab: 'ExpansionLab', price: '$5,000/mo', value: 5000, recurring: true },
-  { lab: 'Full Suite', price: '$18,500', value: 18500 },
+  { lab: 'EssentialsLab', price: '$3,000', value: 3000 },
+  { lab: 'EssentialsLab ELITE', price: '$5,000', value: 5000 },
+  { lab: 'Business Growth System', price: '$18,500', value: 18500 },
+  { lab: 'ExpansionLab', price: '$3,000/mo', value: 3000, recurring: true },
+  { lab: 'ExpansionLab ELITE', price: '$5,000/mo', value: 5000, recurring: true },
+  { lab: 'Social posting add-on', price: '$1,000/mo', value: 1000, recurring: true },
+  { lab: 'Meta ads add-on', price: '$1,000/mo', value: 1000, recurring: true },
 ];
 
 /* ── Volume tiers ──────────────────────────────────────────────────── */
@@ -105,14 +118,14 @@ export function commissionFor(lab: LabCommission, rate: number): string {
 }
 
 /**
- * First-sale payout. A recurring Lab pays the bonus on month one only — the
- * multiplier applies to the first month's commission, then it reverts to base.
- * Stated explicitly because "2× on the first sale" is ambiguous on a retainer,
- * and an ambiguous comp term is the one an affiliate disputes.
+ * The most one referred client can pay out at `rate`: the commission itself
+ * on a one-time offering, and RECURRING_MAX_MONTHS monthly payments on a
+ * recurring one (less if the client cancels sooner). Stated explicitly so the
+ * cap is never a surprise.
  */
-export function firstSaleFor(lab: LabCommission, rate: number): string {
-  const amount = usd(Math.round(lab.value * rate * FIRST_SALE_MULTIPLIER));
-  return lab.recurring ? `${amount} first month` : amount;
+export function maxPerClientFor(lab: LabCommission, rate: number): string {
+  if (!lab.recurring) return usd(Math.round(lab.value * rate));
+  return `${usd(Math.round(lab.value * rate * RECURRING_MAX_MONTHS))} over ${RECURRING_MAX_MONTHS} mo`;
 }
 
 /** The rate an affiliate has earned at a given lifetime Qualified Sale count. */
