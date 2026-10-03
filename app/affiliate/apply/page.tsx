@@ -12,7 +12,6 @@ import {
   LAB_COMMISSIONS,
   MINIMUM_PAYOUT_USD,
   PAYOUT_DAYS_AFTER_MONTH_END,
-  VOLUME_TIERS,
   commissionFor,
   maxPerClientFor,
   pct,
@@ -733,33 +732,7 @@ export default function BeakerApplyPage() {
                     terms as one-time commissions.
                   </p>
 
-                  <h4 className="font-bold text-text-primary mt-4">A-3. Volume Tiers</h4>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-bg-secondary text-text-primary text-xs">
-                          <th className="p-2 font-bold">LIFETIME QUALIFIED SALES</th>
-                          <th className="p-2 font-bold">COMMISSION RATE</th>
-                          <th className="p-2 font-bold">TIER</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {VOLUME_TIERS.map((tier) => (
-                          <tr key={tier.label} className="border-b border-border">
-                            <td className="p-2">
-                              {tier.threshold === 0 ? '0–4 sales' : `${tier.threshold}+ sales`}
-                            </td>
-                            <td className="p-2 font-bold text-text-primary">
-                              {tier.rate === null ? 'Negotiated' : pct(tier.rate)}
-                            </td>
-                            <td className="p-2">{tier.label}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <h4 className="font-bold text-text-primary mt-4">A-4. Notes</h4>
+                  <h4 className="font-bold text-text-primary mt-4">A-3. Notes</h4>
                   <ul className="list-disc pl-6 space-y-1 text-xs">
                     {exhibitANotes().map((note, i) => (
                       <li key={i}>{note}</li>

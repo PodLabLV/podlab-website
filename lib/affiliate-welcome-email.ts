@@ -14,7 +14,6 @@ import {
   LAB_COMMISSIONS,
   MINIMUM_PAYOUT_USD,
   PAYOUT_DAYS_AFTER_MONTH_END,
-  VOLUME_TIERS,
   commissionFor,
   maxPerClientFor,
   RECURRING_MAX_MONTHS,
@@ -52,15 +51,6 @@ export function buildAffiliateWelcomeEmail(input: WelcomeEmailInput): string {
         <td style="padding:9px 12px;border-bottom:1px solid #EAEAEA;color:${INK};font-weight:700">${esc(maxPerClientFor(lab, BASE_RATE))}</td>
       </tr>`,
   ).join('');
-
-  const tiers = VOLUME_TIERS.filter((t) => t.threshold > 0)
-    .map(
-      (t) =>
-        `<li style="margin-bottom:4px"><strong>${t.threshold}+ Qualified Sales</strong> — ${
-          t.rate === null ? 'custom partnership tier' : `commission bumps to ${pct(t.rate)}`
-        }</li>`,
-    )
-    .join('');
 
   return `<!doctype html>
 <html><body style="margin:0;padding:0;background:#F4F4F4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:${INK}">
@@ -103,11 +93,6 @@ export function buildAffiliateWelcomeEmail(input: WelcomeEmailInput): string {
           <p style="margin:14px 0 0;font-size:12.5px;color:${MUTED};line-height:1.6">
             ${pct(BASE_RATE)} on every sale. Monthly offerings pay every month the client stays active, for up to ${RECURRING_MAX_MONTHS} months.
           </p>
-        </td></tr>
-
-        <tr><td style="padding:22px 30px 0">
-          <div style="font-size:13px;font-weight:800;letter-spacing:0.4px;margin-bottom:8px">VOLUME TIERS</div>
-          <ul style="margin:0;padding-left:20px;font-size:13px;line-height:1.6;color:#333">${tiers}</ul>
         </td></tr>
 
         <tr><td style="padding:22px 30px 0">
