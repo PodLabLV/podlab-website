@@ -148,21 +148,6 @@ export default function AffiliatePage() {
               <p className="text-text-secondary mb-8">
                 Example: Refer 3 clients to ExpansionLab → Earn <strong className="text-accent">$900/month</strong> for up to a year
               </p>
-              <h3 className="text-2xl font-bold mb-4">Volume Bonuses</h3>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="bg-bg-primary/50 rounded-lg p-4 text-center">
-                  <div className="text-accent font-bold text-lg">5 Referrals</div>
-                  <div className="text-text-secondary mt-1">Commission bumped to 12%</div>
-                </div>
-                <div className="bg-bg-primary/50 rounded-lg p-4 text-center">
-                  <div className="text-accent font-bold text-lg">10 Referrals</div>
-                  <div className="text-text-secondary mt-1">Commission bumped to 15%</div>
-                </div>
-                <div className="bg-bg-primary/50 rounded-lg p-4 text-center">
-                  <div className="text-accent font-bold text-lg">20+ Referrals</div>
-                  <div className="text-text-secondary mt-1">Custom partnership tier</div>
-                </div>
-              </div>
             </div>
           </div>
         </section>

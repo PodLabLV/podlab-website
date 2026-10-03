@@ -13,7 +13,7 @@
  */
 
 /** Bump on ANY change to terms or agreement text. Stamped into every PDF. */
-export const AGREEMENT_VERSION = 'v2026.10.02';
+export const AGREEMENT_VERSION = 'v2026.10.02b';
 
 export const COMPANY = {
   legalName: 'PodLab LV LLC',
@@ -30,7 +30,8 @@ export const COMPANY = {
 export const BASE_RATE = 0.1;
 
 // v2026.10.02: the first-sale 2× bonus is retired. Every sale pays the
-// affiliate's rate (10% base, then the volume tiers) on every offering.
+// affiliate's rate on every offering. v2026.10.02b: one fixed 10%, no volume
+// tiers — the affiliate's 10% is a fixed slice of every sale (Hiram 2026-10-02).
 
 /**
  * A recurring offering pays commission on each monthly payment for at most
@@ -84,23 +85,6 @@ export const LAB_COMMISSIONS: LabCommission[] = [
   { lab: 'Meta ads add-on', price: '$1,000/mo', value: 1000, recurring: true },
 ];
 
-/* ── Volume tiers ──────────────────────────────────────────────────── */
-
-export interface VolumeTier {
-  /** Qualified Sales needed to reach this tier. */
-  threshold: number;
-  /** Rate once the tier is reached; null = negotiated separately. */
-  rate: number | null;
-  label: string;
-}
-
-export const VOLUME_TIERS: VolumeTier[] = [
-  { threshold: 0, rate: 0.1, label: 'Standard' },
-  { threshold: 5, rate: 0.12, label: '5+ Qualified Sales' },
-  { threshold: 10, rate: 0.15, label: '10+ Qualified Sales' },
-  { threshold: 20, rate: null, label: '20+ Qualified Sales' },
-];
-
 /* ── Formatting ────────────────────────────────────────────────────── */
 
 export function usd(amount: number): string {
@@ -126,13 +110,4 @@ export function commissionFor(lab: LabCommission, rate: number): string {
 export function maxPerClientFor(lab: LabCommission, rate: number): string {
   if (!lab.recurring) return usd(Math.round(lab.value * rate));
   return `${usd(Math.round(lab.value * rate * RECURRING_MAX_MONTHS))} over ${RECURRING_MAX_MONTHS} mo`;
-}
-
-/** The rate an affiliate has earned at a given lifetime Qualified Sale count. */
-export function rateForVolume(qualifiedSales: number): number {
-  let rate = BASE_RATE;
-  for (const tier of VOLUME_TIERS) {
-    if (qualifiedSales >= tier.threshold && tier.rate !== null) rate = tier.rate;
-  }
-  return rate;
 }

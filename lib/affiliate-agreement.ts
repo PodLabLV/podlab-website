@@ -14,11 +14,11 @@ import {
   AGREEMENT_VERSION,
   COMPANY,
   DISPUTE_WINDOW_DAYS,
+  BASE_RATE,
   RECURRING_MAX_MONTHS,
   HOLD_PERIOD_DAYS,
   MINIMUM_PAYOUT_USD,
   PAYOUT_DAYS_AFTER_MONTH_END,
-  VOLUME_TIERS,
   pct,
   usd,
 } from './affiliate-terms';
@@ -238,8 +238,8 @@ export function buildAgreement(p: AgreementParty, opts: AgreementOptions = {}): 
         },
         {
           n: '4.11',
-          title: 'Volume Tiers',
-          text: `Affiliate's Commission Rate increases with lifetime Qualified Sales as set out in Exhibit A. A tier takes effect on Qualified Sales closing after the qualifying sale count is reached, and is not applied retroactively to earlier sales. Tier status is measured on lifetime Qualified Sales that have cleared the Hold Period.`,
+          title: 'Fixed Commission Rate',
+          text: `The Commission Rate is fixed at ${pct(BASE_RATE)} of Net Revenue for every Qualified Sale and every Offering, as set out in Exhibit A. It does not change with the number of Qualified Sales, and there are no volume tiers or bonuses.`,
         },
       ],
     },
@@ -687,12 +687,8 @@ export function buildPartyBlock(p: AgreementParty): { label: string; value: stri
 
 /** Plain-language notes printed under Exhibit A's tables. */
 export function exhibitANotes(): string[] {
-  const tierText = VOLUME_TIERS.filter((t) => t.threshold > 0)
-    .map((t) => (t.rate === null ? `${t.threshold}+ sales: custom tier` : `${t.threshold}+ sales: ${pct(t.rate)}`))
-    .join('; ');
   return [
     `Commission is calculated on Net Revenue (Section 4.3), not list price. The dollar figures above assume a sale at full list price with no discount applied.`,
-    `Volume tiers are measured on lifetime Qualified Sales that have cleared the ${HOLD_PERIOD_DAYS}-day Hold Period (${tierText}). Tiers apply going forward, never retroactively.`,
     `Commissions clear ${HOLD_PERIOD_DAYS} days after ${COMPANY.shortName} receives payment and are paid within ${PAYOUT_DAYS_AFTER_MONTH_END} days of month end, subject to a ${usd(MINIMUM_PAYOUT_USD)} minimum payout.`,
     `Prices shown are ${COMPANY.shortName}'s list prices as of the Effective Date and may change; a change applies only to Qualified Sales closing after notice, per Section 18.2.`,
   ];

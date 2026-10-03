@@ -37,7 +37,6 @@ import {
   BASE_RATE,
   COMPANY,
   LAB_COMMISSIONS,
-  VOLUME_TIERS,
   commissionFor,
   maxPerClientFor,
   RECURRING_MAX_MONTHS,
@@ -212,29 +211,7 @@ function ExhibitA({ party }: { party: AgreementParty }) {
         commissions.
       </Text>
 
-      <Text style={styles.sectionHeading}>A-3. Volume Tiers</Text>
-      <View style={styles.tableHeader}>
-        <Text style={{ width: '40%' }}>LIFETIME QUALIFIED SALES</Text>
-        <Text style={{ width: '30%' }}>COMMISSION RATE</Text>
-        <Text style={{ width: '30%' }}>TIER</Text>
-      </View>
-      {VOLUME_TIERS.map((tier, i) => (
-        <View
-          key={tier.label}
-          style={i % 2 === 1 ? [styles.tableRow, styles.tableRowAlt] : styles.tableRow}
-          wrap={false}
-        >
-          <Text style={{ width: '40%' }}>
-            {tier.threshold === 0 ? '0–4 sales' : `${tier.threshold}+ sales`}
-          </Text>
-          <Text style={[{ width: '30%' }, styles.bold]}>
-            {tier.rate === null ? 'Negotiated' : pct(tier.rate)}
-          </Text>
-          <Text style={{ width: '30%' }}>{tier.label}</Text>
-        </View>
-      ))}
-
-      <Text style={styles.sectionHeading}>A-4. Notes</Text>
+      <Text style={styles.sectionHeading}>A-3. Notes</Text>
       {notes.map((n, i) => (
         <Text key={i} style={styles.note}>
           • {n}

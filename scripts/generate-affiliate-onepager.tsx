@@ -34,7 +34,6 @@ import {
   MINIMUM_PAYOUT_USD,
   PAYOUT_DAYS_AFTER_MONTH_END,
   PAYOUT_METHODS,
-  VOLUME_TIERS,
   commissionFor,
   maxPerClientFor,
   pct,
@@ -157,24 +156,6 @@ function Sheet({ who }: { who: Personal }) {
               </Text>
             </View>
 
-            <Text style={s.h2later}>REFER MORE, EARN A HIGHER RATE</Text>
-            <View style={s.th}>
-              <Text style={{ width: '50%' }}>CLOSED REFERRALS</Text>
-              <Text style={{ width: '50%' }}>YOUR RATE FROM THEN ON</Text>
-            </View>
-            {VOLUME_TIERS.map((t, i) => (
-              <View key={t.label} style={i % 2 === 1 ? [s.tr, s.trAlt] : s.tr} wrap={false}>
-                <Text style={{ width: '50%', color: MUTED }}>
-                  {t.threshold === 0 ? 'Your first 4' : `${t.threshold} or more`}
-                </Text>
-                <Text style={[{ width: '50%' }, s.bold]}>
-                  {t.rate === null ? "Let's talk — custom tier" : pct(t.rate)}
-                </Text>
-              </View>
-            ))}
-            <Text style={[s.p, { marginTop: 5 }]}>
-              A higher rate applies to the sales you close after you reach the tier.
-            </Text>
           </View>
 
           {/* ── right: how it works ── */}
