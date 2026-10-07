@@ -146,6 +146,8 @@ interface PortalData {
   answers: Record<string, string>;
   phases: PortalPhase[];
   isStaff: boolean;
+  /** Signed-in email, so an account with no client row can be told where to go. */
+  viewerEmail: string | null;
   setAnswer: (itemId: string, value: string) => void;
   setPhaseStatus: (id: string, status: string) => void;
   /** Optimistic local updates, then a background refetch. */
@@ -169,6 +171,7 @@ const EMPTY: PortalData = {
   answers: {},
   phases: [],
   isStaff: false,
+  viewerEmail: null,
   setAnswer: () => {},
   setPhaseStatus: () => {},
   setActionItem: () => {},
@@ -236,7 +239,9 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       // Signed in, but nobody has set this account up yet. Pages render an
       // explanatory empty state rather than a wall of zeroes.
       if (!client) {
-        setData({ ...EMPTY, loading: false });
+        const { data: { session: s } } = await db.auth.getSession();
+        if (cancelled) return;
+        setData({ ...EMPTY, loading: false, viewerEmail: s?.user?.email ?? null });
         return;
       }
 
@@ -277,6 +282,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         phases: (phases.data as PortalPhase[]) ?? [],
         // Staff is asserted by the server on every write; this only decides
         // whether the edit controls render.
+        viewerEmail: session.data.session?.user?.email ?? null,
         isStaff: Boolean(session.data.session?.user?.email &&
           STAFF_EMAILS.includes(session.data.session.user.email.toLowerCase())),
         setActionItem,

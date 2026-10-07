@@ -1,25 +1,32 @@
 'use client';
 
 import Link from 'next/link';
-import { usePortal, formatDate } from '@/lib/portal-data';
-import { Card, StatCard, EmptyState } from '@/components/portal/Shared';
+import { usePortal, formatDate, type PortalPhase } from '@/lib/portal-data';
+import { PageHeader, Card, EmptyState, StatusBadge } from '@/components/portal/Shared';
 
-const QUICK_LINKS = [
-  { href: '/portal/document', label: 'Clarity Document', body: 'Read your strategy document and request changes.' },
-  { href: '/portal/actions', label: 'Action Items', body: 'What to do first. Tick them off as you go.' },
-  { href: '/portal/intake', label: 'Intake', body: 'What we need from you. Saves as you type.' },
-  { href: '/portal/delivery', label: 'Delivery', body: 'Every phase of the build and where it stands.' },
-  { href: '/portal/deliverables', label: 'Deliverables', body: 'Every file we have produced for you.' },
-  { href: '/portal/progress', label: 'Progress', body: 'Where each project stands right now.' },
-  { href: '/portal/reports', label: 'Reports', body: 'Performance once campaigns are running.' },
-  { href: '/portal/invoices', label: 'Invoices', body: 'Your billing history with PodLab.' },
-];
+interface NextStep {
+  href: string;
+  kicker: string;
+  title: string;
+  detail?: string;
+}
+
+const Arrow = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <path d="M5 12h14M13 6l6 6-6 6" />
+  </svg>
+);
+
+/** The phase being worked now: the first in progress, else the first not started. */
+function currentPhase(phases: PortalPhase[]): PortalPhase | undefined {
+  return phases.find((p) => p.status === 'in progress') ?? phases.find((p) => p.status === 'not started');
+}
 
 export default function PortalDashboard() {
-  const { loading, error, client, assets, projects, activity, actionItems } = usePortal();
+  const { loading, error, client, assets, activity, actionItems, phases, intakeItems, answers, viewerEmail } = usePortal();
 
   if (loading) {
-    return <p className="text-white/40 text-sm">Loading your portal...</p>;
+    return <p className="portal-label !text-[9px] text-[#eeeeee]/40">Loading your portal</p>;
   }
 
   if (error) {
@@ -33,97 +40,211 @@ export default function PortalDashboard() {
   }
 
   if (!client) {
+    // Team members land here when they sign in on the client door by mistake.
+    if (viewerEmail?.toLowerCase().endsWith('@podlablv.com')) {
+      return (
+        <>
+          <PageHeader eyebrow="PodLab team" title="This is the" accent="client side." />
+          <EmptyState
+            title="No client record on this account"
+            body="The PodLab Portal is what clients see. Your pipeline, deals and referrals live in the CRM."
+            cta={{ label: 'Open the CRM', href: 'https://crm.podlablv.com' }}
+          />
+        </>
+      );
+    }
     return (
-      <EmptyState
-        title="Your portal is being set up"
-        body="Your account is active but we have not finished loading your workspace. This usually takes less than a day. Reach out if you were expecting to see something here."
-        cta={{ label: 'Email PodLab', href: 'mailto:info@podlablv.com' }}
-      />
+      <>
+        <PageHeader eyebrow="PodLab Portal" title="Your portal is" accent="being set up." />
+        <EmptyState
+          title="Almost ready"
+          body="Your account is active but we have not finished loading your workspace. This usually takes less than a day. Reach out if you were expecting to see something here."
+          cta={{ label: 'Email PodLab', href: 'mailto:info@podlablv.com' }}
+        />
+      </>
     );
   }
 
-  const ready = assets.filter((a) => (a.status || '').toLowerCase() === 'ready');
-  const active = projects.filter((p) => p.progress_pct < 100);
   const firstName = client.first_name || client.business_name;
+  const ready = assets.filter((a) => (a.status || '').toLowerCase() === 'ready');
+  const openActions = actionItems.filter((i) => i.status !== 'done');
+  const phasesDone = phases.filter((p) => p.status === 'done').length;
+  const answered = intakeItems.filter((i) => (answers[i.id] ?? '').trim() !== '').length;
+  const now = currentPhase(phases);
+
+  // What the client should do next, most important first.
+  const steps: NextStep[] = [];
+  if (intakeItems.length > 0 && answered < intakeItems.length) {
+    steps.push({
+      href: '/portal/intake',
+      kicker: 'From you',
+      title: answered === 0 ? 'Start your intake' : 'Finish your intake',
+      detail: `${answered} of ${intakeItems.length} answered. It saves as you type.`,
+    });
+  }
+  if (client.document_url) {
+    steps.push({
+      href: '/portal/document',
+      kicker: 'Ready to read',
+      title: 'Your Clarity Document',
+      detail: 'Read it and flag anything you want changed.',
+    });
+  }
+  if (openActions[0]) {
+    steps.push({
+      href: '/portal/actions',
+      kicker: 'Action item',
+      title: openActions[0].title,
+      detail: openActions.length > 1 ? `${openActions.length - 1} more after this one.` : undefined,
+    });
+  }
+  if (now) {
+    steps.push({
+      href: '/portal/delivery',
+      kicker: now.status === 'in progress' ? 'We are building' : 'Up next on our side',
+      title: now.title,
+      detail: [now.owner, now.due_label].filter(Boolean).join(' · ') || undefined,
+    });
+  }
+
+  const stats = [
+    { label: 'Phases complete', value: phases.length ? `${phasesDone}/${phases.length}` : '—' },
+    { label: 'Deliverables ready', value: String(ready.length) },
+    { label: 'Action items open', value: String(openActions.length) },
+    { label: 'Intake answered', value: intakeItems.length ? `${Math.round((answered / intakeItems.length) * 100)}%` : '—' },
+  ];
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="font-display text-white text-lg sm:text-xl uppercase tracking-wider">
-          Welcome back, {firstName}
-        </h1>
-        <p className="text-white/40 text-sm mt-2">
-          {client.business_name}
-          {client.plan_label ? ` — ${client.plan_label}` : ''}
-        </p>
-      </div>
+      <PageHeader
+        eyebrow={[client.business_name, client.plan_label].filter(Boolean).join(' · ')}
+        title="Welcome back,"
+        accent={`${firstName}.`}
+      />
 
       {client.welcome_note && (
-        <Card className="p-5 mb-6 border-[#2ADD1B]/20 bg-[#2ADD1B]/5">
-          <p className="text-white/80 text-sm leading-relaxed">{client.welcome_note}</p>
-        </Card>
+        <p className="-mt-4 mb-10 max-w-3xl border-l-2 border-[#2add1b] pl-5 text-base leading-relaxed text-[#eeeeee]/80">
+          {client.welcome_note}
+        </p>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Deliverables Ready" value={String(ready.length)} />
-        <StatCard label="Active Projects" value={String(active.length)} />
-        <StatCard
-          label="Projects Complete"
-          value={String(projects.filter((p) => p.progress_pct >= 100).length)}
-        />
-        <StatCard
-          label="Action Items Open"
-          value={String(actionItems.filter((i) => i.status !== 'done').length)}
-        />
+      {/* Stat strip: hairline-ruled cells, the site's grid language. */}
+      <div className="grid grid-cols-2 gap-px border border-[#1a1a1a] bg-[#1a1a1a] lg:grid-cols-4">
+        {stats.map((s) => (
+          <div key={s.label} className="bg-black p-5 md:p-6">
+            <p className="portal-label !text-[9px] text-[#eeeeee]/40">{s.label}</p>
+            <p className="mt-3 text-3xl font-bold tracking-tight text-[#eeeeee] md:text-4xl">{s.value}</p>
+          </div>
+        ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <h2 className="font-display text-white text-sm uppercase tracking-wider mb-4">
-            Recent Activity
-          </h2>
-          {activity.length === 0 ? (
-            <EmptyState
-              title="Nothing logged yet"
-              body="Activity shows up here as we deliver files, publish reports, and complete milestones."
-            />
+      {steps.length > 0 && (
+        <section className="mt-12">
+          <span className="portal-label block text-[#2add1b]">Next up</span>
+          <ul className="mt-4 divide-y divide-[#1a1a1a] border-y border-[#1a1a1a]">
+            {steps.map((s, i) => (
+              <li key={s.href + s.title}>
+                <Link href={s.href} className="group flex items-center gap-5 py-5 transition hover:bg-white/[0.02]">
+                  <span className="portal-label w-6 shrink-0 !text-[10px] text-[#eeeeee]/25">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="portal-label block !text-[9px] text-[#eeeeee]/40">{s.kicker}</span>
+                    <span className="mt-1.5 block text-lg font-semibold text-[#eeeeee] transition group-hover:text-[#2add1b]">{s.title}</span>
+                    {s.detail && <span className="mt-1 block text-sm text-[#eeeeee]/50">{s.detail}</span>}
+                  </span>
+                  <span className="shrink-0 text-[#eeeeee]/30 transition group-hover:translate-x-1 group-hover:text-[#2add1b]">
+                    <Arrow />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <div className="mt-12 grid gap-10 lg:grid-cols-5">
+        <section className="lg:col-span-3">
+          <div className="flex items-end justify-between gap-4">
+            <span className="portal-label block text-[#2add1b]">Your build</span>
+            {phases.length > 0 && (
+              <Link href="/portal/delivery" className="portal-label !text-[9px] text-[#eeeeee]/40 transition hover:text-[#2add1b]">
+                All phases
+              </Link>
+            )}
+          </div>
+          {phases.length === 0 ? (
+            <div className="mt-4">
+              <EmptyState
+                title="No build in flight"
+                body="Once a Lab is underway, every phase shows here with who owns it and where it stands."
+              />
+            </div>
           ) : (
-            <Card className="divide-y divide-white/5">
-              {activity.slice(0, 6).map((a) => (
-                <div key={a.id} className="p-4 flex items-start gap-4">
-                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#2ADD1B] shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm">{a.title}</p>
-                    <p className="text-white/30 text-xs mt-1">
-                      {a.kind ? `${a.kind} · ` : ''}
-                      {a.happened_at ? formatDate(a.happened_at) : ''}
-                    </p>
-                  </div>
+            <Card className="mt-4">
+              <div className="border-b border-[#1a1a1a] p-5">
+                <div className="flex items-baseline justify-between gap-4">
+                  <p className="text-sm text-[#eeeeee]">{client.plan_label ?? 'Your build'}</p>
+                  <p className="portal-label !text-[9px] text-[#eeeeee]/40">
+                    {Math.round((phasesDone / phases.length) * 100)}% complete
+                  </p>
                 </div>
-              ))}
+                <div className="mt-3 h-px bg-[#1a1a1a]">
+                  <div className="h-px bg-[#2add1b] transition-[width] duration-500" style={{ width: `${(phasesDone / phases.length) * 100}%` }} />
+                </div>
+              </div>
+              <ol className="divide-y divide-[#1a1a1a]">
+                {phases.slice(0, 6).map((p) => (
+                  <li key={p.id} className="flex items-center gap-4 px-5 py-4">
+                    <span
+                      className={`h-2 w-2 shrink-0 ${
+                        p.status === 'done'
+                          ? 'bg-[#2add1b]'
+                          : p.status === 'in progress'
+                            ? 'border border-[#2add1b] bg-[#2add1b]/30'
+                            : p.status === 'blocked'
+                              ? 'bg-red-400'
+                              : 'border border-[#eeeeee]/25'
+                      }`}
+                      aria-hidden="true"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className={`block truncate text-sm ${p.status === 'done' ? 'text-[#eeeeee]/50' : 'text-[#eeeeee]'}`}>{p.title}</span>
+                      {(p.owner || p.due_label) && (
+                        <span className="mt-0.5 block truncate text-xs text-[#eeeeee]/35">
+                          {[p.owner, p.due_label].filter(Boolean).join(' · ')}
+                        </span>
+                      )}
+                    </span>
+                    <StatusBadge status={p.status} />
+                  </li>
+                ))}
+              </ol>
             </Card>
           )}
-        </div>
+        </section>
 
-        <div>
-          <h2 className="font-display text-white text-sm uppercase tracking-wider mb-4">
-            Jump To
-          </h2>
-          <div className="space-y-3">
-            {QUICK_LINKS.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="block bg-[#1A1A1A]/80 backdrop-blur-sm border border-white/10 rounded-2xl p-4 hover:border-[#2ADD1B]/30 transition"
-              >
-                <p className="font-display text-white text-xs uppercase tracking-wider">
-                  {l.label}
-                </p>
-                <p className="text-white/40 text-xs mt-1.5 leading-relaxed">{l.body}</p>
-              </Link>
-            ))}
-          </div>
-        </div>
+        <section className="lg:col-span-2">
+          <span className="portal-label block text-[#2add1b]">Recent activity</span>
+          {activity.length === 0 ? (
+            <div className="mt-4">
+              <EmptyState
+                title="Nothing logged yet"
+                body="Activity shows up here as we deliver files, publish reports, and complete milestones."
+              />
+            </div>
+          ) : (
+            <ol className="mt-4 border-l border-[#1a1a1a]">
+              {activity.slice(0, 6).map((a) => (
+                <li key={a.id} className="relative pb-6 pl-6 last:pb-0">
+                  <span className="absolute -left-[3px] top-1.5 h-[5px] w-[5px] bg-[#2add1b]" aria-hidden="true" />
+                  <p className="text-sm text-[#eeeeee]">{a.title}</p>
+                  <p className="portal-label mt-1.5 !text-[8.5px] text-[#eeeeee]/35">
+                    {[a.kind, a.happened_at ? formatDate(a.happened_at) : ''].filter(Boolean).join(' · ')}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
       </div>
     </div>
   );

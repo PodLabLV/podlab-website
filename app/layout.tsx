@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
-import { Inter, Michroma } from 'next/font/google';
+import { Inter, Michroma, Playfair_Display } from 'next/font/google';
 import Script from 'next/script';
 import ChatBot from '@/components/ChatBot';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const michroma = Michroma({ weight: '400', subsets: ['latin'], variable: '--font-michroma' });
+const playfair = Playfair_Display({ style: ['normal', 'italic'], subsets: ['latin'], variable: '--font-playfair' });
 
 // Tracking IDs
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-PMJQL5VL';
@@ -118,7 +119,7 @@ export default function RootLayout({
           </Script>
         )}
       </head>
-      <body className={`${inter.variable} ${michroma.variable}`}>
+      <body className={`${inter.variable} ${michroma.variable} ${playfair.variable}`}>
         {/* GTM noscript fallback */}
         <noscript>
           <iframe

@@ -295,3 +295,37 @@ h1, h2, h3, h4, h5, h6,
   border-color: rgba(42, 221, 27, 0.15);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
+
+/* PodLab Portal — the new podlablv.com brand system (podlab-lab): Studio Black,
+   Signal Green, Filament; Michroma labels over Playfair italic, square edges. */
+.portal {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  color: #eeeeee;
+  /* Sit above the old site's #content-overlay dimmer and body::before texture. */
+  position: relative;
+  z-index: 1;
+}
+.portal-label {
+  font-family: var(--font-michroma), system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.portal-drama {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+}
+.portal h1, .portal h2, .portal h3, .portal h4 {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  text-transform: none;
+  hyphens: manual;
+}
+/* The old site's text shadows were for its animated background; the portal is flat black. */
+.portal p, .portal li, .portal span, .portal h1, .portal h2, .portal h3, .portal h4 {
+  text-shadow: none;
+}
+.portal :focus-visible {
+  outline: 1px solid #2add1b;
+  outline-offset: 3px;
+}

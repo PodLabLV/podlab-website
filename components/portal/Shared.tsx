@@ -5,16 +5,22 @@ import type { ReactNode } from 'react';
 export function PageHeader({
   title,
   subtitle,
+  eyebrow,
+  accent,
 }: {
   title: string;
   subtitle?: string;
+  eyebrow?: string;
+  /** Trailing words set in green Playfair italic, the site's headline signature. */
+  accent?: string;
 }) {
   return (
-    <div className="mb-8">
-      <h1 className="font-display text-white text-lg sm:text-xl uppercase tracking-wider">
-        {title}
+    <div className="mb-10">
+      {eyebrow && <span className="portal-label block text-[#2add1b]">{eyebrow}</span>}
+      <h1 className={`${eyebrow ? 'mt-4' : ''} text-3xl font-bold leading-[1.05] tracking-tight text-[#eeeeee] md:text-4xl`}>
+        {title} {accent && <em className="portal-drama text-[#2add1b]">{accent}</em>}
       </h1>
-      {subtitle && <p className="text-white/40 text-sm mt-2">{subtitle}</p>}
+      {subtitle && <p className="mt-4 max-w-2xl text-base leading-relaxed text-[#eeeeee]/60">{subtitle}</p>}
     </div>
   );
 }
@@ -26,13 +32,7 @@ export function Card({
   children: ReactNode;
   className?: string;
 }) {
-  return (
-    <div
-      className={`bg-[#1A1A1A]/80 backdrop-blur-sm border border-white/10 rounded-2xl ${className}`}
-    >
-      {children}
-    </div>
-  );
+  return <div className={`border border-[#1a1a1a] bg-[#0a0a0a] ${className}`}>{children}</div>;
 }
 
 export function StatCard({
@@ -46,11 +46,9 @@ export function StatCard({
 }) {
   return (
     <Card className="p-5">
-      <p className="font-display text-[10px] uppercase tracking-widest text-white/40">
-        {label}
-      </p>
-      <p className="text-2xl text-white mt-2 font-semibold">{value}</p>
-      {sub && <p className="text-xs text-white/40 mt-1">{sub}</p>}
+      <p className="portal-label !text-[9px] text-[#eeeeee]/40">{label}</p>
+      <p className="mt-3 text-3xl font-bold tracking-tight text-[#eeeeee]">{value}</p>
+      {sub && <p className="mt-1 text-xs text-[#eeeeee]/40">{sub}</p>}
     </Card>
   );
 }
@@ -69,19 +67,15 @@ export function EmptyState({
   cta?: { label: string; href: string };
 }) {
   return (
-    <Card className="p-10 text-center">
-      <p className="font-display text-white text-sm uppercase tracking-wider">
-        {title}
-      </p>
-      <p className="text-white/40 text-sm mt-3 max-w-md mx-auto leading-relaxed">
-        {body}
-      </p>
+    <Card className="p-8 md:p-10">
+      <p className="portal-label text-[#eeeeee]">{title}</p>
+      <p className="mt-3 max-w-lg text-sm leading-relaxed text-[#eeeeee]/50">{body}</p>
       {cta && (
         <a
           href={cta.href}
           target={cta.href.startsWith('http') ? '_blank' : undefined}
           rel={cta.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-          className="inline-block mt-6 px-5 py-2.5 rounded-xl bg-[#2ADD1B] text-black text-sm font-semibold hover:bg-[#2ADD1B]/90 transition"
+          className="portal-label mt-6 inline-flex items-center gap-3 bg-[#2add1b] px-5 py-3 !text-[10px] text-black transition hover:bg-[#eeeeee]"
         >
           {cta.label}
         </a>
@@ -93,17 +87,15 @@ export function EmptyState({
 export function StatusBadge({ status }: { status: string | null }) {
   const s = (status || '').toLowerCase();
   const tone =
-    s === 'ready' || s === 'paid'
-      ? 'bg-[#2ADD1B]/10 text-[#2ADD1B] border-[#2ADD1B]/20'
+    s === 'ready' || s === 'paid' || s === 'done'
+      ? 'text-[#2add1b] border-[#2add1b]/40'
       : s === 'in progress' || s === 'pending'
-        ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-        : s === 'overdue'
-          ? 'bg-red-500/10 text-red-400 border-red-500/20'
-          : 'bg-white/5 text-white/40 border-white/10';
+        ? 'text-yellow-300 border-yellow-300/30'
+        : s === 'overdue' || s === 'blocked'
+          ? 'text-red-400 border-red-400/40'
+          : 'text-[#eeeeee]/40 border-[#eeeeee]/15';
   return (
-    <span
-      className={`inline-block px-2.5 py-1 rounded-lg border text-[10px] font-display uppercase tracking-widest ${tone}`}
-    >
+    <span className={`portal-label inline-block border px-2 py-1 !text-[9px] ${tone}`}>
       {status || 'Pending'}
     </span>
   );
@@ -114,8 +106,8 @@ export function FileMark({ type }: { type: string | null }) {
   const t = (type || 'LINK').toUpperCase();
   const label = t === 'VIDEO' ? 'MP4' : t === 'FOLDER' ? 'DIR' : t === 'PDF' ? 'PDF' : 'WEB';
   return (
-    <span className="shrink-0 w-11 h-11 rounded-xl bg-[#2ADD1B]/10 border border-[#2ADD1B]/20 flex items-center justify-center">
-      <span className="font-display text-[9px] tracking-wider text-[#2ADD1B]">
+    <span className="flex h-11 w-11 shrink-0 items-center justify-center border border-[#2add1b]/30">
+      <span className="portal-label !text-[9px] !tracking-[0.12em] text-[#2add1b]">
         {label}
       </span>
     </span>
