@@ -100,9 +100,8 @@ function PortalShell({ children }: { children: React.ReactNode }) {
       >
         <div className="border-b border-[#1a1a1a] px-6 pb-5 pt-6">
           <Link href="/" aria-label="PodLab home" className="block">
-            <Image src="/portal/podlab-wordmark.png" alt="PodLab" width={112} height={40} unoptimized className="h-auto w-[112px]" />
+            <Image src="/portal/podlab-portal-green.png" alt="PodLab Portal" width={720} height={229} unoptimized className="h-auto w-[156px]" />
           </Link>
-          <span className="portal-label mt-3 block !text-[9px] text-[#2add1b]">PodLab Portal</span>
         </div>
 
         <nav aria-label="Portal" className="flex-1 overflow-y-auto py-4">
@@ -157,7 +156,7 @@ function PortalShell({ children }: { children: React.ReactNode }) {
         {/* Top bar (mobile) */}
         <div className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#1a1a1a] bg-black/80 px-4 backdrop-blur lg:hidden">
           <Link href="/portal" aria-label="PodLab Portal home">
-            <Image src="/portal/podlab-wordmark.png" alt="PodLab" width={96} height={34} unoptimized className="h-auto w-[96px]" />
+            <Image src="/portal/podlab-portal-green.png" alt="PodLab Portal" width={720} height={229} unoptimized className="h-auto w-[116px]" />
           </Link>
           <button
             onClick={() => setSidebarOpen(true)}

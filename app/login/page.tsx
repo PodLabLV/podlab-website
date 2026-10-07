@@ -138,7 +138,7 @@ export default function LoginPage() {
       <section className="relative z-10 flex min-h-svh flex-col px-6 py-6 md:px-12 lg:border-l lg:border-[#1a1a1a]">
         <div className="flex items-center justify-between">
           <Link href="/" aria-label="PodLab home">
-            <Image src="/portal/podlab-wordmark.png" alt="PodLab" width={120} height={43} priority unoptimized className="h-auto w-[104px] md:w-[120px]" />
+            <Image src="/portal/podlab-portal-green.png" alt="PodLab Portal" width={720} height={229} priority unoptimized className="h-auto w-[132px] md:w-[156px]" />
           </Link>
           <Link href="/" className="portal-label text-[#eeeeee]/50 transition hover:text-[#2add1b]">
             Back to site
@@ -146,7 +146,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-16">
-          <span className="portal-label text-[#2add1b]">PodLab Portal</span>
+          <span className="portal-label text-[#2add1b]">Client sign-in</span>
           <h1 className="mt-4 text-4xl font-bold leading-[1.05] tracking-tight text-[#eeeeee] md:text-5xl">
             {mode === 'login' ? (
               <>
