@@ -22,7 +22,7 @@ function buildResetEmailHtml(resetLink: string, firstName?: string): string {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PodLab Client Portal — Password Reset</title>
+  <title>PodLab Portal — Password Reset</title>
 </head>
 <body style="margin:0;padding:0;background-color:#0A0A0A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0A0A0A;padding:40px 20px;">
@@ -35,7 +35,7 @@ function buildResetEmailHtml(resetLink: string, firstName?: string): string {
             <td style="padding:32px 32px 24px;text-align:center;border-bottom:1px solid #2E2E2E;">
               <div style="display:inline-block;width:48px;height:48px;background-color:#2ADD1B;border-radius:12px;line-height:48px;font-size:20px;font-weight:bold;color:#000;">P</div>
               <h1 style="margin:16px 0 4px;font-size:22px;font-weight:800;color:#ffffff;letter-spacing:0.5px;">
-                PodLab Client Portal
+                PodLab Portal
               </h1>
               <p style="margin:0;font-size:14px;color:#888;font-weight:500;">Password Reset</p>
             </td>
@@ -48,7 +48,7 @@ function buildResetEmailHtml(resetLink: string, firstName?: string): string {
                 ${greeting}
               </p>
               <p style="margin:0 0 24px;font-size:15px;color:#ccc;line-height:1.6;">
-                We received a request to reset your PodLab Client Portal password. Click the button below to set a new password.
+                We received a request to reset your PodLab Portal password. Click the button below to set a new password.
               </p>
               
               <!-- CTA Button -->
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           from: 'PodLab <info@podlablv.com>',
           to: cleanEmail,
-          subject: 'PodLab Client Portal — Password Reset',
+          subject: 'PodLab Portal — Password Reset',
           html: emailHtml,
         }),
       })
