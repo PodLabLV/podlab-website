@@ -209,6 +209,41 @@ export default function StaffClientPage() {
         </ul>
       </Section>
 
+      {d.videoAssets.length > 0 && (
+        <Section
+          title="Video deliverables and editor cards"
+          hint="Tie a video deliverable to the card the editor works from. When the client sends notes on it, they land on that card with time and chapter, and a card past review goes back to Revising."
+        >
+          {d.cards.length === 0 ? (
+            <p className="text-sm text-[#eeeeee]/50">Link a production board above first; its cards show up here.</p>
+          ) : (
+            <ul className="divide-y divide-[#1a1a1a] border border-[#1a1a1a]">
+              {d.videoAssets.map((a) => (
+                <li key={a.id} className="flex flex-col gap-2 bg-black px-4 py-3 md:flex-row md:items-center md:justify-between">
+                  <span className="text-sm text-[#eeeeee]">{a.title}</span>
+                  <select
+                    aria-label={`Editor card for ${a.title}`}
+                    disabled={busy !== null}
+                    value={a.crmCardId ?? ''}
+                    onChange={(e) =>
+                      call(`a-${a.id}`, '/api/portal/deliverables', 'POST', { intent: 'link-card', assetId: a.id, crmCardId: e.target.value || null }, e.target.value ? 'Tied to the editor card.' : 'Untied.')
+                    }
+                    className="w-full border border-[#1a1a1a] bg-black px-2 py-2 text-xs text-[#eeeeee]/75 focus:border-[#2add1b] focus:outline-none md:w-80"
+                  >
+                    <option value="">Not tied to a card</option>
+                    {d.cards.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.board} · {c.title}
+                      </option>
+                    ))}
+                  </select>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+      )}
+
       {gen && gen.generated > 0 && (
         <Section
           title="Scripts from their application"

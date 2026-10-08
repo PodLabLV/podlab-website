@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { admin, resolveCaller, resolveStaff, notifySlack, logToCrm } from '@/lib/portal-server';
+import { admin, resolveCaller, resolveStaff } from '@/lib/portal-server';
 import {
   PORTAL_COMMENT_SUFFIX,
   isDoneColumn,
@@ -8,7 +8,8 @@ import {
   type ProductionPayload,
   type VslTrack,
 } from '@/lib/production';
-import { parseChapters, readNote, tagNote } from '@/lib/chapters';
+import { parseChapters, readNote } from '@/lib/chapters';
+import { linkedBoardIds, postClientNote } from '@/lib/production-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,12 +27,8 @@ interface CrmCard {
   video_url: string | null;
   description: string | null;
 }
-interface CrmComment { id: string; card_id: string; author_name: string | null; body: string; created_at: string }
+interface CrmComment { id: string; card_id: string; author_name: string | null; body: string; created_at: string; resolved: boolean | null }
 
-async function linkedBoardIds(db: ReturnType<typeof admin>, clientId: string): Promise<string[]> {
-  const { data } = await db.from('portal_client_boards').select('board_id').eq('client_id', clientId);
-  return (data ?? []).map((r: { board_id: string }) => r.board_id);
-}
 
 /**
  * GET — the caller's boards, columns and cards, read from crm.* server-side.
@@ -44,7 +41,7 @@ export async function GET(req: Request) {
   if (!caller) return NextResponse.json({ error: 'Not authorized' }, { status: 401 });
 
   const crm = db.schema('crm');
-  const boardIds = await linkedBoardIds(db, caller.clientId);
+  const boardIds = (await linkedBoardIds(db, caller.clientId)) ?? [];
 
   const payload: ProductionPayload = { boards: [], vsl: null };
 
@@ -69,7 +66,7 @@ export async function GET(req: Request) {
     const comments = cardRows.length
       ? await crm
           .from('content_comments')
-          .select('id, card_id, author_name, body, created_at')
+          .select('id, card_id, author_name, body, created_at, resolved')
           .in('card_id', cardRows.map((c) => c.id))
           .order('created_at', { ascending: false })
       : { data: [] as CrmComment[] };
@@ -108,6 +105,7 @@ export async function GET(req: Request) {
                   ...(({ t, text }) => ({ t, body: text }))(readNote(m.body)),
                   createdAt: m.created_at,
                   fromClient: (m.author_name ?? '').endsWith(PORTAL_COMMENT_SUFFIX),
+                  resolved: Boolean(m.resolved),
                 })),
             };
           }),
@@ -157,29 +155,9 @@ export async function POST(req: Request) {
   if (body.length > MAX_NOTE) return NextResponse.json({ error: 'That note is too long.' }, { status: 400 });
   const t = typeof p.timeSeconds === 'number' && Number.isFinite(p.timeSeconds) && p.timeSeconds >= 0 ? p.timeSeconds : null;
 
-  // The card must sit on one of this client's boards; a guessed id gets a 404.
-  const crm = db.schema('crm');
-  const { data: card } = await crm.from('content_cards').select('id, title, board_id, description').eq('id', p.cardId).maybeSingle();
-  const boardIds = await linkedBoardIds(db, caller.clientId);
-  if (!card || !boardIds.includes(card.board_id)) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-
-  const { data: comment, error } = await crm
-    .from('content_comments')
-    // Editors read the moment straight off the card: "[0:42 · Hook] cut the pause".
-    .insert({ card_id: card.id, author_name: caller.displayName + PORTAL_COMMENT_SUFFIX, body: tagNote(body, t, parseChapters(card.description ?? '')) })
-    .select('id, author_name, body, created_at')
-    .single();
-  if (error) {
-    console.error('[portal] production note failed', error.message);
-    return NextResponse.json({ error: 'Could not send that.' }, { status: 500 });
-  }
-
-  await Promise.all([
-    notifySlack(`*Revision note* — ${caller.businessName} on "${card.title}"\n> ${comment.body.slice(0, 500)}`),
-    logToCrm(db, caller, `Revision note on "${card.title}": ${comment.body.slice(0, 200)}`),
-  ]);
+  const res = await postClientNote(db, caller, p.cardId, body, t);
+  if (!res.ok) return NextResponse.json({ error: res.message }, { status: res.status });
+  const comment = res.comment;
 
   return NextResponse.json({
     comment: {
@@ -188,7 +166,9 @@ export async function POST(req: Request) {
       ...(({ t: at, text }) => ({ t: at, body: text }))(readNote(comment.body)),
       createdAt: comment.created_at,
       fromClient: true,
+      resolved: false,
     },
+    reopened: res.reopened,
   });
 }
 

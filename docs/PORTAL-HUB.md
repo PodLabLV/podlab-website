@@ -42,6 +42,17 @@ Chapters use the same lines YouTube reads from a video description, so editors w
   - On the card, the editor sees: **`[0:42 · The problem] cut the pause`**, signed `<name> (client, via portal)`. Slack and the CRM timeline are pinged too.
 - **Inline playback:** uploaded files and YouTube links play inline with a live clock. Drive, Frame.io and Vimeo links open in a new tab, and the client picks the chapter or types the time.
 
+## The revision loop (client ↔ editor)
+
+| Step | What happens |
+|---|---|
+| Client leaves a note | On **Production** (or through TipTop) it lands on the editor's CRM card as `[0:42 · Hook] note`, signed `<name> (client, via portal)`. On a **video deliverable tied to a card** (staff → Manage → *Video deliverables and editor cards*), the notes copy onto the card when the client presses Send. |
+| Card already past review | A note on a card in **Quality check** or **Approved** moves it back to **Revising**. The CRM won't let it leave Revising until every comment is resolved, so client notes can't be skipped. **Posted** cards aren't moved; Slack flags them for a re-cut decision. |
+| Editor is told | Slack names the card's editor. Set `REVISIONS_SLACK_WEBHOOK_URL` (a #revisions channel webhook) to keep these out of the main channel; without it they go to the main webhook. |
+| Editor fixes it | Ticking the comment resolved in the CRM shows **Fixed** on the client's note, and "2 of 3 of your notes fixed" on the video. |
+| Client is told | The daily digest email (8am Pacific) lists new cuts, fixed notes, approvals and new versions. Clients can switch it off in Profile. |
+| Delivered | **Progress & Delivered** (and the dashboard) lists approved or posted videos, approved files and scripts, and finished phases, with dates. |
+
 ## Staff: running it
 
 You need a row in `portal_staff`. info@ already has one. Staff get **Clients · staff** in the portal sidebar.

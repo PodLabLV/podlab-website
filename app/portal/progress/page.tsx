@@ -2,33 +2,46 @@
 
 import { usePortal, formatDate } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState } from '@/components/portal/Shared';
+import DeliveredList from '@/components/portal/DeliveredList';
 
 const STAGES = ['Discovery', 'Strategy', 'Production', 'Review', 'Delivered'];
 
 export default function ProgressPage() {
   const { loading, client, projects } = usePortal();
 
-  if (loading) return <p className="text-white/40 text-sm">Loading...</p>;
+  if (loading) return <p className="portal-label !text-[9px] text-[#eeeeee]/40">Loading</p>;
+
+  const header = (
+    <>
+      <PageHeader
+        eyebrow="Progress"
+        title="Everything we've"
+        accent="delivered."
+        subtitle="Finished videos, approved files and scripts, and completed build phases, newest first."
+      />
+      <DeliveredList />
+    </>
+  );
 
   if (!client || projects.length === 0) {
     return (
       <>
-        <PageHeader title="Progress" />
-        <EmptyState
-          title="No projects in flight"
-          body="Once a Lab is underway you will see it here, stage by stage, with who owns it and when it lands."
-          cta={{ label: 'Book a call', href: 'https://calendly.com/podlablv/app-hiram' }}
-        />
+        {header}
+        <div className="mt-12">
+          <EmptyState
+            title="No projects in flight"
+            body="Once a Lab is underway you will see it here, stage by stage, with who owns it and when it lands."
+            cta={{ label: 'Book a call', href: 'https://calendly.com/podlablv/strategy-call' }}
+          />
+        </div>
       </>
     );
   }
 
   return (
     <>
-      <PageHeader
-        title="Progress"
-        subtitle="Where every project stands. Updated as each stage closes."
-      />
+      {header}
+      <span className="portal-label mb-4 mt-12 block text-[#2add1b]">Projects in flight</span>
 
       <div className="flex flex-wrap gap-x-6 gap-y-2 mb-6">
         {STAGES.map((s, i) => (

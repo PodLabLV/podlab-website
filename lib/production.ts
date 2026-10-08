@@ -18,6 +18,8 @@ export interface ProductionComment {
   createdAt: string;
   /** Written from the portal by the client, rather than by the PodLab team. */
   fromClient: boolean;
+  /** The editor ticked it off in the CRM (the card can't leave Revising until every note is). */
+  resolved: boolean;
 }
 
 export interface ProductionCard {

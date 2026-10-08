@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePortal, formatDate, type PortalPhase } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState, StatusBadge } from '@/components/portal/Shared';
 import { chainStatus } from '@/lib/growth-chain';
+import DeliveredList from '@/components/portal/DeliveredList';
 import { loadScriptIndex } from '@/lib/portal/browser';
 import { isWaitingOnClient } from '@/lib/portal/scripts';
 import type { ProductionPayload } from '@/lib/production';
@@ -329,7 +330,11 @@ export default function PortalDashboard() {
         </section>
 
         <section className="lg:col-span-2">
-          <span className="portal-label block text-[#2add1b]">Recent activity</span>
+          <span className="portal-label block text-[#2add1b]">Delivered</span>
+          <div className="mt-4">
+            <DeliveredList limit={5} />
+          </div>
+          <span className="portal-label mt-10 block text-[#2add1b]">Recent activity</span>
           {activity.length === 0 ? (
             <div className="mt-4">
               <EmptyState
