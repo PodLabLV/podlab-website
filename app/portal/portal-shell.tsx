@@ -34,7 +34,7 @@ function PortalShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [checking, setChecking] = useState(true);
-  const { client } = usePortal();
+  const { client, isStaff } = usePortal();
   const businessName = client?.business_name ?? '';
 
   useEffect(() => {
@@ -107,7 +107,7 @@ function PortalShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav aria-label="Portal" className="flex-1 overflow-y-auto py-4">
-          {portalNav.map((item, i) => {
+          {(isStaff ? [...portalNav, { href: '/portal/clients', label: 'Clients · staff' }] : portalNav).map((item, i) => {
             const active = isActive(item.href);
             return (
               <Link

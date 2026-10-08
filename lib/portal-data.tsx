@@ -201,8 +201,16 @@ const EMPTY: PortalData = {
   accessToken: null,
 };
 
-/** Display-only hint. Every write re-checks staff status server-side. */
-const STAFF_EMAILS = ['info@podlablv.com'];
+/** Display-only: decides whether staff tools render. Every staff route re-checks server-side. */
+async function checkStaff(token: string | null | undefined): Promise<boolean> {
+  if (!token) return false;
+  try {
+    const res = await fetch('/api/portal/whoami', { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+    return res.ok && Boolean((await res.json()).staff);
+  } catch {
+    return false;
+  }
+}
 
 const PortalContext = createContext<PortalData>(EMPTY);
 
@@ -270,7 +278,14 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       if (!client) {
         const { data: { session: s } } = await db.auth.getSession();
         if (cancelled) return;
-        setData({ ...EMPTY, loading: false, viewerEmail: s?.user?.email ?? null });
+        const viewer = s?.user?.email ?? null;
+        setData({
+          ...EMPTY,
+          loading: false,
+          viewerEmail: viewer,
+          accessToken: s?.access_token ?? null,
+          isStaff: await checkStaff(s?.access_token),
+        });
         return;
       }
 
@@ -317,8 +332,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         // Staff is asserted by the server on every write; this only decides
         // whether the edit controls render.
         viewerEmail: session.data.session?.user?.email ?? null,
-        isStaff: Boolean(session.data.session?.user?.email &&
-          STAFF_EMAILS.includes(session.data.session.user.email.toLowerCase())),
+        isStaff: await checkStaff(session.data.session?.access_token),
         setActionItem,
         addComment,
         setAnswer,

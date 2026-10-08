@@ -24,7 +24,7 @@ function currentPhase(phases: PortalPhase[]): PortalPhase | undefined {
 }
 
 export default function PortalDashboard() {
-  const { loading, error, client, assets, activity, actionItems, phases, intakeItems, answers, viewerEmail, products, elementRows } =
+  const { loading, error, client, assets, activity, actionItems, phases, intakeItems, answers, viewerEmail, products, elementRows, isStaff } =
     usePortal();
 
   if (loading) {
@@ -43,7 +43,7 @@ export default function PortalDashboard() {
 
   if (!client) {
     // Team members land here when they sign in on the client door by mistake.
-    if (viewerEmail?.toLowerCase().endsWith('@podlablv.com')) {
+    if (isStaff || viewerEmail?.toLowerCase().endsWith('@podlablv.com')) {
       return (
         <>
           <PageHeader eyebrow="PodLab team" title="This is the" accent="client side." />
@@ -52,6 +52,14 @@ export default function PortalDashboard() {
             body="The PodLab Portal is what clients see. Your pipeline, deals and referrals live in the CRM."
             cta={{ label: 'Open the CRM', href: 'https://crm.podlablv.com' }}
           />
+          {isStaff && (
+            <a
+              href="/portal/clients"
+              className="portal-label mt-6 inline-flex items-center gap-3 border border-[#1a1a1a] px-5 py-3 !text-[10px] text-[#eeeeee]/70 transition hover:border-[#2add1b] hover:text-[#2add1b]"
+            >
+              Invite clients to the portal →
+            </a>
+          )}
         </>
       );
     }
