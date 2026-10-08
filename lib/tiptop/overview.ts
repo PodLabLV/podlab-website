@@ -6,6 +6,7 @@ import { isWaitingOnClient, unsentClientNotes, vocab } from '@/lib/portal/script
 import { loadProfile } from '@/lib/portal/profile';
 import { clientDocumentInfo, listVersions } from '@/lib/portal/documents';
 import { loadBrand, brandGaps } from '@/lib/portal/brand';
+import { gameFor } from '@/lib/portal/game';
 
 /**
  * Everything TipTop knows about one client, read server-side with the service
@@ -478,6 +479,8 @@ export function renderOverview(o: Overview): string {
     L.push(
       `Brand page (/portal/brand: logos, colors, fonts, guide, b-roll; they upload there themselves): logos ${o.brand.logos.length ? o.brand.logos.join(', ') : 'none'}; colors ${o.brand.colors.join(', ') || 'none'}; fonts ${o.brand.fonts.join(', ') || 'none'}; brand guide ${o.brand.guide ? 'uploaded' : 'not uploaded'}; b-roll ${o.brand.broll.files} files, ${o.brand.broll.links} links.${o.brand.gaps.length ? ` Missing: ${o.brand.gaps.join('; ')}.` : ' Kit complete.'}`,
     );
+  const g = gameFor(o);
+  L.push(`Build level (sidebar game; points come from their inputs and approvals): Level ${g.level.n} ${g.level.name}, ${g.score} pts${g.level.next !== null ? `, ${g.level.next - g.score} to level ${g.level.n + 1}` : ''}. Next mission: ${g.nextMission ? `${g.nextMission.title} (+${g.nextMission.points})` : 'none, nothing waiting on them'}.`);
   L.push(o.accountability.length ? `Open loops (bring up the top one or two when it fits):\n${o.accountability.map((a) => `  - ${a}`).join('\n')}` : 'Open loops: none. They are on top of everything.');
   return L.join('\n');
 }

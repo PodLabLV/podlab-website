@@ -7,24 +7,8 @@ import { useState, useEffect } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { PortalProvider, usePortal } from '@/lib/portal-data';
 import TipTop from '@/components/portal/tiptop/TipTop';
+import SidebarNav from '@/components/portal/SidebarNav';
 
-const portalNav = [
-  { href: '/portal', label: 'Dashboard' },
-  { href: '/portal/growth', label: 'Growth Chain' },
-  { href: '/portal/document', label: 'Clarity Document' },
-  { href: '/portal/intake', label: 'Intake' },
-  { href: '/portal/answers', label: 'Your Answers' },
-  { href: '/portal/delivery', label: 'Delivery' },
-  { href: '/portal/production', label: 'Production' },
-  { href: '/portal/brand', label: 'Brand' },
-  { href: '/portal/actions', label: 'Action Items' },
-  { href: '/portal/deliverables', label: 'Deliverables' },
-  { href: '/portal/scripts', label: 'Scripts' },
-  { href: '/portal/progress', label: 'Progress & Delivered' },
-  { href: '/portal/reports', label: 'Reports' },
-  { href: '/portal/invoices', label: 'Invoices' },
-  { href: '/portal/profile', label: 'Profile' },
-];
 
 interface UserInfo {
   firstName: string;
@@ -34,7 +18,6 @@ interface UserInfo {
 }
 
 function PortalShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<UserInfo | null>(null);
@@ -90,8 +73,6 @@ function PortalShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const isActive = (href: string) => (href === '/portal' ? pathname === '/portal' : pathname.startsWith(href));
-
   return (
     <div className="portal flex min-h-svh bg-black">
       {/* Mobile overlay */}
@@ -111,29 +92,7 @@ function PortalShell({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
 
-        <nav aria-label="Portal" className="flex-1 overflow-y-auto py-4">
-          {(isStaff ? [...portalNav, { href: '/portal/clients', label: 'Clients · staff' }] : portalNav).map((item, i) => {
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                aria-current={active ? 'page' : undefined}
-                className={`group flex items-center gap-3 border-l-2 px-6 py-2.5 text-sm transition ${
-                  active
-                    ? 'border-[#2add1b] bg-[#2add1b]/[0.06] text-[#eeeeee]'
-                    : 'border-transparent text-[#eeeeee]/55 hover:bg-white/[0.03] hover:text-[#eeeeee]'
-                }`}
-              >
-                <span className={`portal-label !text-[9px] ${active ? 'text-[#2add1b]' : 'text-[#eeeeee]/25'}`}>
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <span className="font-medium">{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        <SidebarNav isStaff={isStaff} onNavigate={() => setSidebarOpen(false)} />
 
         <div className="border-t border-[#1a1a1a] px-6 py-5">
           {user && (
