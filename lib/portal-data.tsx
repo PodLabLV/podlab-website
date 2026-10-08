@@ -254,6 +254,14 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // TipTop (or any page) can ask for a fresh read after a server-side write.
+  const [reloadKey, setReloadKey] = useState(0);
+  useEffect(() => {
+    const bump = () => setReloadKey((k) => k + 1);
+    window.addEventListener('portal:refresh', bump);
+    return () => window.removeEventListener('portal:refresh', bump);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     const db = getSupabaseBrowser();
@@ -345,7 +353,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [setActionItem, addComment, setAnswer, setPhaseStatus, setElementRows]);
+  }, [setActionItem, addComment, setAnswer, setPhaseStatus, setElementRows, reloadKey]);
 
   return <PortalContext.Provider value={data}>{children}</PortalContext.Provider>;
 }

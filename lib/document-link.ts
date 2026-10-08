@@ -23,6 +23,17 @@ function sign(slug: string, exp: number): string {
   return crypto.createHmac('sha256', secret()).update(`${slug}.${exp}`).digest('base64url');
 }
 
+/** The private/clarity slug behind a stored document_url, or null for an external or empty one. */
+export function documentSlug(documentUrl: string | null | undefined): string | null {
+  if (!documentUrl) return null;
+  return LOCAL_DOC.exec(documentUrl)?.[1] ?? null;
+}
+
+/** The document_url a slug is stored under (the lookup the document route does in reverse). */
+export function documentUrlForSlug(slug: string): string {
+  return `/portal/${slug}/clarity-document.html`;
+}
+
 /** For a client's stored document_url, the URL the portal should actually load. */
 export function documentLinkFor(documentUrl: string | null): string | null {
   if (!documentUrl) return null;
