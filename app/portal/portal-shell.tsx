@@ -16,6 +16,7 @@ const portalNav = [
   { href: '/portal/production', label: 'Production' },
   { href: '/portal/actions', label: 'Action Items' },
   { href: '/portal/deliverables', label: 'Deliverables' },
+  { href: '/portal/scripts', label: 'Scripts' },
   { href: '/portal/progress', label: 'Progress' },
   { href: '/portal/reports', label: 'Reports' },
   { href: '/portal/invoices', label: 'Invoices' },
