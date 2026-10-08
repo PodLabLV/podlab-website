@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { SITE_URL, EMAIL_STYLE, emailLayout } from '@/lib/portal-email';
 
 /**
  * Portal access links: the invite a new client gets, and the reset link for a
@@ -18,7 +19,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const ACCESS_COOKIE = 'portal_access';
 
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://podlablv.com';
+export { SITE_URL };
 
 export type AccessKind = 'invite' | 'recovery';
 
@@ -94,29 +95,17 @@ const COPY: Record<AccessKind | 'reset', { subject: string; kicker: string; lead
 function emailHtml(kind: AccessKind | 'reset', url: string, firstName?: string | null): string {
   const c = COPY[kind];
   const hello = firstName ? `Hi ${firstName},` : 'Hi there,';
-  const logo = `${SITE_URL}/portal/podlab-portal-green.png`;
-  return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${c.subject}</title></head>
-<body style="margin:0;padding:0;background:#000000;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#000000;padding:40px 16px;"><tr><td align="center">
-    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#0a0a0a;border:1px solid #1a1a1a;">
-      <tr><td style="padding:28px 32px;border-bottom:1px solid #1a1a1a;">
-        <img src="${logo}" width="168" alt="PodLab Portal" style="display:block;width:168px;height:auto;border:0;">
-      </td></tr>
-      <tr><td style="padding:32px;">
-        <p style="margin:0 0 10px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#2add1b;">${c.kicker}</p>
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#eeeeee;">${hello}</p>
-        <p style="margin:0 0 28px;font-size:15px;line-height:1.6;color:#bdbdbd;">${c.lead}</p>
-        <a href="${url}" style="display:inline-block;padding:15px 28px;background:#2add1b;color:#000000;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-decoration:none;">${c.button} &rarr;</a>
-        <p style="margin:28px 0 0;font-size:12px;line-height:1.6;color:#777777;">${c.foot}</p>
-        <p style="margin:16px 0 0;font-size:11px;line-height:1.6;color:#555555;word-break:break-all;">Button not working? Paste this into your browser:<br><a href="${url}" style="color:#2add1b;">${url}</a></p>
-      </td></tr>
-      <tr><td style="padding:18px 32px;border-top:1px solid #1a1a1a;font-size:11px;color:#555555;">
-        PodLab · Las Vegas · <a href="mailto:info@podlablv.com" style="color:#888888;">info@podlablv.com</a>
-      </td></tr>
-    </table>
-  </td></tr></table>
-</body></html>`;
+  return emailLayout({
+    title: c.subject,
+    content: [
+      `        <p style="${EMAIL_STYLE.kicker}">${c.kicker}</p>`,
+      `        <p style="${EMAIL_STYLE.hello}">${hello}</p>`,
+      `        <p style="${EMAIL_STYLE.lead}">${c.lead}</p>`,
+      `        <a href="${url}" style="${EMAIL_STYLE.button}">${c.button} &rarr;</a>`,
+      `        <p style="margin:28px 0 0;font-size:12px;line-height:1.6;color:#777777;">${c.foot}</p>`,
+      `        <p style="margin:16px 0 0;font-size:11px;line-height:1.6;color:#555555;word-break:break-all;">Button not working? Paste this into your browser:<br><a href="${url}" style="${EMAIL_STYLE.link}">${url}</a></p>`,
+    ].join('\n'),
+  });
 }
 
 /** Send through Resend from info@. Returns false when unconfigured or rejected; callers fall back to showing the link. */

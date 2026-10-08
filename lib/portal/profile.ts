@@ -39,6 +39,10 @@ export interface ClientProfile {
   timezone: string | null;
   /** False until the migration adds phone / website / timezone. */
   extendedReady: boolean;
+  /** Opted out of the daily update email. */
+  digestOptOut: boolean;
+  /** False until the 20261010 migration adds digest_opt_out. */
+  digestReady: boolean;
 }
 
 function isTimezone(tz: string): boolean {
@@ -160,6 +164,8 @@ export async function loadProfile(db: SupabaseClient, clientId: string): Promise
     website: data.website ?? null,
     timezone: data.timezone ?? null,
     extendedReady: 'phone' in data && 'website' in data && 'timezone' in data,
+    digestOptOut: data.digest_opt_out === true,
+    digestReady: 'digest_opt_out' in data,
   };
 }
 
@@ -217,6 +223,24 @@ export async function saveProfile(
 
   const saved = Object.keys(changed).filter((k) => !pending.includes(k as ProfileField)) as ProfileField[];
   return { ok: true, saved, pending, before };
+}
+
+/** The daily update email switch. Separate from the text fields: it is a preference, not contact details. */
+export async function saveDigestOptOut(
+  db: SupabaseClient,
+  clientId: string,
+  optOut: boolean,
+): Promise<{ ok: true; changed: boolean } | { ok: false; message: string }> {
+  const current = await loadProfile(db, clientId);
+  if (!current) return { ok: false, message: 'Could not find your profile.' };
+  if (!current.digestReady) return { ok: false, message: 'Email updates are not switched on yet. Try again soon.' };
+  if (current.digestOptOut === optOut) return { ok: true, changed: false };
+  const { error } = await db.from('portal_clients').update({ digest_opt_out: optOut }).eq('id', clientId);
+  if (error) {
+    console.error('[portal] digest opt-out update failed', error.message);
+    return { ok: false, message: 'Could not save that.' };
+  }
+  return { ok: true, changed: true };
 }
 
 /** "Phone: (none) → +17025550101" lines for Slack / the CRM timeline. */
