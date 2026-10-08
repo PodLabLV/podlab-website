@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { PortalProvider, usePortal } from '@/lib/portal-data';
+import TipTop from '@/components/portal/tiptop/TipTop';
 
 const portalNav = [
   { href: '/portal', label: 'Dashboard' },
@@ -21,6 +22,7 @@ const portalNav = [
   { href: '/portal/progress', label: 'Progress' },
   { href: '/portal/reports', label: 'Reports' },
   { href: '/portal/invoices', label: 'Invoices' },
+  { href: '/portal/profile', label: 'Profile' },
 ];
 
 interface UserInfo {
@@ -175,6 +177,8 @@ function PortalShell({ children }: { children: React.ReactNode }) {
 
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:px-12 lg:py-12">{children}</div>
       </main>
+
+      <TipTop />
     </div>
   );
 }

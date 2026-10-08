@@ -84,3 +84,7 @@ The demo data is modeled after a realistic **$3,500/month ExpansionLab client** 
 - [ ] Add file download URLs to deliverables
 - [ ] Make month selector functional with historical data
 - [ ] Add email notifications for new deliverables/reports
+
+## TipTop, the client's guide (2026-10-09)
+
+A launcher + chat panel on every portal page (`components/portal/tiptop/`), backed by `POST /api/portal/tiptop` (AI SDK 7 `streamText` through Vercel AI Gateway, `anthropic/claude-sonnet-5.5` with fallbacks). She reads the client's whole account server-side (`lib/tiptop/overview.ts`), nudges on open loops, and acts through tools (`lib/tiptop/tools.ts`): revision notes on videos/scripts/deliverables, Clarity Document edits (exact find/replace, versioned in `portal_document_versions`, restorable on `/portal/document`), profile updates (`/portal/profile`, `/api/portal/profile`), action items, prefilled Calendly links, one honest product suggestion, and `flag_for_team` to Slack. Every write shows the client a confirm card first (HMAC-signed tool approvals). Migration: `supabase/migrations/20261009_portal_tiptop.sql`. Tests: `npm run test:tiptop`. Local without a gateway key: `TIPTOP_MOCK=1` (type `/tool <name> <json>`).
