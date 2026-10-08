@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { parseChapters, tagNote } from '@/lib/chapters';
 import { notifySlack, logToCrm, type PortalCaller } from '@/lib/portal-server';
 import { PORTAL_COMMENT_SUFFIX } from '@/lib/production';
 import { recordActivity, trimTo, MAX_NOTE } from '@/lib/portal/server';
@@ -34,17 +35,20 @@ export async function sendVideoNote(
   note: string,
   seconds?: number | null,
 ): Promise<ActionResult<{ title: string; body: string }>> {
-  const body = withTimestamp(note.trim(), seconds);
   if (!note.trim()) return { ok: false, message: 'Write a note first.' };
-  if (body.length > MAX_NOTE) return { ok: false, message: 'That note is too long.' };
+  if (note.trim().length > MAX_NOTE) return { ok: false, message: 'That note is too long.' };
 
   const { data: links, error: linkErr } = await db.from('portal_client_boards').select('board_id').eq('client_id', caller.clientId);
   if (missingTable(linkErr)) return { ok: false, message: 'Video notes are not switched on for your account yet.' };
   const boardIds = (links ?? []).map((r: { board_id: string }) => r.board_id);
 
   const crm = db.schema('crm');
-  const { data: card } = await crm.from('content_cards').select('id, title, board_id').eq('id', cardId).maybeSingle();
+  const { data: card } = await crm.from('content_cards').select('id, title, board_id, description').eq('id', cardId).maybeSingle();
   if (!card || !boardIds.includes(card.board_id)) return { ok: false, message: 'I could not find that video on your boards.' };
+
+  // Same tag the Production page writes: "[0:42 · Hook] note", chapter from the card description.
+  const t = typeof seconds === 'number' && Number.isFinite(seconds) && seconds >= 0 ? seconds : null;
+  const body = tagNote(note.trim(), t, parseChapters(card.description ?? ''));
 
   const { error } = await crm
     .from('content_comments')

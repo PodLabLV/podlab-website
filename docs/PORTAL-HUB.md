@@ -21,7 +21,8 @@ The portal is the one place a client goes for everything PodLab. Staff keep work
 | **Deliverables** | Versioned files. Video cuts get chapters and timestamped notes. Approve or send notes. | `portal_assets` + `portal_asset_versions` / `_comments` |
 | **Scripts** | Versioned scripts, notes pinned to a line, approval with evidence, teleprompter. | `portal_scripts*` |
 | **Action Items, Progress, Reports, Invoices** | As before. Invoices mirror from Whop. | `portal_*` |
-| **TipTop** | Their guide. See `PR` for the TipTop branch. | |
+| **Profile** | Name, phone, business, website, timezone. Login email changes go through info@. | `portal_clients` |
+| **TipTop** | Their guide, launcher on every portal page. Knows their account, nudges open items, files timestamped revisions, edits their Clarity Document (client confirms each edit; every version kept, Restore never deletes), updates their profile, books calls, suggests the product for a locked element (once), flags anything else to the team. | `lib/tiptop/*`, `portal_document_versions`, `portal_tiptop_threads` |
 
 ## Video chapters and timestamped revisions
 
@@ -60,11 +61,11 @@ You need a row in `portal_staff`. info@ already has one. Staff get **Clients · 
 
 1. **Database:** run every migration once, in order: `bash ~/podlab-portal-migrations/RUN-ALL.sh` in the macOS Terminal app.
    - Each file is safe to run twice, and the script stops at the first failure.
-   - Copies live in `supabase/migrations/` (2026-10-07 → 2026-10-09).
+   - Copies live in `supabase/migrations/` (2026-10-07 → 2026-10-09; seven files).
 2. **Site:** merge the hub PR, then deploy podlab-site to production from the main worktree.
    - Agents can't run production deploys; run them in the Terminal app.
    - The CLI often ends with `fetch failed` even when the deploy worked. Check `vercel ls --prod` before retrying.
-3. **Env vars:** already set: `RESEND_API_KEY`, `SLACK_WEBHOOK_URL`, Supabase keys, `NEXT_PUBLIC_SITE_URL`. Optional: `PORTAL_PUBLISH_KEY`. TipTop's needs are listed in its PR.
+3. **Env vars:** already set: `RESEND_API_KEY`, `SLACK_WEBHOOK_URL`, Supabase keys, `NEXT_PUBLIC_SITE_URL`. Optional: `PORTAL_PUBLISH_KEY`. TipTop needs AI Gateway enabled on the Vercel project (OIDC auth, no key). Optional: `TIPTOP_MODEL`, `TIPTOP_FALLBACK_MODELS`, `TIPTOP_REQUESTS_PER_MINUTE`, `TIPTOP_APPROVAL_SECRET`.
 
 ## Security notes
 
