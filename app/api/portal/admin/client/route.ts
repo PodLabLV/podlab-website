@@ -13,6 +13,8 @@ export interface StaffClientDetail {
     planLabel: string | null;
     hasLogin: boolean;
     crmLeadId: string | null;
+    /** Their folder in the PodLab OS Shared Drive (staff only). */
+    driveFolderUrl: string | null;
   };
   products: string[];
   elements: Array<{ element: string; score: number | null; delivered_at: string | null; state_override: string | null }>;
@@ -72,6 +74,7 @@ export async function GET(req: Request) {
       planLabel: c.plan_label ?? null,
       hasLogin: Boolean(c.user_id),
       crmLeadId: c.crm_lead_id ?? null,
+      driveFolderUrl: c.drive_folder_url ?? null,
     },
     products: (products.data ?? []).map((p: { product: string }) => p.product),
     elements: elements.data ?? [],
@@ -93,4 +96,29 @@ export async function GET(req: Request) {
     })),
   };
   return NextResponse.json(detail);
+}
+
+const DRIVE_URL = /^https:\/\/drive\.google\.com\/(drive\/(u\/\d+\/)?folders\/|open\?id=)[\w-]{10,}/;
+
+/** PATCH { id, driveFolderUrl } — staff only. Sets or clears the client's Drive folder link. */
+export async function PATCH(req: Request) {
+  const db = admin();
+  if (!(await resolveStaff(req, db))) return NextResponse.json({ error: 'Not authorized' }, { status: 401 });
+  let p: { id?: string; driveFolderUrl?: string | null };
+  try {
+    p = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Bad request' }, { status: 400 });
+  }
+  if (!p.id) return NextResponse.json({ error: 'id required' }, { status: 400 });
+  const url = (p.driveFolderUrl ?? '').trim() || null;
+  if (url && !DRIVE_URL.test(url)) {
+    return NextResponse.json({ error: 'Paste a Google Drive folder link (drive.google.com/drive/folders/…).' }, { status: 400 });
+  }
+  const { error } = await db.from('portal_clients').update({ drive_folder_url: url }).eq('id', p.id);
+  if (error) {
+    console.error('[portal] drive folder save failed', error.message);
+    return NextResponse.json({ error: /drive_folder_url/.test(error.message) ? 'Run migration 20261011 first.' : 'Could not save that.' }, { status: 500 });
+  }
+  return NextResponse.json({ ok: true, driveFolderUrl: url });
 }

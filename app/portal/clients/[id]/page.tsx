@@ -40,6 +40,7 @@ export default function StaffClientPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
   const [gen, setGen] = useState<{ generated: number; published: number } | null>(null);
+  const [driveDraft, setDriveDraft] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!accessToken) return;
@@ -114,6 +115,49 @@ export default function StaffClientPage() {
           Waiting on a migration: {d.missing.join(', ')}. Saving those sections will fail until it runs.
         </p>
       )}
+      <Section title="Drive folder" hint="Their folder in the PodLab OS Shared Drive: Clarity Doc, brand kit, pictures, raw footage and finished projects.">
+        {d.client.driveFolderUrl && driveDraft === null ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href={d.client.driveFolderUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="portal-label inline-flex items-center gap-2 bg-[#2add1b] px-5 py-3 !text-[10px] text-black transition hover:bg-[#eeeeee]"
+            >
+              Open in Drive ↗
+            </a>
+            <button onClick={() => setDriveDraft(d.client.driveFolderUrl ?? '')} className="portal-label !text-[9px] text-[#eeeeee]/40 transition hover:text-[#2add1b]">
+              Change link
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              value={driveDraft ?? ''}
+              onChange={(e) => setDriveDraft(e.target.value)}
+              placeholder="https://drive.google.com/drive/folders/…"
+              aria-label="Drive folder link"
+              className="min-w-0 flex-1 border border-[#1a1a1a] bg-black px-3 py-2.5 text-sm text-[#eeeeee] placeholder:text-[#eeeeee]/25 focus:border-[#2add1b] focus:outline-none"
+            />
+            <button
+              disabled={busy !== null}
+              onClick={async () => {
+                await call('drive', '/api/portal/admin/client', 'PATCH', { id: d.client.id, driveFolderUrl: driveDraft ?? '' }, 'Drive folder saved.');
+                setDriveDraft(null);
+              }}
+              className="portal-label bg-[#2add1b] px-5 py-3 !text-[10px] text-black transition hover:bg-[#eeeeee] disabled:opacity-40"
+            >
+              Save
+            </button>
+            {d.client.driveFolderUrl && (
+              <button onClick={() => setDriveDraft(null)} className="portal-label px-3 !text-[9px] text-[#eeeeee]/40 hover:text-[#eeeeee]">
+                Cancel
+              </button>
+            )}
+          </div>
+        )}
+      </Section>
+
       {flash && <p role="status" className="mt-4 border-l-2 border-[#2add1b] bg-[#2add1b]/5 px-4 py-3 text-sm text-[#eeeeee]/85">{flash}</p>}
 
       <Section title="What they bought" hint="Drives their Growth Chain: a product moves the elements it unlocks to Building. Edits and recordings show under what they have but unlock nothing.">

@@ -15,6 +15,7 @@ export interface StaffClientRow {
   invitedAt: string | null;
   invitedBy: string | null;
   lastSignInAt: string | null;
+  driveFolderUrl: string | null;
 }
 
 /** GET — staff only. Every portal client with their login status. */
@@ -47,6 +48,7 @@ export async function GET(req: Request) {
         invitedAt: c.invited_at ?? null,
         invitedBy: c.invited_by ?? null,
         lastSignInAt,
+        driveFolderUrl: c.drive_folder_url ?? null,
       };
     }),
   );
