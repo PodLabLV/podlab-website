@@ -95,8 +95,11 @@ export async function resolveStaff(
 }
 
 /** Best-effort Slack ping. A webhook failure must never fail the client's action. */
-export async function notifySlack(text: string): Promise<void> {
-  const url = process.env.SLACK_WEBHOOK_URL;
+export async function notifySlack(text: string, channel: 'default' | 'revisions' = 'default'): Promise<void> {
+  // Revision notes can go to their own channel (#revisions) so editors see them
+  // without the rest of the portal's traffic; until that webhook exists they
+  // fall back to the main one.
+  const url = (channel === 'revisions' && process.env.REVISIONS_SLACK_WEBHOOK_URL) || process.env.SLACK_WEBHOOK_URL;
   if (!url) return;
   try {
     await fetch(url, {

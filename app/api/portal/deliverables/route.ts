@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { parseChapters } from '@/lib/chapters';
+import { mirrorNotesToCard } from '@/lib/production-server';
 import { admin, resolveCaller, notifySlack, logToCrm } from '@/lib/portal-server';
 import {
   resolveActor,
@@ -63,7 +64,8 @@ export async function GET(req: Request) {
 
 // ── POST: publish ────────────────────────────────────────────────────────
 interface PostPayload {
-  intent?: 'sign' | 'register' | 'chapters';
+  intent?: 'sign' | 'register' | 'chapters' | 'link-card';
+  crmCardId?: string | null; // link-card, or on register
   versionId?: string;       // chapters
   chapters?: unknown;       // "0:00 Hook" lines, or [{ t, title }]
   assetId?: string;
@@ -109,6 +111,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Could not start that upload.' }, { status: 500 });
     }
     return NextResponse.json({ path, token: data.token, signedUrl: data.signedUrl });
+  }
+
+  // ── tie an asset to the editor's CRM card (null unties) ──────────────
+  if (p.intent === 'link-card') {
+    if (!p.assetId) return NextResponse.json({ error: 'assetId required' }, { status: 400 });
+    const { data, error } = await db
+      .from('portal_assets')
+      .update({ crm_card_id: p.crmCardId || null })
+      .eq('id', p.assetId)
+      .select('id')
+      .maybeSingle();
+    if (error) {
+      console.error('[portal] link card failed', error.message);
+      return NextResponse.json({ error: 'Could not link that card.' }, { status: 500 });
+    }
+    if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return NextResponse.json({ assetId: p.assetId, crmCardId: p.crmCardId || null });
   }
 
   // ── set or replace a version's chapters ─────────────────────────────
@@ -168,6 +187,7 @@ export async function POST(req: Request) {
         file_type: FILE_TYPES.includes(fileType) ? fileType : 'LINK',
         status: 'in review',
         current_version: 0,
+        ...(p.crmCardId ? { crm_card_id: p.crmCardId } : {}),
       })
       .select('id')
       .single();
@@ -256,7 +276,7 @@ export async function PATCH(req: Request) {
 
   const { data: asset } = await db
     .from('portal_assets')
-    .select('id, client_id, title, status, current_version, changes_requested_at')
+    .select('*')
     .eq('id', p.assetId)
     .maybeSingle();
   if (!asset) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -266,7 +286,7 @@ export async function PATCH(req: Request) {
 
   const { data: version } = await db
     .from('portal_asset_versions')
-    .select('id, version_no')
+    .select('*')
     .eq('asset_id', asset.id)
     .eq('version_no', asset.current_version)
     .maybeSingle();
@@ -352,6 +372,21 @@ export async function PATCH(req: Request) {
     logToCrm(db, caller, `Requested changes in portal on ${label} (${count} note${count === 1 ? '' : 's'}): ${trimTo(lines.join(' | '), 1500)}`),
     recordActivity(db, caller.clientId, 'deliverable', `You sent ${count} note${count === 1 ? '' : 's'} on ${label}`),
   ]);
+
+  // Tied to an editor's card: the notes go onto the card too, where the editor works.
+  if (asset.crm_card_id) {
+    await mirrorNotesToCard(
+      db,
+      caller,
+      asset.crm_card_id,
+      label,
+      [
+        ...(message ? [{ t: null, body: message }] : []),
+        ...unsent.map((n) => ({ t: n.time_seconds === null ? null : Number(n.time_seconds), body: n.body })),
+      ],
+      version.chapters,
+    );
+  }
 
   return NextResponse.json({ status: 'changes requested', sent: count });
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { usePortal, formatDate } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState } from '@/components/portal/Shared';
-import type { ProductionBoard, ProductionCard, ProductionComment, ProductionPayload, VslTrack } from '@/lib/production';
+import { stageFor, type ProductionBoard, type ProductionCard, type ProductionComment, type ProductionPayload, type VslTrack } from '@/lib/production';
 import VideoReview, { type ReviewNote } from '@/components/portal/VideoReview';
 import { videoSource } from '@/lib/chapters';
 
@@ -28,7 +28,7 @@ function StageTag({ card }: { card: ProductionCard }) {
   return <span className={`portal-label inline-block shrink-0 border px-2 py-1 !text-[8.5px] ${tone}`}>{card.stage || 'Queued'}</span>;
 }
 
-function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: string, c: ProductionComment) => void }) {
+function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: string, c: ProductionComment, movedTo?: string) => void }) {
   const { accessToken } = usePortal();
   const [open, setOpen] = useState(false);
 
@@ -40,7 +40,7 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Could not send that.');
-    onNote(card.id, json.comment as ProductionComment);
+    onNote(card.id, json.comment as ProductionComment, json.reopened ? 'Revising' : undefined);
   }
 
   const notes: ReviewNote[] = card.comments.map((c) => ({
@@ -50,7 +50,10 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
     author: c.author,
     fromClient: c.fromClient,
     meta: formatDate(c.createdAt),
+    resolved: c.resolved,
   }));
+  const mine = card.comments.filter((c) => c.fromClient);
+  const fixed = mine.filter((c) => c.resolved).length;
 
   return (
     <li className="bg-black">
@@ -67,7 +70,7 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
               {[
                 card.dueOn ? `Due ${formatDate(card.dueOn)}` : null,
                 card.chapters.length ? `${card.chapters.length} chapters` : null,
-                card.comments.length ? `${card.comments.length} note${card.comments.length === 1 ? '' : 's'}` : null,
+                mine.length ? `${fixed} of ${mine.length} of your notes fixed` : card.comments.length ? `${card.comments.length} note${card.comments.length === 1 ? '' : 's'}` : null,
               ]
                 .filter(Boolean)
                 .join(' · ') || ' '}
@@ -84,17 +87,23 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
             source={videoSource(card.videoUrl)}
             chapters={card.chapters}
             notes={notes}
-            onAddNote={card.done ? null : addNote}
+            onAddNote={addNote}
             emptyText={card.videoUrl ? undefined : 'No cut posted yet. You can still leave a note for the editor.'}
           />
-          {!card.done && <p className="mt-3 text-xs text-[#eeeeee]/35">Each note lands on the editor&apos;s card with its time and chapter.</p>}
+          <p className="mt-3 text-xs text-[#eeeeee]/35">
+            {card.done
+              ? card.stage === 'Posted'
+                ? 'This video is already live. A note goes to the team, who will decide on a re-cut with you.'
+                : 'This video is approved. A note sends it back to the editor for another pass.'
+              : 'Each note lands on the editor’s card with its time and chapter.'}
+          </p>
         </div>
       )}
     </li>
   );
 }
 
-function BoardSection({ board, onNote }: { board: ProductionBoard; onNote: (cardId: string, c: ProductionComment) => void }) {
+function BoardSection({ board, onNote }: { board: ProductionBoard; onNote: (cardId: string, c: ProductionComment, movedTo?: string) => void }) {
   const [showDone, setShowDone] = useState(false);
   const active = board.cards.filter((c) => !c.done);
   const done = board.cards.filter((c) => c.done);
@@ -187,15 +196,27 @@ export default function ProductionPage() {
       .catch((err) => setError(err instanceof Error ? err.message : 'Could not load production.'));
   }, [accessToken, client]);
 
-  const onNote = (cardId: string, c: ProductionComment) =>
-    setData((prev) =>
-      prev && {
-        ...prev,
-        boards: prev.boards.map((b) => ({
-          ...b,
-          cards: b.cards.map((card) => (card.id === cardId ? { ...card, comments: [c, ...card.comments] } : card)),
-        })),
-      },
+  // A note on a video past review sends it back to Revising; mirror that here.
+  const onNote = (cardId: string, c: ProductionComment, movedTo?: string) =>
+    setData(
+      (prev) =>
+        prev && {
+          ...prev,
+          boards: prev.boards.map((b) => ({
+            ...b,
+            cards: b.cards.map((card) =>
+              card.id !== cardId
+                ? card
+                : {
+                    ...card,
+                    comments: [c, ...card.comments],
+                    ...(movedTo
+                      ? { column: movedTo, stage: stageFor(movedTo), done: false, step: Math.max(0, b.columns.indexOf(movedTo)) }
+                      : {}),
+                  },
+            ),
+          })),
+        },
     );
 
   if (loading || (client && !data && !error)) return <p className="portal-label !text-[9px] text-[#eeeeee]/40">Loading production</p>;

@@ -19,8 +19,10 @@ export interface ReviewNote {
   body: string;
   author: string;
   fromClient: boolean;
-  /** Small trailing tag, e.g. "Resolved" or a date. */
+  /** Small trailing tag, e.g. a date. */
   meta?: string;
+  /** The editor ticked it off. */
+  resolved?: boolean;
 }
 
 interface Props {
@@ -304,6 +306,7 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
                 <p className="portal-label mt-1.5 !text-[8px] text-[#eeeeee]/30">
                   {n.fromClient ? 'You' : `${n.author} · PodLab`}
                   {n.meta ? `  ·  ${n.meta}` : ''}
+                  {n.resolved && <span className="ml-2 border border-[#2add1b]/50 px-1.5 py-0.5 text-[#2add1b]">Fixed</span>}
                 </p>
               </div>
             </li>

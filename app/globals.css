@@ -333,6 +333,12 @@ h1, h2, h3, h4, h5, h6,
 .portal a:hover {
   text-shadow: none;
 }
+/* The old site lifts and glows every button on hover; portal buttons stay put. */
+.portal button:hover,
+.portal .btn:hover {
+  transform: none;
+  box-shadow: none;
+}
 .portal :focus-visible {
   outline: 1px solid #2add1b;
   outline-offset: 3px;
