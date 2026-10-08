@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { usePortal, formatDate } from '@/lib/portal-data';
 import { PageHeader, EmptyState } from '@/components/portal/Shared';
 import type { StaffClientRow } from '@/app/api/portal/admin/clients/route';
@@ -86,7 +87,12 @@ function ClientRow({ c, token, onDone }: { c: StaffClientRow; token: string; onD
         <p className="mt-1 truncate text-xs text-[#eeeeee]/45">
           {[c.name, c.planLabel].filter(Boolean).join(' · ') || ' '}
         </p>
-        <p className="portal-label mt-2 !text-[8.5px] text-[#eeeeee]/30">{when}</p>
+        <p className="portal-label mt-2 !text-[8.5px] text-[#eeeeee]/30">
+          {when} ·{' '}
+          <Link href={`/portal/clients/${c.id}`} className="text-[#2add1b] hover:text-[#eeeeee]">
+            Manage
+          </Link>
+        </p>
       </div>
 
       <div>

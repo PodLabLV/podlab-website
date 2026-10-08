@@ -12,6 +12,7 @@ const portalNav = [
   { href: '/portal/growth', label: 'Growth Chain' },
   { href: '/portal/document', label: 'Clarity Document' },
   { href: '/portal/intake', label: 'Intake' },
+  { href: '/portal/answers', label: 'Your Answers' },
   { href: '/portal/delivery', label: 'Delivery' },
   { href: '/portal/production', label: 'Production' },
   { href: '/portal/actions', label: 'Action Items' },

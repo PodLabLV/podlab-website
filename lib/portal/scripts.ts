@@ -73,6 +73,8 @@ export interface PortalAssetVersion {
   note: string | null;
   uploaded_by: string | null;
   created_at: string;
+  /** [{ t, title }] — see lib/chapters.ts. Absent before 20261008e runs. */
+  chapters?: unknown;
 }
 
 export interface PortalAssetComment {

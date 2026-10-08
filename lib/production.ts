@@ -6,10 +6,15 @@
  * editors' ladders (CRM phase59) are mapped to words a client understands.
  */
 
+import type { Chapter } from '@/lib/chapters';
+
 export interface ProductionComment {
   id: string;
   author: string;
+  /** Text without the "[0:42 · Hook]" tag. */
   body: string;
+  /** Seconds into the video, when the note was pinned to a moment. */
+  t: number | null;
   createdAt: string;
   /** Written from the portal by the client, rather than by the PodLab team. */
   fromClient: boolean;
@@ -26,6 +31,8 @@ export interface ProductionCard {
   steps: number;
   dueOn: string | null;
   videoUrl: string | null;
+  /** From the card description, YouTube-chapter style ("0:00 Hook" per line). */
+  chapters: Chapter[];
   done: boolean;
   comments: ProductionComment[];
 }

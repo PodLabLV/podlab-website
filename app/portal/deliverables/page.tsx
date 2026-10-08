@@ -14,6 +14,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePortal, formatDate, type PortalAsset } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState, FileMark } from '@/components/portal/Shared';
 import ScriptStatusBadge from '@/components/portal/ScriptStatusBadge';
+import VideoReview from '@/components/portal/VideoReview';
+import { parseChapters, videoSource } from '@/lib/chapters';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { loadAssetReview, portalCall, type AssetReviewData } from '@/lib/portal/browser';
 import {
@@ -140,33 +142,6 @@ function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps)
 
   return (
     <div className="border-t border-[#1a1a1a] p-5 md:p-6">
-      {inlineVideo && (
-        <div className="mb-5 bg-black">
-          {src ? (
-            <video
-              ref={videoRef}
-              src={src}
-              controls
-              playsInline
-              preload="metadata"
-              className="aspect-video w-full bg-black"
-              onPause={() => setStamp(clock(videoRef.current?.currentTime ?? 0))}
-              onError={() => {
-                // A signed URL expires; mint once more before giving up.
-                if (!retried) {
-                  setRetried(true);
-                  mint();
-                }
-              }}
-            />
-          ) : (
-            <div className="flex aspect-video w-full items-center justify-center border border-[#1a1a1a]">
-              <span className="portal-label !text-[9px] text-[#eeeeee]/35">Loading video</span>
-            </div>
-          )}
-        </div>
-      )}
-
       {current.note && (
         <div className="mb-5 border-l-2 border-[#2add1b] pl-4">
           <span className="portal-label block !text-[9px] text-[#2add1b]">What changed in v{current.version_no}</span>
@@ -174,6 +149,37 @@ function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps)
         </div>
       )}
 
+      {isVideo ? (
+        <VideoReview
+          source={current.storage_path ? (src ? { kind: 'file', url: src } : null) : videoSource(current.external_url)}
+          chapters={parseChapters(current.chapters ?? [])}
+          notes={notes.map((c) => ({
+            id: c.id,
+            t: c.time_seconds === null ? null : Number(c.time_seconds),
+            body: c.body,
+            author: c.author_name,
+            fromClient: c.author_kind === 'client',
+            meta: c.status === 'resolved' ? 'Resolved' : undefined,
+          }))}
+          onAddNote={
+            approved
+              ? null
+              : async (t, body) => {
+                  await portalCall('/api/portal/deliverables/comments', 'POST', { versionId: current.id, timeSeconds: t, body });
+                  await onChanged();
+                }
+          }
+          onSourceError={() => {
+            // A signed URL expires; mint once more before giving up.
+            if (!retried) {
+              setRetried(true);
+              mint();
+            }
+          }}
+          emptyText={approved ? 'No notes on this version.' : undefined}
+        />
+      ) : (
+        <>
       <span className="portal-label block !text-[9px] text-[#eeeeee]/45">
         Notes on v{current.version_no}
         {notes.length ? ` · ${notes.length}` : ''}
@@ -237,6 +243,9 @@ function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps)
             {busy ? 'Saving' : 'Save note'}
           </button>
         </div>
+      )}
+
+        </>
       )}
 
       {err && <p role="alert" className="mt-4 border-l-2 border-red-500 bg-red-500/5 px-4 py-3 text-sm text-red-300">{err}</p>}

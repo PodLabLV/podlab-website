@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { usePortal, formatDate } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState } from '@/components/portal/Shared';
 import type { ProductionBoard, ProductionCard, ProductionComment, ProductionPayload, VslTrack } from '@/lib/production';
+import VideoReview, { type ReviewNote } from '@/components/portal/VideoReview';
+import { videoSource } from '@/lib/chapters';
 
 function StepBar({ card }: { card: ProductionCard }) {
   if (card.steps < 2) return null;
@@ -29,30 +31,26 @@ function StageTag({ card }: { card: ProductionCard }) {
 function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: string, c: ProductionComment) => void }) {
   const { accessToken } = usePortal();
   const [open, setOpen] = useState(false);
-  const [note, setNote] = useState('');
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  async function send(e: React.FormEvent) {
-    e.preventDefault();
-    setSending(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/portal/production', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken ?? ''}` },
-        body: JSON.stringify({ cardId: card.id, body: note }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Could not send that.');
-      onNote(card.id, json.comment as ProductionComment);
-      setNote('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not send that.');
-    } finally {
-      setSending(false);
-    }
+  async function addNote(t: number | null, body: string) {
+    const res = await fetch('/api/portal/production', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken ?? ''}` },
+      body: JSON.stringify({ cardId: card.id, body, timeSeconds: t }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Could not send that.');
+    onNote(card.id, json.comment as ProductionComment);
   }
+
+  const notes: ReviewNote[] = card.comments.map((c) => ({
+    id: c.id,
+    t: c.t,
+    body: c.body,
+    author: c.author,
+    fromClient: c.fromClient,
+    meta: formatDate(c.createdAt),
+  }));
 
   return (
     <li className="bg-black">
@@ -66,7 +64,11 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
           <span className="min-w-0">
             <span className="block text-[15px] font-semibold text-[#eeeeee]">{card.title}</span>
             <span className="mt-1 block text-xs text-[#eeeeee]/40">
-              {[card.dueOn ? `Due ${formatDate(card.dueOn)}` : null, card.comments.length ? `${card.comments.length} note${card.comments.length === 1 ? '' : 's'}` : null]
+              {[
+                card.dueOn ? `Due ${formatDate(card.dueOn)}` : null,
+                card.chapters.length ? `${card.chapters.length} chapters` : null,
+                card.comments.length ? `${card.comments.length} note${card.comments.length === 1 ? '' : 's'}` : null,
+              ]
                 .filter(Boolean)
                 .join(' · ') || ' '}
             </span>
@@ -77,55 +79,15 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
       </button>
 
       {open && (
-        <div className="border-t border-[#1a1a1a] px-5 pb-5 pt-4">
-          {card.videoUrl && (
-            <a
-              href={card.videoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="portal-label inline-flex items-center gap-2 border border-[#2add1b]/50 px-4 py-2.5 !text-[9.5px] text-[#2add1b] transition hover:bg-[#2add1b] hover:text-black"
-            >
-              Watch the latest cut →
-            </a>
-          )}
-
-          {card.comments.length > 0 && (
-            <ol className="mt-4 space-y-3">
-              {card.comments.map((c) => (
-                <li key={c.id} className={`border-l-2 pl-4 ${c.fromClient ? 'border-[#eeeeee]/25' : 'border-[#2add1b]/60'}`}>
-                  <p className="portal-label !text-[8.5px] text-[#eeeeee]/35">
-                    {c.fromClient ? 'You' : c.author} · {formatDate(c.createdAt)}
-                  </p>
-                  <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-[#eeeeee]/80">{c.body}</p>
-                </li>
-              ))}
-            </ol>
-          )}
-
-          <form onSubmit={send} className="mt-5">
-            <label htmlFor={`note-${card.id}`} className="portal-label mb-2 block !text-[9px] text-[#eeeeee]/45">
-              Request a change
-            </label>
-            <textarea
-              id={`note-${card.id}`}
-              rows={3}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="What should change? Timestamps help: “0:42, cut the pause.”"
-              className="w-full resize-y border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3 text-[15px] leading-relaxed text-[#eeeeee] placeholder:text-[#eeeeee]/25 focus:border-[#2add1b] focus:outline-none"
-            />
-            {error && <p role="alert" className="mt-2 text-sm text-red-300">{error}</p>}
-            <div className="mt-3 flex flex-wrap items-center gap-4">
-              <button
-                type="submit"
-                disabled={sending || !note.trim()}
-                className="portal-label bg-[#2add1b] px-5 py-3 !text-[10px] text-black transition hover:bg-[#eeeeee] disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {sending ? 'Sending' : 'Send to the editor'}
-              </button>
-              <span className="text-xs text-[#eeeeee]/35">Goes straight onto the editor&apos;s card.</span>
-            </div>
-          </form>
+        <div className="border-t border-[#1a1a1a] px-5 pb-6 pt-5">
+          <VideoReview
+            source={videoSource(card.videoUrl)}
+            chapters={card.chapters}
+            notes={notes}
+            onAddNote={card.done ? null : addNote}
+            emptyText={card.videoUrl ? undefined : 'No cut posted yet. You can still leave a note for the editor.'}
+          />
+          {!card.done && <p className="mt-3 text-xs text-[#eeeeee]/35">Each note lands on the editor&apos;s card with its time and chapter.</p>}
         </div>
       )}
     </li>
@@ -243,7 +205,7 @@ export default function ProductionPage() {
       eyebrow="Production"
       title="Your videos,"
       accent="in the edit."
-      subtitle="Every video we're making for you, live from our editors' board. Leave a note on any cut and it lands on the editor's card."
+      subtitle="Every video we're making for you, live from our editors' board. Jump by chapter, pause on the moment, and your note lands on the editor's card with the time."
     />
   );
 

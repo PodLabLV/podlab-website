@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { parseChapters } from '@/lib/chapters';
 import { admin, resolveCaller, notifySlack, logToCrm } from '@/lib/portal-server';
 import {
   resolveActor,
@@ -62,7 +63,9 @@ export async function GET(req: Request) {
 
 // ── POST: publish ────────────────────────────────────────────────────────
 interface PostPayload {
-  intent?: 'sign' | 'register';
+  intent?: 'sign' | 'register' | 'chapters';
+  versionId?: string;       // chapters
+  chapters?: unknown;       // "0:00 Hook" lines, or [{ t, title }]
   assetId?: string;
   clientId?: string;
   clientEmail?: string;
@@ -106,6 +109,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Could not start that upload.' }, { status: 500 });
     }
     return NextResponse.json({ path, token: data.token, signedUrl: data.signedUrl });
+  }
+
+  // ── set or replace a version's chapters ─────────────────────────────
+  if (p.intent === 'chapters') {
+    if (!p.versionId) return NextResponse.json({ error: 'versionId required' }, { status: 400 });
+    const chapters = parseChapters(p.chapters ?? '');
+    const { data, error } = await db
+      .from('portal_asset_versions')
+      .update({ chapters })
+      .eq('id', p.versionId)
+      .select('id')
+      .maybeSingle();
+    if (error) {
+      console.error('[portal] chapters update failed', error.message);
+      return NextResponse.json({ error: 'Could not save chapters.' }, { status: 500 });
+    }
+    if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return NextResponse.json({ versionId: p.versionId, chapters });
   }
 
   // ── register a version ──────────────────────────────────────────────
@@ -177,6 +198,7 @@ export async function POST(req: Request) {
       mime_type: p.mimeType ?? null,
       note: p.note?.trim() ? p.note.trim().slice(0, 1000) : null,
       uploaded_by: publisher.name,
+      ...(p.chapters ? { chapters: parseChapters(p.chapters) } : {}),
     })
     .select('id, version_no')
     .single();

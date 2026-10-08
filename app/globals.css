@@ -321,8 +321,16 @@ h1, h2, h3, h4, h5, h6,
   text-transform: none;
   hyphens: manual;
 }
+/* The old site pads every <section> on phones; portal layouts own their gutters. */
+@media (max-width: 767px) {
+  .portal section {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
 /* The old site's text shadows were for its animated background; the portal is flat black. */
-.portal p, .portal li, .portal span, .portal h1, .portal h2, .portal h3, .portal h4 {
+.portal p, .portal li, .portal span, .portal h1, .portal h2, .portal h3, .portal h4,
+.portal a:hover {
   text-shadow: none;
 }
 .portal :focus-visible {

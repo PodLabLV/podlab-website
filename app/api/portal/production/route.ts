@@ -8,6 +8,7 @@ import {
   type ProductionPayload,
   type VslTrack,
 } from '@/lib/production';
+import { parseChapters, readNote, tagNote } from '@/lib/chapters';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,7 @@ interface CrmCard {
   sort: number;
   due_on: string | null;
   video_url: string | null;
+  description: string | null;
 }
 interface CrmComment { id: string; card_id: string; author_name: string | null; body: string; created_at: string }
 
@@ -52,7 +54,7 @@ export async function GET(req: Request) {
       crm.from('content_lists').select('id, board_id, name, sort').in('board_id', boardIds).eq('archived', false).order('sort'),
       crm
         .from('content_cards')
-        .select('id, board_id, list_id, title, sort, due_on, video_url')
+        .select('id, board_id, list_id, title, sort, due_on, video_url, description')
         .in('board_id', boardIds)
         .eq('archived', false)
         .eq('is_template', false)
@@ -96,13 +98,14 @@ export async function GET(req: Request) {
               steps: cols.length,
               dueOn: c.due_on,
               videoUrl: c.video_url,
+              chapters: parseChapters(c.description ?? ''),
               done: isDoneColumn(column),
               comments: commentRows
                 .filter((m) => m.card_id === c.id)
                 .map((m) => ({
                   id: m.id,
                   author: (m.author_name ?? 'PodLab').replace(PORTAL_COMMENT_SUFFIX, ''),
-                  body: m.body,
+                  ...(({ t, text }) => ({ t, body: text }))(readNote(m.body)),
                   createdAt: m.created_at,
                   fromClient: (m.author_name ?? '').endsWith(PORTAL_COMMENT_SUFFIX),
                 })),
@@ -143,7 +146,7 @@ export async function POST(req: Request) {
   const caller = await resolveCaller(req, db);
   if (!caller) return NextResponse.json({ error: 'Not authorized' }, { status: 401 });
 
-  let p: { cardId?: string; body?: string };
+  let p: { cardId?: string; body?: string; timeSeconds?: number | null };
   try {
     p = await req.json();
   } catch {
@@ -152,10 +155,11 @@ export async function POST(req: Request) {
   const body = (p.body ?? '').trim();
   if (!p.cardId || !body) return NextResponse.json({ error: 'Write a note first.' }, { status: 400 });
   if (body.length > MAX_NOTE) return NextResponse.json({ error: 'That note is too long.' }, { status: 400 });
+  const t = typeof p.timeSeconds === 'number' && Number.isFinite(p.timeSeconds) && p.timeSeconds >= 0 ? p.timeSeconds : null;
 
   // The card must sit on one of this client's boards; a guessed id gets a 404.
   const crm = db.schema('crm');
-  const { data: card } = await crm.from('content_cards').select('id, title, board_id').eq('id', p.cardId).maybeSingle();
+  const { data: card } = await crm.from('content_cards').select('id, title, board_id, description').eq('id', p.cardId).maybeSingle();
   const boardIds = await linkedBoardIds(db, caller.clientId);
   if (!card || !boardIds.includes(card.board_id)) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -163,7 +167,8 @@ export async function POST(req: Request) {
 
   const { data: comment, error } = await crm
     .from('content_comments')
-    .insert({ card_id: card.id, author_name: caller.displayName + PORTAL_COMMENT_SUFFIX, body })
+    // Editors read the moment straight off the card: "[0:42 · Hook] cut the pause".
+    .insert({ card_id: card.id, author_name: caller.displayName + PORTAL_COMMENT_SUFFIX, body: tagNote(body, t, parseChapters(card.description ?? '')) })
     .select('id, author_name, body, created_at')
     .single();
   if (error) {
@@ -172,15 +177,15 @@ export async function POST(req: Request) {
   }
 
   await Promise.all([
-    notifySlack(`*Revision note* — ${caller.businessName} on "${card.title}"\n> ${body.slice(0, 500)}`),
-    logToCrm(db, caller, `Revision note on "${card.title}": ${body.slice(0, 200)}`),
+    notifySlack(`*Revision note* — ${caller.businessName} on "${card.title}"\n> ${comment.body.slice(0, 500)}`),
+    logToCrm(db, caller, `Revision note on "${card.title}": ${comment.body.slice(0, 200)}`),
   ]);
 
   return NextResponse.json({
     comment: {
       id: comment.id,
       author: caller.displayName,
-      body: comment.body,
+      ...(({ t: at, text }) => ({ t: at, body: text }))(readNote(comment.body)),
       createdAt: comment.created_at,
       fromClient: true,
     },

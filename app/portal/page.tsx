@@ -1,9 +1,13 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePortal, formatDate, type PortalPhase } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState, StatusBadge } from '@/components/portal/Shared';
 import { chainStatus } from '@/lib/growth-chain';
+import { loadScriptIndex } from '@/lib/portal/browser';
+import { isWaitingOnClient } from '@/lib/portal/scripts';
+import type { ProductionPayload } from '@/lib/production';
 
 interface NextStep {
   href: string;
@@ -18,14 +22,60 @@ const Arrow = () => (
   </svg>
 );
 
+/**
+ * What is waiting on the client elsewhere in the portal: scripts to approve and
+ * cuts to watch. Both are best-effort; a module that isn't live yet adds nothing.
+ */
+function useWaitingOnClient(clientId: string | undefined, token: string | null): NextStep[] {
+  const [steps, setSteps] = useState<NextStep[]>([]);
+  useEffect(() => {
+    if (!clientId || !token) return;
+    let cancelled = false;
+    (async () => {
+      const found: NextStep[] = [];
+      try {
+        const { scripts } = await loadScriptIndex();
+        for (const sc of scripts.filter((x) => isWaitingOnClient(x.status)).slice(0, 2)) {
+          found.push({ href: `/portal/scripts/${sc.id}`, kicker: 'Waiting on your approval', title: sc.title, detail: 'Read it, leave notes, or approve it so we can shoot.' });
+        }
+      } catch {
+        // Scripts not live yet.
+      }
+      try {
+        const res = await fetch('/api/portal/production', { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+        if (res.ok) {
+          const data = (await res.json()) as ProductionPayload;
+          const ready = data.boards.flatMap((b) => b.cards).filter((c) => c.videoUrl && !c.done);
+          if (ready.length) {
+            found.push({
+              href: '/portal/production',
+              kicker: 'Ready to watch',
+              title: ready.length === 1 ? ready[0].title : `${ready.length} cuts are ready to watch`,
+              detail: 'Pause on any moment to leave a timestamped note for the editor.',
+            });
+          }
+        }
+      } catch {
+        // Production not linked yet.
+      }
+      if (!cancelled) setSteps(found);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId, token]);
+  return steps;
+}
+
 /** The phase being worked now: the first in progress, else the first not started. */
 function currentPhase(phases: PortalPhase[]): PortalPhase | undefined {
   return phases.find((p) => p.status === 'in progress') ?? phases.find((p) => p.status === 'not started');
 }
 
 export default function PortalDashboard() {
-  const { loading, error, client, assets, activity, actionItems, phases, intakeItems, answers, viewerEmail, products, elementRows, isStaff } =
+  const { loading, error, client, assets, activity, actionItems, phases, intakeItems, answers, viewerEmail, products, elementRows, isStaff, accessToken } =
     usePortal();
+  const waiting = useWaitingOnClient(client?.id, accessToken);
 
   if (loading) {
     return <p className="portal-label !text-[9px] text-[#eeeeee]/40">Loading your portal</p>;
@@ -86,7 +136,10 @@ export default function PortalDashboard() {
   const constraint = chain.elements.find((e) => e.key === chain.constraint);
 
   // What the client should do next, most important first.
-  const steps: NextStep[] = [];
+  const steps: NextStep[] = [...waiting];
+  for (const a of assets.filter((x) => (x.status || '').toLowerCase() === 'in review').slice(0, 2)) {
+    steps.push({ href: '/portal/deliverables', kicker: 'Ready for your review', title: a.title, detail: 'Approve it, or leave notes on what should change.' });
+  }
   if (chain.answered === 0) {
     steps.push({
       href: '/portal/growth',
