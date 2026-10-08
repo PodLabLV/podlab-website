@@ -5,6 +5,7 @@ import { isDoneColumn, stageFor, PORTAL_COMMENT_SUFFIX } from '@/lib/production'
 import { isWaitingOnClient, unsentClientNotes, vocab } from '@/lib/portal/scripts';
 import { loadProfile } from '@/lib/portal/profile';
 import { clientDocumentInfo, listVersions } from '@/lib/portal/documents';
+import { loadBrand, brandGaps } from '@/lib/portal/brand';
 
 /**
  * Everything TipTop knows about one client, read server-side with the service
@@ -54,6 +55,15 @@ export interface Overview {
   intake: { total: number; answered: number; requiredLeft: number; submitted: boolean };
   invoices: { open: Array<{ no: string | null; description: string | null; amount: string; status: string | null; issued: string | null }>; paidCount: number };
   document: { has: boolean; editable: boolean; historyReady: boolean; versions: number };
+  brand: {
+    available: boolean;
+    logos: string[];
+    colors: string[];
+    fonts: string[];
+    guide: boolean;
+    broll: { files: number; links: number };
+    gaps: string[];
+  };
   /** Nudges, most important first. */
   accountability: string[];
 }
@@ -72,7 +82,7 @@ async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 export async function buildOverview(db: SupabaseClient, caller: PortalCaller): Promise<Overview> {
   const id = caller.clientId;
 
-  const [profile, chain, phases, production, scripts, deliverables, actionItems, intake, invoices, document] = await Promise.all([
+  const [profile, chain, phases, production, scripts, deliverables, actionItems, intake, invoices, document, brand] = await Promise.all([
     safe(() => loadProfile(db, id), null),
     safe(() => chainBlock(db, id), emptyChain()),
     safe(() => phasesBlock(db, id), []),
@@ -83,6 +93,7 @@ export async function buildOverview(db: SupabaseClient, caller: PortalCaller): P
     safe(() => intakeBlock(db, id), { total: 0, answered: 0, requiredLeft: 0, submitted: false }),
     safe(() => invoicesBlock(db, id), { open: [], paidCount: 0 }),
     safe(() => documentBlock(db, id), { has: false, editable: false, historyReady: false, versions: 0 }),
+    safe(() => brandBlock(db, id), emptyBrand()),
   ]);
 
   const o: Overview = {
@@ -106,6 +117,7 @@ export async function buildOverview(db: SupabaseClient, caller: PortalCaller): P
     intake,
     invoices,
     document,
+    brand,
     accountability: [],
   };
 
@@ -134,6 +146,8 @@ function nudges(o: Overview): string[] {
         : `Intake answered (${o.intake.answered}/${o.intake.total}) but not submitted`,
     );
   }
+  // Only the first brand gap: it is a nudge, not a checklist.
+  if (o.brand.available && o.brand.gaps.length) out.push(`Brand page: ${o.brand.gaps[0].toLowerCase()} (editors need it to brand their videos)`);
   if (o.actionItems.open.length) out.push(`${o.actionItems.open.length} open action item${o.actionItems.open.length === 1 ? '' : 's'}`);
   if (o.chain.available && o.chain.answered < 8) out.push(o.chain.answered === 0 ? 'Growth Chain check not taken yet (eight questions, about four minutes)' : `Growth Chain check part-done (${o.chain.answered}/8)`);
   const blocked = o.phases.filter((p) => p.status === 'blocked');
@@ -398,6 +412,25 @@ async function documentBlock(db: SupabaseClient, id: string): Promise<Overview['
   };
 }
 
+function emptyBrand(): Overview['brand'] {
+  return { available: false, logos: [], colors: [], fonts: [], guide: false, broll: { files: 0, links: 0 }, gaps: [] };
+}
+
+async function brandBlock(db: SupabaseClient, id: string): Promise<Overview['brand']> {
+  const b = await loadBrand(db, id, { sign: false });
+  if (!b.ready) return emptyBrand();
+  const broll = b.assets.filter((a) => a.kind === 'broll');
+  return {
+    available: true,
+    logos: b.assets.filter((a) => a.kind === 'logo').map((a) => a.variant ?? 'other'),
+    colors: b.kit.colors.map((c) => `${c.hex}${c.name ? ` ${c.name}` : ''}`),
+    fonts: b.kit.fonts.map((f) => `${f.name}${f.use ? ` (${f.use})` : ''}`),
+    guide: b.assets.some((a) => a.kind === 'guide'),
+    broll: { files: broll.filter((a) => !a.externalUrl).length, links: broll.filter((a) => a.externalUrl).length },
+    gaps: brandGaps(b),
+  };
+}
+
 /** Compact, model-facing rendering of the overview. IDs are included so tools can target them. */
 export function renderOverview(o: Overview): string {
   const L: string[] = [];
@@ -440,6 +473,11 @@ export function renderOverview(o: Overview): string {
   L.push(o.intake.total ? `Intake: ${o.intake.answered}/${o.intake.total} answered, ${o.intake.requiredLeft} required left, ${o.intake.submitted ? 'submitted' : 'NOT submitted'}.` : 'Intake: none assigned.');
   L.push(o.invoices.open.length ? `Unpaid invoices: ${o.invoices.open.map((i) => `${i.no ?? 'invoice'} ${i.amount} ${i.status ?? ''}${i.description ? ` (${i.description})` : ''}`).join('; ')}. Paid: ${o.invoices.paidCount}.` : `Invoices: nothing outstanding (${o.invoices.paidCount} paid).`);
   L.push(`Clarity Document: ${o.document.has ? 'published' : 'not published yet'}${o.document.has ? (o.document.editable ? `, you can edit it (${o.document.versions} saved versions)` : o.document.historyReady ? ', hosted externally, so you cannot edit it' : ', editing not switched on yet') : ''}.`);
+  if (!o.brand.available) L.push('Brand page: not switched on yet.');
+  else
+    L.push(
+      `Brand page (/portal/brand: logos, colors, fonts, guide, b-roll; they upload there themselves): logos ${o.brand.logos.length ? o.brand.logos.join(', ') : 'none'}; colors ${o.brand.colors.join(', ') || 'none'}; fonts ${o.brand.fonts.join(', ') || 'none'}; brand guide ${o.brand.guide ? 'uploaded' : 'not uploaded'}; b-roll ${o.brand.broll.files} files, ${o.brand.broll.links} links.${o.brand.gaps.length ? ` Missing: ${o.brand.gaps.join('; ')}.` : ' Kit complete.'}`,
+    );
   L.push(o.accountability.length ? `Open loops (bring up the top one or two when it fits):\n${o.accountability.map((a) => `  - ${a}`).join('\n')}` : 'Open loops: none. They are on top of everything.');
   return L.join('\n');
 }

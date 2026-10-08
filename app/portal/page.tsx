@@ -9,6 +9,7 @@ import DeliveredList from '@/components/portal/DeliveredList';
 import { loadScriptIndex } from '@/lib/portal/browser';
 import { isWaitingOnClient } from '@/lib/portal/scripts';
 import type { ProductionPayload } from '@/lib/production';
+import { brandGaps, type BrandPayload } from '@/lib/portal/brand';
 
 interface NextStep {
   href: string;
@@ -24,8 +25,8 @@ const Arrow = () => (
 );
 
 /**
- * What is waiting on the client elsewhere in the portal: scripts to approve and
- * cuts to watch. Both are best-effort; a module that isn't live yet adds nothing.
+ * What is waiting on the client elsewhere in the portal: scripts to approve,
+ * cuts to watch, and gaps in their brand kit. Both are best-effort; a module that isn't live yet adds nothing.
  */
 function useWaitingOnClient(clientId: string | undefined, token: string | null): NextStep[] {
   const [steps, setSteps] = useState<NextStep[]>([]);
@@ -58,6 +59,18 @@ function useWaitingOnClient(clientId: string | undefined, token: string | null):
         }
       } catch {
         // Production not linked yet.
+      }
+      try {
+        const res = await fetch('/api/portal/brand', { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+        if (res.ok) {
+          const { brand } = (await res.json()) as { brand: BrandPayload };
+          const gaps = brand.ready ? brandGaps(brand) : [];
+          if (gaps.length) {
+            found.push({ href: '/portal/brand', kicker: 'Your brand', title: gaps[0], detail: 'Your editors need your logo, colors and fonts to brand your videos.' });
+          }
+        }
+      } catch {
+        // Brand page not live yet.
       }
       if (!cancelled) setSteps(found);
     })();

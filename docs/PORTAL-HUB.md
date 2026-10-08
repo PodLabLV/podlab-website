@@ -18,6 +18,7 @@ The portal is the one place a client goes for everything PodLab. Staff keep work
 | **Your Answers** | What they told us (free-VSL application, studio intake, portal intake), read-only, with links to what we built from it. | `crm.leads` + `portal_intake_answers` |
 | **Delivery** | The phases of their build. | `portal_delivery_phases` |
 | **Production** | Every video on their CRM boards, live, with its stage. Chapters, a player, and **timestamped revision notes** that land on the editor's card. | `crm.content_*` via `portal_client_boards` |
+| **Brand** | Logos (each shown on light and dark, tagged main / icon / white / dark), colors (hex), fonts, brand guide, font files, do's and don'ts, and b-roll (uploads up to 5 GB per file, or a pasted Drive/Dropbox link). "Still needed" lists what editors are missing. | `portal_brand_kits`, `portal_brand_assets`, private bucket `client-brand` |
 | **Deliverables** | Versioned files. Video cuts get chapters and timestamped notes. Approve or send notes. | `portal_assets` + `portal_asset_versions` / `_comments` |
 | **Scripts** | Versioned scripts, notes pinned to a line, approval with evidence, teleprompter. | `portal_scripts*` |
 | **Action Items, Progress, Reports, Invoices** | As before. Invoices mirror from Whop. | `portal_*` |
@@ -73,6 +74,19 @@ How it works:
 - **Preview without sending (staff):** `GET /api/cron/portal-digest?dry=1` with your portal session token (optionally `&clientId=`). It returns the would-be emails, HTML included, and saves nothing.
 - The cron needs `CRON_SECRET` in Vercel. Without it, the route answers 401 to everything except staff previews.
 
+## Brand page (logos, brand kit, b-roll)
+
+- **Client side:** `/portal/brand`. Files go straight from the browser to the private `client-brand` bucket via a signed upload URL (`POST /api/portal/brand` intent `sign`, then a PUT, then `register`), so a 4 GB phone clip never passes through a function. One upload at a time with a progress bar. Bigger than 5 GB, or a whole folder: paste a link.
+- **Gaps:** no logo, a missing main / icon / white version, no colors, no fonts. The first gap shows on the dashboard's **Next up** and in TipTop's open loops. B-roll is never a gap.
+- **Slack:** one message per finished batch in #revisions ("Sharlene (The Collected View) added 6 b-roll files (3.2 GB)") with the staff link. The CRM timeline and the client's activity feed get a line too.
+- **Remove** hides the file (`removed_at`); the object stays in storage until staff purge it.
+- **Staff:** Clients → Manage → **Open their brand page** (`/portal/brand?client=<id>`). Staff can upload for the client, and:
+  - **Make editor link:** `/portal/kit/<token>`, a read-only page with every logo, color, font, note and b-roll item and download links. No login, so outside editors can use it. Links inside expire after an hour; reloading the page mints fresh ones.
+  - **Put it on their cards:** adds `Brand kit: <link>` to every card on the client's linked boards (replacing an older link line, never stacking). The line starts with a word, so it's never read as a video chapter.
+  - **New link** rotates the token; the old link stops working at once. Run "Put it on their cards" again after.
+- **Upload size:** the bucket allows 5 GB per file, but Supabase also has a project-wide limit (Dashboard → Storage → Settings → Upload file size limit). It must be at least 5 GB, or bigger files fail with "too big" and the page tells the client to paste a link.
+- Code: `lib/portal/brand.ts` (validation, gaps, loader), `app/api/portal/brand`, `app/api/portal/kit`, `app/portal/brand`, `app/portal/kit/[token]`. Tests: `npm run test:brand`.
+
 ## Staff: running it
 
 You need a row in `portal_staff`. info@ already has one. Staff get **Clients · staff** in the portal sidebar.
@@ -92,7 +106,7 @@ You need a row in `portal_staff`. info@ already has one. Staff get **Clients · 
 
 1. **Database:** run every migration once, in order: `bash ~/podlab-portal-migrations/RUN-ALL.sh` in the macOS Terminal app.
    - Each file is safe to run twice, and the script stops at the first failure.
-   - Copies live in `supabase/migrations/` (2026-10-07 → 2026-10-10; nine files).
+   - Copies live in `supabase/migrations/` (2026-10-07 → 2026-10-12).
 2. **Site:** merge the hub PR, then deploy podlab-site to production from the main worktree.
    - Agents can't run production deploys; run them in the Terminal app.
    - The CLI often ends with `fetch failed` even when the deploy worked. Check `vercel ls --prod` before retrying.
