@@ -13,6 +13,7 @@ const portalNav = [
   { href: '/portal/document', label: 'Clarity Document' },
   { href: '/portal/intake', label: 'Intake' },
   { href: '/portal/delivery', label: 'Delivery' },
+  { href: '/portal/production', label: 'Production' },
   { href: '/portal/actions', label: 'Action Items' },
   { href: '/portal/deliverables', label: 'Deliverables' },
   { href: '/portal/progress', label: 'Progress' },

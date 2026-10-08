@@ -328,4 +328,5 @@ h1, h2, h3, h4, h5, h6,
 .portal :focus-visible {
   outline: 1px solid #2add1b;
   outline-offset: 3px;
+  box-shadow: none;
 }
