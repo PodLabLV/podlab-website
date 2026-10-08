@@ -25,6 +25,35 @@ The portal is the one place a client goes for everything PodLab. Staff keep work
 | **Profile** | Name, phone, business, website, timezone, the daily update email switch. Login email changes go through info@. | `portal_clients` |
 | **TipTop** | Their guide, launcher on every portal page. Knows their account, nudges open items, files timestamped revisions, edits their Clarity Document (client confirms each edit; every version kept, Restore never deletes), updates their profile, books calls, suggests the product for a locked element (once), flags anything else to the team. | `lib/tiptop/*`, `portal_document_versions`, `portal_tiptop_threads` |
 
+## Sidebar: groups, badges and the build level
+
+- **Groups:** Dashboard, then **Your turn** (Intake, Scripts, Deliverables, Brand, Action Items), **Your build** (Growth Chain, Production, Clarity Document, Delivery), **Results** (Progress & Delivered, Reports), and **Account** (Your Answers, Invoices, Profile), which stays collapsed until opened.
+- **Hidden until there's something there:** a page with nothing in it yet (no scripts, no reports, no invoices…) drops out of the sidebar but still works by URL. With no nav data (staff, or the call failed) everything shows.
+- **Badges:** a green count is what's waiting on the client (scripts and deliverables to review, open action items, intake questions left, brand gaps, cuts to watch). The group header totals it ("3 waiting"). A check means their side is done (intake submitted, brand kit complete).
+- **Build level:** points for what moves their build:
+
+  | Mission | Points |
+  |---|---|
+  | Submit intake | 100 |
+  | Growth Chain check | 50 |
+  | Main logo | 60 |
+  | Icon + white logo | 40 |
+  | Colors + fonts | 40 |
+  | B-roll | 60 |
+  | Each script approved | 30 |
+  | Each deliverable approved | 20 |
+  | Each action item closed | 15 |
+  | Delivered by PodLab: Clarity Document | 100 |
+  | Delivered by PodLab: each delivery phase | 25 |
+  | Delivered by PodLab: each video approved or posted | 10 |
+  | Delivered by PodLab: each Growth Chain element | 100 |
+
+  Levels: Kickoff 0 · Foundation 100 · Building 250 · Momentum 450 · Launch 700 · Scale 1000 · Systemized 1400 · Duplicated 1900 · Legacy 2500.
+- **Next mission:** the first undone client mission, shown under the bar with its points. Delivered-by-PodLab items never show as a next mission. "All missions" expands the full list.
+- **Level-up:** the card flashes green once per new level, remembered per browser.
+- TipTop sees the level and next mission too.
+- Code: `lib/portal/game.ts` (pure; tests `npm run test:game`), `app/api/portal/nav` (built on the TipTop overview), `components/portal/SidebarNav.tsx`.
+
 ## Video chapters and timestamped revisions
 
 Chapters use the same lines YouTube reads from a video description, so editors write them once:
