@@ -341,9 +341,18 @@ export function formatMoney(cents: number): string {
   return `$${Math.round(cents / 100).toLocaleString('en-US')}`;
 }
 
-/** "Aug 11, 2026" from a date-only column, without tripping over timezones. */
+/**
+ * "Aug 11, 2026". A date-only column is read as written, without tripping over
+ * timezones; a full timestamp is shown in the viewer's local day, so a note left
+ * at 6pm in Las Vegas doesn't read as tomorrow (UTC).
+ */
 export function formatDate(value: string | null): string {
   if (!value) return '—';
+  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+  if (value.length > 10 && value.includes('T')) {
+    const t = new Date(value);
+    return Number.isNaN(t.getTime()) ? '—' : t.toLocaleDateString('en-US', opts);
+  }
   const [y, m, d] = value.slice(0, 10).split('-').map(Number);
   if (!y || !m || !d) return '—';
   return new Date(y, m - 1, d).toLocaleDateString('en-US', {
