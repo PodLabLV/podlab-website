@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { admin, resolveCaller, resolveStaff, type PortalCaller } from '@/lib/portal-server';
-import { describeChange, loadProfile, saveProfile, validateProfilePatch } from '@/lib/portal/profile';
+import { describeChange, loadProfile, saveDigestOptOut, saveProfile, validateProfilePatch } from '@/lib/portal/profile';
 import { announceProfileChange } from '@/lib/tiptop/actions';
 
 export const runtime = 'nodejs';
@@ -10,8 +10,9 @@ export const dynamic = 'force-dynamic';
  * Profile.
  *
  * GET   the caller's own profile; staff may pass ?clientId= to read any client.
- * PATCH { first_name?, last_name?, phone?, business_name?, website?, timezone? }
+ * PATCH { first_name?, last_name?, phone?, business_name?, website?, timezone?, digestOptOut? }
  *       on the caller's own row; staff may include clientId to edit any client.
+ *       digestOptOut (boolean) is the daily update email switch and may be sent alone.
  *
  * Staff is decided server-side (portal_staff), never by the browser, and a
  * client can only ever reach their own row: the id comes from the token.
@@ -62,8 +63,18 @@ export async function PATCH(req: Request) {
   const r = await who(req, db, typeof body.clientId === 'string' ? body.clientId : null);
   if ('error' in r) return r.error;
 
-  const { clientId: _ignored, ...fields } = body;
+  const { clientId: _ignored, digestOptOut, ...fields } = body;
   void _ignored;
+
+  if (digestOptOut !== undefined) {
+    if (typeof digestOptOut !== 'boolean') return NextResponse.json({ error: 'digestOptOut must be true or false.' }, { status: 400 });
+    const d = await saveDigestOptOut(db, r.caller.clientId, digestOptOut);
+    if (!d.ok) return NextResponse.json({ error: d.message }, { status: d.message.includes('not switched on') ? 409 : 500 });
+    if (Object.keys(fields).length === 0) {
+      return NextResponse.json({ profile: await loadProfile(db, r.caller.clientId), saved: d.changed ? ['digest_opt_out'] : [], pending: [] });
+    }
+  }
+
   const check = validateProfilePatch(fields);
   if (!check.ok) return NextResponse.json({ error: 'Check the highlighted fields.', errors: check.errors }, { status: 400 });
 

@@ -15,6 +15,8 @@ interface Profile {
   website: string | null;
   timezone: string | null;
   extendedReady: boolean;
+  digestOptOut?: boolean;
+  digestReady?: boolean;
 }
 
 const FIELDS: Array<{ key: Field; label: string; placeholder: string; type?: string; autoComplete?: string }> = [
@@ -45,6 +47,8 @@ export default function ProfilePage() {
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [message, setMessage] = useState<string | null>(null);
   const zoneList = useMemo(zones, []);
+  const [digestStatus, setDigestStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [digestMessage, setDigestMessage] = useState<string | null>(null);
 
   const fill = (p: Profile) => {
     setProfile(p);
@@ -137,6 +141,29 @@ export default function ProfilePage() {
     }
   }
 
+  async function setDigest(on: boolean) {
+    if (!profile || digestStatus === 'saving') return;
+    setDigestStatus('saving');
+    setDigestMessage(null);
+    setProfile({ ...profile, digestOptOut: !on });
+    try {
+      const res = await fetch('/api/portal/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken ?? ''}` },
+        body: JSON.stringify({ digestOptOut: !on }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error ?? 'Could not save that.');
+      if (j.profile) setProfile(j.profile);
+      setDigestMessage(on ? 'On. You will hear from us when something moves.' : 'Off. We will not email you updates.');
+      setDigestStatus('saved');
+    } catch (err) {
+      setProfile({ ...profile, digestOptOut: profile.digestOptOut });
+      setDigestMessage(err instanceof Error ? err.message : 'Could not save that.');
+      setDigestStatus('error');
+    }
+  }
+
   return (
     <>
       <PageHeader eyebrow="Account" title="Your" accent="profile." subtitle="How we reach you and what we call you. Changes save to your account and the team sees them." />
@@ -204,6 +231,25 @@ export default function ProfilePage() {
               </a>
               .
             </p>
+          </Card>
+          <Card className="p-6">
+            <p className="portal-label !text-[9px] text-[#eeeeee]/45">Email updates</p>
+            <label className={`mt-3 flex items-start gap-3 ${profile?.digestReady ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
+              <input
+                type="checkbox"
+                checked={profile ? !profile.digestOptOut : true}
+                disabled={!profile?.digestReady || digestStatus === 'saving'}
+                onChange={(e) => setDigest(e.target.checked)}
+                className="mt-1 h-4 w-4 shrink-0 accent-[#2add1b]"
+              />
+              <span className="text-sm leading-relaxed text-[#eeeeee]">Email me a daily update when something changes</span>
+            </label>
+            <p className="mt-3 text-xs leading-relaxed text-[#eeeeee]/45">
+              {profile && !profile.digestReady
+                ? 'Daily updates are being switched on.'
+                : 'At most one a day, and only when there is news: a new cut, a note fixed, a version to review.'}
+            </p>
+            {digestMessage && <p className={`mt-2 text-xs ${digestStatus === 'error' ? 'text-red-400' : 'text-[#2add1b]'}`}>{digestMessage}</p>}
           </Card>
           <Card className="p-6">
             <p className="portal-label !text-[9px] text-[#2add1b]">Faster</p>
