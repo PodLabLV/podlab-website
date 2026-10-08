@@ -21,6 +21,7 @@ import {
   type ReactNode,
 } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import type { ElementState, LayerKey } from '@/lib/growth-chain';
 
 export interface PortalClient {
   id: string;
@@ -121,6 +122,21 @@ export interface PortalPhase {
   due_label: string | null;
   sort_order: number;
   updated_at: string | null;
+  /** Growth Chain layers this phase builds (lib/growth-chain.ts). */
+  elements: string[] | null;
+}
+
+export interface PortalProduct {
+  product: string;
+  purchased_on: string | null;
+}
+
+export interface PortalElementRow {
+  element: LayerKey;
+  score: number | null;
+  answer: unknown;
+  delivered_at: string | null;
+  state_override: ElementState | null;
 }
 
 export interface PortalMetric {
@@ -145,11 +161,14 @@ interface PortalData {
   intakeItems: PortalIntakeItem[];
   answers: Record<string, string>;
   phases: PortalPhase[];
+  products: PortalProduct[];
+  elementRows: PortalElementRow[];
   isStaff: boolean;
   /** Signed-in email, so an account with no client row can be told where to go. */
   viewerEmail: string | null;
   setAnswer: (itemId: string, value: string) => void;
   setPhaseStatus: (id: string, status: string) => void;
+  setElementRows: (rows: PortalElementRow[]) => void;
   /** Optimistic local updates, then a background refetch. */
   setActionItem: (id: string, done: boolean) => void;
   addComment: (comment: PortalComment) => void;
@@ -170,10 +189,13 @@ const EMPTY: PortalData = {
   intakeItems: [],
   answers: {},
   phases: [],
+  products: [],
+  elementRows: [],
   isStaff: false,
   viewerEmail: null,
   setAnswer: () => {},
   setPhaseStatus: () => {},
+  setElementRows: () => {},
   setActionItem: () => {},
   addComment: () => {},
   accessToken: null,
@@ -217,6 +239,13 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const setElementRows = useCallback((rows: PortalElementRow[]) => {
+    setData((prev) => {
+      const merged = prev.elementRows.filter((r) => !rows.some((n) => n.element === r.element));
+      return { ...prev, elementRows: [...merged, ...rows] };
+    });
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     const db = getSupabaseBrowser();
@@ -246,7 +275,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       }
 
       const [assets, projects, invoices, activity, metrics, comments, actions, session,
-             intake, intakeAnswers, phases] =
+             intake, intakeAnswers, phases, products, elementRows] =
         await Promise.all([
           db.from('portal_assets').select('*').order('sort_order'),
           db.from('portal_projects').select('*').order('sort_order'),
@@ -259,6 +288,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           db.from('portal_intake_items').select('*').order('sort_order'),
           db.from('portal_intake_answers').select('item_id, value'),
           db.from('portal_delivery_phases').select('*').order('sort_order'),
+          db.from('portal_client_products').select('product, purchased_on'),
+          db.from('portal_client_elements').select('element, score, answer, delivered_at, state_override'),
         ]);
 
       if (cancelled) return;
@@ -280,6 +311,9 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           ((intakeAnswers.data as PortalIntakeAnswer[]) ?? []).map((a) => [a.item_id, a.value ?? '']),
         ),
         phases: (phases.data as PortalPhase[]) ?? [],
+        // Both tables are new; before the migration runs they error and read as empty.
+        products: (products.data as PortalProduct[]) ?? [],
+        elementRows: (elementRows.data as PortalElementRow[]) ?? [],
         // Staff is asserted by the server on every write; this only decides
         // whether the edit controls render.
         viewerEmail: session.data.session?.user?.email ?? null,
@@ -289,6 +323,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         addComment,
         setAnswer,
         setPhaseStatus,
+        setElementRows,
       });
     }
 
@@ -296,7 +331,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [setActionItem, addComment, setAnswer, setPhaseStatus]);
+  }, [setActionItem, addComment, setAnswer, setPhaseStatus, setElementRows]);
 
   return <PortalContext.Provider value={data}>{children}</PortalContext.Provider>;
 }

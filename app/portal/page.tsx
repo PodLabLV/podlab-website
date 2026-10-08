@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePortal, formatDate, type PortalPhase } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState, StatusBadge } from '@/components/portal/Shared';
+import { chainStatus } from '@/lib/growth-chain';
 
 interface NextStep {
   href: string;
@@ -23,7 +24,8 @@ function currentPhase(phases: PortalPhase[]): PortalPhase | undefined {
 }
 
 export default function PortalDashboard() {
-  const { loading, error, client, assets, activity, actionItems, phases, intakeItems, answers, viewerEmail } = usePortal();
+  const { loading, error, client, assets, activity, actionItems, phases, intakeItems, answers, viewerEmail, products, elementRows } =
+    usePortal();
 
   if (loading) {
     return <p className="portal-label !text-[9px] text-[#eeeeee]/40">Loading your portal</p>;
@@ -72,8 +74,26 @@ export default function PortalDashboard() {
   const answered = intakeItems.filter((i) => (answers[i.id] ?? '').trim() !== '').length;
   const now = currentPhase(phases);
 
+  const chain = chainStatus(products.map((p) => p.product), elementRows, phases);
+  const constraint = chain.elements.find((e) => e.key === chain.constraint);
+
   // What the client should do next, most important first.
   const steps: NextStep[] = [];
+  if (chain.answered === 0) {
+    steps.push({
+      href: '/portal/growth',
+      kicker: 'Two minutes',
+      title: 'Score your Growth Chain',
+      detail: 'Eight questions. Find the one element holding the rest back.',
+    });
+  } else if (constraint) {
+    steps.push({
+      href: '/portal/growth',
+      kicker: 'Your constraint',
+      title: constraint.element.name,
+      detail: constraint.element.without,
+    });
+  }
   if (intakeItems.length > 0 && answered < intakeItems.length) {
     steps.push({
       href: '/portal/intake',
@@ -137,6 +157,31 @@ export default function PortalDashboard() {
           </div>
         ))}
       </div>
+
+      {/* The chain at a glance: one square per element, in order. */}
+      <Link href="/portal/growth" className="group mt-px flex flex-wrap items-center gap-x-6 gap-y-3 border border-t-0 border-[#1a1a1a] bg-[#0a0a0a] px-5 py-4 transition hover:bg-[#0f0f0f]">
+        <span className="portal-label !text-[9px] text-[#eeeeee]/40">Growth Chain</span>
+        <span className="flex gap-1.5" aria-label={`${chain.unlocked} of 8 elements unlocked`}>
+          {chain.elements.map((e) => (
+            <span
+              key={e.key}
+              title={`${e.element.name}: ${e.state}`}
+              className={`flex h-7 w-7 items-center justify-center border text-[10px] font-bold ${
+                e.state === 'unlocked'
+                  ? 'border-[#2add1b] bg-[#2add1b] text-black'
+                  : e.state === 'building'
+                    ? 'border-[#2add1b]/60 text-[#2add1b]'
+                    : 'border-[#eeeeee]/15 text-[#eeeeee]/30'
+              }`}
+            >
+              {e.element.symbol}
+            </span>
+          ))}
+        </span>
+        <span className="text-sm text-[#eeeeee]/60 transition group-hover:text-[#2add1b]">
+          {chain.unlocked} of 8 unlocked{constraint ? ` · constraint: ${constraint.element.name}` : ''}
+        </span>
+      </Link>
 
       {steps.length > 0 && (
         <section className="mt-12">
