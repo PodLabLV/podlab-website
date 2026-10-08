@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { usePortal, formatDate, type PortalComment } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState, StatusBadge } from '@/components/portal/Shared';
+import DocumentHistory from '@/components/portal/DocumentHistory';
 
 /** Matches the deliverable's own section numbering so notes are unambiguous. */
 const SECTIONS = [
@@ -26,6 +27,13 @@ export default function DocumentPage() {
   const { loading, client, comments, addComment, accessToken } = usePortal();
   // The document is private: fetch a short-lived signed link for this client.
   const [docUrl, setDocUrl] = useState<string | null>(null);
+  // Bumped when the document changes (a restore here, or an edit by TipTop) to re-mint the link.
+  const [docRev, setDocRev] = useState(0);
+  useEffect(() => {
+    const bump = () => setDocRev((n) => n + 1);
+    window.addEventListener('portal:document-changed', bump);
+    return () => window.removeEventListener('portal:document-changed', bump);
+  }, []);
   useEffect(() => {
     if (!client?.document_url || !accessToken) return;
     let alive = true;
@@ -34,7 +42,7 @@ export default function DocumentPage() {
       .then((j: { url: string | null }) => { if (alive) setDocUrl(j.url); })
       .catch(() => { if (alive) setDocUrl(null); });
     return () => { alive = false; };
-  }, [client?.document_url, accessToken]);
+  }, [client?.document_url, accessToken, docRev]);
   const [section, setSection] = useState(SECTIONS[0]);
   const [body, setBody] = useState('');
   const [saving, setSaving] = useState(false);
@@ -119,6 +127,10 @@ export default function DocumentPage() {
           body="Your deliverable has not been linked to this portal yet. Let us know and we will publish it."
           cta={{ label: 'Email PodLab', href: 'mailto:info@podlablv.com' }}
         />
+      )}
+
+      {client.document_url && (
+        <DocumentHistory accessToken={accessToken} onChanged={() => window.dispatchEvent(new Event('portal:document-changed'))} />
       )}
 
       <div className="grid lg:grid-cols-2 gap-6">

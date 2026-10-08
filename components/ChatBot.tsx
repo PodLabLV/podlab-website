@@ -69,7 +69,15 @@ function linkify(text: string): string {
   return text
 }
 
+// Cleetus stays on the marketing site. In the portal (and on its login) the
+// client's guide is TipTop, so only one assistant ever shows.
 export default function ChatBot() {
+  const pathname = usePathname() ?? ''
+  if (pathname.startsWith('/portal') || pathname.startsWith('/login')) return null
+  return <ChatBotInner />
+}
+
+function ChatBotInner() {
   const pathname = usePathname()
   const isOnPortal = pathname?.startsWith('/portal') ?? false
 

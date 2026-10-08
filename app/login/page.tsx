@@ -1,10 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Navigation from '@/components/Navigation';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import HomePageWrapper from '@/components/HomePageWrapper';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+
+// PodLab Portal sign-in, in the podlablv.com brand system: the lab still on the
+// left (behind the form on phones), the form on true black on the right.
+
+/** Only same-site paths, so ?redirect= can't bounce a client off to another domain. */
+function redirectTarget(): string {
+  const raw = new URLSearchParams(window.location.search).get('redirect') || '';
+  return raw.startsWith('/') && !raw.startsWith('//') ? raw : '/portal';
+}
+
+const inputClass =
+  'w-full border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3.5 text-[15px] text-[#eeeeee] placeholder:text-[#eeeeee]/25 transition focus:border-[#2add1b] focus:outline-none';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -14,38 +25,29 @@ export default function LoginPage() {
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [mode, setMode] = useState<'login' | 'reset'>('login');
   const [resetSent, setResetSent] = useState(false);
-  const [resetLoading, setResetLoading] = useState(false);
 
-  // Auto-focus email field on mount
+  // Already signed in: straight through.
   useEffect(() => {
-    const emailInput = document.getElementById('email') as HTMLInputElement;
-    if (emailInput) emailInput.focus();
+    getSupabaseBrowser()
+      .auth.getSession()
+      .then(({ data: { session } }) => {
+        if (session) window.location.href = redirectTarget();
+      });
   }, []);
 
-  // On mount: if user already has a valid session, redirect them straight to portal
   useEffect(() => {
-    const supabase = getSupabaseBrowser();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        const params = new URLSearchParams(window.location.search);
-        const redirectTo = params.get('redirect') || '/portal';
-        window.location.href = redirectTo;
+    try {
+      const remembered = localStorage.getItem('remember_email');
+      if (remembered) {
+        setEmail(remembered);
+        setRememberMe(true);
       }
-    });
+    } catch {
+      // Storage blocked (private window): nothing to prefill.
+    }
   }, []);
-
-  // Handle Enter key submit
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && email && password && !loading && !showForgotPassword) {
-        handleLogin(e as unknown as React.FormEvent);
-      }
-    };
-    window.addEventListener('keypress', handleKeyPress);
-    return () => window.removeEventListener('keypress', handleKeyPress);
-  }, [email, password, loading, showForgotPassword]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,52 +55,47 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const supabase = getSupabaseBrowser();
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
+      const { data, error: authError } = await getSupabaseBrowser().auth.signInWithPassword({
+        email: email.trim(),
         password,
       });
 
       if (authError) {
         if (authError.message?.includes('Invalid login')) {
-          setError('Invalid email or password. Please try again.');
+          setError('That email and password don’t match. Try again, or reset your password.');
         } else if (authError.message?.includes('Email not confirmed')) {
-          setError('Please check your email and confirm your account first.');
+          setError('Confirm your account from the email we sent you first.');
         } else {
-          setError(authError.message || 'Login failed. Please try again.');
+          setError(authError.message || 'Sign-in failed. Try again.');
         }
         return;
       }
 
       if (data.session) {
-        if (rememberMe) {
-          localStorage.setItem('remember_email', email);
-        } else {
-          localStorage.removeItem('remember_email');
+        try {
+          if (rememberMe) localStorage.setItem('remember_email', email.trim());
+          else localStorage.removeItem('remember_email');
+        } catch {
+          // Storage blocked: sign-in still works, the email just isn't remembered.
         }
-
         setSuccess(true);
-        const params = new URLSearchParams(window.location.search);
-        const redirectTo = params.get('redirect') || '/portal';
-        setTimeout(() => {
-          window.location.href = redirectTo;
-        }, 1200);
+        window.location.href = redirectTarget();
       }
     } catch (err) {
-      setError('Connection error. Please check your internet and try again.');
+      setError('Connection problem. Check your internet and try again.');
       console.error('Login error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
+  const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      setError('Please enter your email address first.');
+      setError('Enter your email address first.');
       return;
     }
-    setResetLoading(true);
+    setLoading(true);
     setError('');
 
     try {
@@ -107,297 +104,193 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.toLowerCase().trim() }),
       });
-
       if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || 'Failed to send reset email.');
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Could not send the reset email.');
       } else {
         setResetSent(true);
       }
     } catch (err) {
-      setError('Connection error. Please try again.');
+      setError('Connection problem. Try again.');
       console.error('Reset error:', err);
     } finally {
-      setResetLoading(false);
+      setLoading(false);
     }
   };
 
-  // Load remembered email on mount
-  useEffect(() => {
-    const rememberedEmail = localStorage.getItem('remember_email');
-    if (rememberedEmail) {
-      setEmail(rememberedEmail);
-      setRememberMe(true);
-    }
-  }, []);
+  const switchMode = (next: 'login' | 'reset') => {
+    setMode(next);
+    setError('');
+    setResetSent(false);
+  };
 
   return (
-    <HomePageWrapper>
-      <div className="min-h-screen">
-        <Navigation />
-        
-        <div className="relative min-h-screen flex items-center justify-center px-6 py-32">
-          {/* Success overlay */}
-          {success && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-              <div className="text-center space-y-6">
-                <div className="w-20 h-20 mx-auto rounded-full bg-accent flex items-center justify-center animate-in zoom-in duration-500">
-                  <svg className="w-10 h-10 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-3xl font-black text-white">Welcome Back!</h2>
-                  <p className="text-text-secondary">Redirecting to your portal...</p>
-                </div>
-                <div className="flex justify-center gap-2">
-                  <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                </div>
-              </div>
-            </div>
+    <main className="portal relative min-h-svh bg-black lg:grid lg:grid-cols-[1.15fr_1fr]">
+      {/* The lab: a panel on desktop, a dimmed backdrop on phones. */}
+      <div className="absolute inset-0 lg:relative lg:inset-auto" aria-hidden="true">
+        <Image src="/portal/lab.webp" alt="" fill priority unoptimized sizes="(min-width: 1024px) 55vw, 100vw" className="object-cover object-center" />
+        <div className="absolute inset-0 bg-black/80 lg:bg-transparent lg:bg-gradient-to-r lg:from-black/20 lg:via-transparent lg:to-black/90" />
+        <div className="absolute inset-x-0 bottom-0 hidden p-12 lg:block">
+          <span className="portal-label text-[#2add1b]">Record once. Sell forever.</span>
+        </div>
+      </div>
+
+      <section className="relative z-10 flex min-h-svh flex-col px-6 py-6 md:px-12 lg:border-l lg:border-[#1a1a1a]">
+        <div className="flex items-center justify-between">
+          <Link href="/" aria-label="PodLab home">
+            <Image src="/portal/podlab-portal-green.png" alt="PodLab Portal" width={720} height={229} priority unoptimized className="h-auto w-[132px] md:w-[156px]" />
+          </Link>
+          <Link href="/" className="portal-label text-[#eeeeee]/50 transition hover:text-[#2add1b]">
+            Back to site
+          </Link>
+        </div>
+
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-16">
+          <span className="portal-label text-[#2add1b]">Client sign-in</span>
+          <h1 className="mt-4 text-4xl font-bold leading-[1.05] tracking-tight text-[#eeeeee] md:text-5xl">
+            {mode === 'login' ? (
+              <>
+                Your build, <em className="portal-drama text-[#2add1b]">in one place.</em>
+              </>
+            ) : (
+              <>
+                Reset your <em className="portal-drama text-[#2add1b]">password.</em>
+              </>
+            )}
+          </h1>
+          <p className="mt-5 text-base leading-relaxed text-[#eeeeee]/60">
+            {mode === 'login'
+              ? 'Your strategy document, delivery schedule, files and invoices. Sign in with the email we set you up with.'
+              : 'Enter your email and we’ll send you a link to set a new one.'}
+          </p>
+
+          {error && (
+            <p role="alert" className="mt-8 border-l-2 border-red-500 bg-red-500/5 px-4 py-3 text-sm text-red-300">
+              {error}
+            </p>
           )}
-          
-          {/* Login form */}
-          <div className="relative z-10 w-full max-w-md">
-            <div className="glass-card p-8 shadow-[0_0_80px_rgba(42,221,27,0.15)] transition-all hover:shadow-[0_0_100px_rgba(42,221,27,0.25)] hover:border-accent/30">
-              {/* Logo/Branding */}
-              <div className="text-center mb-8 space-y-3">
-                <div className="inline-block p-4 bg-black/50 rounded-2xl border border-accent/30 mb-4">
-                  <svg className="w-12 h-12 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                  </svg>
-                </div>
-                <h1 className="text-4xl font-black text-white font-display">
-                  Client <span className="text-accent">Portal</span>
-                </h1>
-                <p className="text-text-secondary text-sm">
-                  {showForgotPassword ? 'Reset your password' : 'Access your projects, deliverables, and roadmap'}
-                </p>
-              </div>
+          {resetSent && (
+            <p role="status" className="mt-8 border-l-2 border-[#2add1b] bg-[#2add1b]/5 px-4 py-3 text-sm text-[#eeeeee]/80">
+              Reset link sent. Check your inbox (and spam) for an email from PodLab.
+            </p>
+          )}
 
-              {/* Error message */}
-              {error && (
-                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg animate-in slide-in-from-top duration-300">
-                  <div className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p className="text-red-400 text-sm">{error}</p>
-                  </div>
-                </div>
-              )}
+          <form onSubmit={mode === 'login' ? handleLogin : handleReset} className="mt-8 space-y-5">
+            <div>
+              <label htmlFor="email" className="portal-label mb-2 block text-[#eeeeee]/50">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                autoFocus
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                className={inputClass}
+              />
+            </div>
 
-              {/* Reset sent success */}
-              {resetSent && (
-                <div className="mb-6 p-4 bg-accent/10 border border-accent/30 rounded-lg">
-                  <p className="text-accent text-sm">Password reset email sent! Check your inbox.</p>
-                </div>
-              )}
-
-              {showForgotPassword ? (
-                /* Forgot password form */
-                <form onSubmit={handleForgotPassword} className="space-y-5">
-                  <div className="space-y-2">
-                    <label htmlFor="email" className="block text-sm font-semibold text-white">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg className="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                        </svg>
-                      </div>
-                      <input
-                        type="email"
-                        id="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="w-full pl-12 pr-4 py-3.5 bg-black/50 border-2 border-accent/30 rounded-lg text-white focus:outline-none focus:border-accent focus:bg-black transition-all placeholder:text-text-secondary/50"
-                        placeholder="you@company.com"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={resetLoading || !email}
-                    className="relative w-full px-6 py-4 bg-accent text-black font-black text-lg rounded-xl hover:bg-accent-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide"
-                  >
-                    {resetLoading ? 'Sending...' : 'Send Reset Link'}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => { setShowForgotPassword(false); setResetSent(false); setError(''); }}
-                    className="w-full text-sm text-accent hover:underline"
-                  >
-                    ← Back to login
-                  </button>
-                </form>
-              ) : (
-                /* Login form */
-                <form onSubmit={handleLogin} className="space-y-5">
-                  {/* Email field */}
-                  <div className="space-y-2">
-                    <label htmlFor="email" className="block text-sm font-semibold text-white">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg className="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                        </svg>
-                      </div>
-                      <input
-                        type="email"
-                        id="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="w-full pl-12 pr-4 py-3.5 bg-black/50 border-2 border-accent/30 rounded-lg text-white focus:outline-none focus:border-accent focus:bg-black transition-all placeholder:text-text-secondary/50"
-                        placeholder="you@company.com"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Password field */}
-                  <div className="space-y-2">
-                    <label htmlFor="password" className="block text-sm font-semibold text-white">
+            {mode === 'login' && (
+              <>
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <label htmlFor="password" className="portal-label block text-[#eeeeee]/50">
                       Password
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg className="w-5 h-5 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                      </div>
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        id="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        className="w-full pl-12 pr-12 py-3.5 bg-black/50 border-2 border-accent/30 rounded-lg text-white focus:outline-none focus:border-accent focus:bg-black transition-all placeholder:text-text-secondary/50"
-                        placeholder="••••••••"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-text-secondary hover:text-accent transition-colors"
-                      >
-                        {showPassword ? (
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Remember me + Forgot password */}
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                        className="w-4 h-4 rounded border-2 border-accent/30 bg-black/50 text-accent focus:ring-2 focus:ring-accent/50 focus:ring-offset-0 transition-all cursor-pointer"
-                      />
-                      <span className="text-sm text-text-secondary group-hover:text-white transition-colors">
-                        Remember me
-                      </span>
                     </label>
                     <button
                       type="button"
-                      onClick={() => { setShowForgotPassword(true); setError(''); }}
-                      className="text-sm text-accent hover:underline"
+                      onClick={() => switchMode('reset')}
+                      className="text-xs text-[#eeeeee]/50 transition hover:text-[#2add1b]"
                     >
-                      Forgot password?
+                      Forgot it?
                     </button>
                   </div>
-
-                  {/* Submit button */}
-                  <button
-                    type="submit"
-                    disabled={loading || !email || !password}
-                    className="relative w-full px-6 py-4 bg-accent text-black font-black text-lg rounded-xl hover:bg-accent-hover transition-all hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(42,221,27,0.4)] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none uppercase tracking-wide overflow-hidden group"
-                  >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      {loading ? (
-                        <>
-                          <svg className="animate-spin h-5 w-5 text-black" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          <span>Logging in...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Access Portal</span>
-                          <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                        </>
-                      )}
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
-                  </button>
-                </form>
-              )}
-
-              {/* Footer links */}
-              <div className="mt-8 pt-6 border-t border-accent/10 space-y-4">
-                <div className="text-center">
-                  <p className="text-sm text-text-secondary mb-3">
-                    Not a client yet?
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Link 
-                      href="/assessment" 
-                      className="px-4 py-2 border-2 border-accent/30 text-accent text-sm font-semibold rounded-lg hover:bg-accent/10 hover:border-accent transition-all text-center"
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className={`${inputClass} pr-16`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="portal-label absolute inset-y-0 right-0 px-4 !text-[9px] text-[#eeeeee]/40 transition hover:text-[#2add1b]"
                     >
-                      Take Assessment
-                    </Link>
-                    <a 
-                      href="https://calendly.com/podlablv/strategy-call"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 bg-white/5 border-2 border-white/10 text-white text-sm font-semibold rounded-lg hover:bg-white/10 hover:border-white/20 transition-all text-center"
-                    >
-                      Book Strategy Call
-                    </a>
+                      {showPassword ? 'Hide' : 'Show'}
+                    </button>
                   </div>
                 </div>
-                
-                <div className="text-center">
-                  <p className="text-xs text-text-secondary">
-                    Need help?{' '}
-                    <a href="mailto:info@podlablv.com" className="text-accent hover:underline">
-                      Contact support
-                    </a>
-                  </p>
-                </div>
-              </div>
-            </div>
 
-            {/* Security badge */}
-            <div className="mt-6 flex items-center justify-center gap-2 text-xs text-text-secondary">
-              <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              <span>256-bit SSL encrypted • Your data is secure</span>
-            </div>
-          </div>
+                <label className="flex cursor-pointer items-center gap-3 text-sm text-[#eeeeee]/60">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="h-4 w-4 cursor-pointer rounded-none border-[#1a1a1a] bg-[#0a0a0a] accent-[#2add1b]"
+                  />
+                  Remember my email
+                </label>
+              </>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || success || !email || (mode === 'login' && !password)}
+              className="portal-label flex w-full items-center justify-center gap-3 bg-[#2add1b] px-6 py-4 !text-[12px] text-black transition hover:bg-[#eeeeee] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {mode === 'login'
+                ? success
+                  ? 'Opening your portal'
+                  : loading
+                    ? 'Signing in'
+                    : 'Sign in'
+                : loading
+                  ? 'Sending'
+                  : 'Send reset link'}
+              {!loading && !success && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              )}
+            </button>
+
+            {mode === 'reset' && (
+              <button
+                type="button"
+                onClick={() => switchMode('login')}
+                className="portal-label w-full border border-[#1a1a1a] px-6 py-4 text-[#eeeeee]/70 transition hover:border-[#2add1b] hover:text-[#2add1b]"
+              >
+                Back to sign in
+              </button>
+            )}
+          </form>
         </div>
-      </div>
-    </HomePageWrapper>
+
+        <div className="mx-auto grid w-full max-w-md gap-px border border-[#1a1a1a] bg-[#1a1a1a] text-sm sm:grid-cols-2">
+          <Link href="/diagnostic" className="group bg-black p-4 transition hover:bg-[#0a0a0a]">
+            <span className="portal-label block !text-[9px] text-[#eeeeee]/40">Not a client yet</span>
+            <span className="mt-2 block text-[#eeeeee]/80 transition group-hover:text-[#2add1b]">See if you qualify for a free VSL</span>
+          </Link>
+          <a href="https://crm.podlablv.com" className="group bg-black p-4 transition hover:bg-[#0a0a0a]">
+            <span className="portal-label block !text-[9px] text-[#eeeeee]/40">PodLab team</span>
+            <span className="mt-2 block text-[#eeeeee]/80 transition group-hover:text-[#2add1b]">Sign in to the CRM instead</span>
+          </a>
+        </div>
+        <p className="mx-auto mt-5 w-full max-w-md text-xs text-[#eeeeee]/40">
+          Trouble signing in?{' '}
+          <a href="mailto:info@podlablv.com" className="text-[#eeeeee]/70 underline-offset-4 transition hover:text-[#2add1b] hover:underline">
+            info@podlablv.com
+          </a>
+        </p>
+      </section>
+    </main>
   );
 }

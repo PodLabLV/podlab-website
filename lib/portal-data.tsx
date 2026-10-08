@@ -21,6 +21,7 @@ import {
   type ReactNode,
 } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import type { ElementState, LayerKey } from '@/lib/growth-chain';
 
 export interface PortalClient {
   id: string;
@@ -121,6 +122,21 @@ export interface PortalPhase {
   due_label: string | null;
   sort_order: number;
   updated_at: string | null;
+  /** Growth Chain layers this phase builds (lib/growth-chain.ts). */
+  elements: string[] | null;
+}
+
+export interface PortalProduct {
+  product: string;
+  purchased_on: string | null;
+}
+
+export interface PortalElementRow {
+  element: LayerKey;
+  score: number | null;
+  answer: unknown;
+  delivered_at: string | null;
+  state_override: ElementState | null;
 }
 
 export interface PortalMetric {
@@ -145,9 +161,14 @@ interface PortalData {
   intakeItems: PortalIntakeItem[];
   answers: Record<string, string>;
   phases: PortalPhase[];
+  products: PortalProduct[];
+  elementRows: PortalElementRow[];
   isStaff: boolean;
+  /** Signed-in email, so an account with no client row can be told where to go. */
+  viewerEmail: string | null;
   setAnswer: (itemId: string, value: string) => void;
   setPhaseStatus: (id: string, status: string) => void;
+  setElementRows: (rows: PortalElementRow[]) => void;
   /** Optimistic local updates, then a background refetch. */
   setActionItem: (id: string, done: boolean) => void;
   addComment: (comment: PortalComment) => void;
@@ -168,16 +189,28 @@ const EMPTY: PortalData = {
   intakeItems: [],
   answers: {},
   phases: [],
+  products: [],
+  elementRows: [],
   isStaff: false,
+  viewerEmail: null,
   setAnswer: () => {},
   setPhaseStatus: () => {},
+  setElementRows: () => {},
   setActionItem: () => {},
   addComment: () => {},
   accessToken: null,
 };
 
-/** Display-only hint. Every write re-checks staff status server-side. */
-const STAFF_EMAILS = ['info@podlablv.com'];
+/** Display-only: decides whether staff tools render. Every staff route re-checks server-side. */
+async function checkStaff(token: string | null | undefined): Promise<boolean> {
+  if (!token) return false;
+  try {
+    const res = await fetch('/api/portal/whoami', { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
+    return res.ok && Boolean((await res.json()).staff);
+  } catch {
+    return false;
+  }
+}
 
 const PortalContext = createContext<PortalData>(EMPTY);
 
@@ -214,6 +247,21 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const setElementRows = useCallback((rows: PortalElementRow[]) => {
+    setData((prev) => {
+      const merged = prev.elementRows.filter((r) => !rows.some((n) => n.element === r.element));
+      return { ...prev, elementRows: [...merged, ...rows] };
+    });
+  }, []);
+
+  // TipTop (or any page) can ask for a fresh read after a server-side write.
+  const [reloadKey, setReloadKey] = useState(0);
+  useEffect(() => {
+    const bump = () => setReloadKey((k) => k + 1);
+    window.addEventListener('portal:refresh', bump);
+    return () => window.removeEventListener('portal:refresh', bump);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     const db = getSupabaseBrowser();
@@ -236,12 +284,21 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       // Signed in, but nobody has set this account up yet. Pages render an
       // explanatory empty state rather than a wall of zeroes.
       if (!client) {
-        setData({ ...EMPTY, loading: false });
+        const { data: { session: s } } = await db.auth.getSession();
+        if (cancelled) return;
+        const viewer = s?.user?.email ?? null;
+        setData({
+          ...EMPTY,
+          loading: false,
+          viewerEmail: viewer,
+          accessToken: s?.access_token ?? null,
+          isStaff: await checkStaff(s?.access_token),
+        });
         return;
       }
 
       const [assets, projects, invoices, activity, metrics, comments, actions, session,
-             intake, intakeAnswers, phases] =
+             intake, intakeAnswers, phases, products, elementRows] =
         await Promise.all([
           db.from('portal_assets').select('*').order('sort_order'),
           db.from('portal_projects').select('*').order('sort_order'),
@@ -254,6 +311,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           db.from('portal_intake_items').select('*').order('sort_order'),
           db.from('portal_intake_answers').select('item_id, value'),
           db.from('portal_delivery_phases').select('*').order('sort_order'),
+          db.from('portal_client_products').select('product, purchased_on'),
+          db.from('portal_client_elements').select('element, score, answer, delivered_at, state_override'),
         ]);
 
       if (cancelled) return;
@@ -275,14 +334,18 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           ((intakeAnswers.data as PortalIntakeAnswer[]) ?? []).map((a) => [a.item_id, a.value ?? '']),
         ),
         phases: (phases.data as PortalPhase[]) ?? [],
+        // Both tables are new; before the migration runs they error and read as empty.
+        products: (products.data as PortalProduct[]) ?? [],
+        elementRows: (elementRows.data as PortalElementRow[]) ?? [],
         // Staff is asserted by the server on every write; this only decides
         // whether the edit controls render.
-        isStaff: Boolean(session.data.session?.user?.email &&
-          STAFF_EMAILS.includes(session.data.session.user.email.toLowerCase())),
+        viewerEmail: session.data.session?.user?.email ?? null,
+        isStaff: await checkStaff(session.data.session?.access_token),
         setActionItem,
         addComment,
         setAnswer,
         setPhaseStatus,
+        setElementRows,
       });
     }
 
@@ -290,7 +353,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [setActionItem, addComment, setAnswer, setPhaseStatus]);
+  }, [setActionItem, addComment, setAnswer, setPhaseStatus, setElementRows, reloadKey]);
 
   return <PortalContext.Provider value={data}>{children}</PortalContext.Provider>;
 }
@@ -300,9 +363,18 @@ export function formatMoney(cents: number): string {
   return `$${Math.round(cents / 100).toLocaleString('en-US')}`;
 }
 
-/** "Aug 11, 2026" from a date-only column, without tripping over timezones. */
+/**
+ * "Aug 11, 2026". A date-only column is read as written, without tripping over
+ * timezones; a full timestamp is shown in the viewer's local day, so a note left
+ * at 6pm in Las Vegas doesn't read as tomorrow (UTC).
+ */
 export function formatDate(value: string | null): string {
   if (!value) return '—';
+  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+  if (value.length > 10 && value.includes('T')) {
+    const t = new Date(value);
+    return Number.isNaN(t.getTime()) ? '—' : t.toLocaleDateString('en-US', opts);
+  }
   const [y, m, d] = value.slice(0, 10).split('-').map(Number);
   if (!y || !m || !d) return '—';
   return new Date(y, m - 1, d).toLocaleDateString('en-US', {
