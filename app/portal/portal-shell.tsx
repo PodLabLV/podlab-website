@@ -16,6 +16,7 @@ const portalNav = [
   { href: '/portal/answers', label: 'Your Answers' },
   { href: '/portal/delivery', label: 'Delivery' },
   { href: '/portal/production', label: 'Production' },
+  { href: '/portal/brand', label: 'Brand' },
   { href: '/portal/actions', label: 'Action Items' },
   { href: '/portal/deliverables', label: 'Deliverables' },
   { href: '/portal/scripts', label: 'Scripts' },
@@ -184,6 +185,10 @@ function PortalShell({ children }: { children: React.ReactNode }) {
 }
 
 export default function PortalShellRoot({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  // The editors' brand kit link is public (the token is the credential): no
+  // session check, no sidebar, no TipTop.
+  if (pathname?.startsWith('/portal/kit/')) return <div className="portal min-h-svh bg-black">{children}</div>;
   return (
     <PortalProvider>
       <PortalShell>{children}</PortalShell>

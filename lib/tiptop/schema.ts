@@ -28,6 +28,7 @@ export const PAGES = {
   intake: { href: '/portal/intake', label: 'Intake' },
   delivery: { href: '/portal/delivery', label: 'Delivery' },
   production: { href: '/portal/production', label: 'Production' },
+  brand: { href: '/portal/brand', label: 'Brand' },
   actions: { href: '/portal/actions', label: 'Action Items' },
   deliverables: { href: '/portal/deliverables', label: 'Deliverables' },
   scripts: { href: '/portal/scripts', label: 'Scripts' },

@@ -160,6 +160,15 @@ export default function StaffClientPage() {
 
       {flash && <p role="status" className="mt-4 border-l-2 border-[#2add1b] bg-[#2add1b]/5 px-4 py-3 text-sm text-[#eeeeee]/85">{flash}</p>}
 
+      <Section title="Brand kit" hint="Their logos, colors, fonts, guide and b-roll. Add files for them, make the editors' read-only link, or put that link on every card of their boards.">
+        <Link
+          href={`/portal/brand?client=${d.client.id}`}
+          className="portal-label inline-flex items-center gap-2 border border-[#1a1a1a] px-5 py-3 !text-[10px] text-[#eeeeee]/70 transition hover:border-[#2add1b] hover:text-[#2add1b]"
+        >
+          Open their brand page
+        </Link>
+      </Section>
+
       <Section title="What they bought" hint="Drives their Growth Chain: a product moves the elements it unlocks to Building. Edits and recordings show under what they have but unlock nothing.">
         <ul className="grid gap-px border border-[#1a1a1a] bg-[#1a1a1a] sm:grid-cols-2 lg:grid-cols-3">
           {PRODUCTS.map((p) => {
