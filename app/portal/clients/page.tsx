@@ -92,6 +92,14 @@ function ClientRow({ c, token, onDone }: { c: StaffClientRow; token: string; onD
           <Link href={`/portal/clients/${c.id}`} className="text-[#2add1b] hover:text-[#eeeeee]">
             Manage
           </Link>
+          {c.driveFolderUrl && (
+            <>
+              {' · '}
+              <a href={c.driveFolderUrl} target="_blank" rel="noopener noreferrer" className="text-[#2add1b] hover:text-[#eeeeee]">
+                Drive ↗
+              </a>
+            </>
+          )}
         </p>
       </div>
 
