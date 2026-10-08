@@ -9,6 +9,7 @@ import { PortalProvider, usePortal } from '@/lib/portal-data';
 
 const portalNav = [
   { href: '/portal', label: 'Dashboard' },
+  { href: '/portal/growth', label: 'Growth Chain' },
   { href: '/portal/document', label: 'Clarity Document' },
   { href: '/portal/intake', label: 'Intake' },
   { href: '/portal/delivery', label: 'Delivery' },
@@ -100,7 +101,7 @@ function PortalShell({ children }: { children: React.ReactNode }) {
       >
         <div className="border-b border-[#1a1a1a] px-6 pb-5 pt-6">
           <Link href="/" aria-label="PodLab home" className="block">
-            <Image src="/portal/podlab-portal-green.png" alt="PodLab Portal" width={720} height={229} unoptimized className="h-auto w-[156px]" />
+            <Image src="/portal/podlab-portal-green.png" alt="PodLab Portal" width={720} height={229} unoptimized className="h-auto w-[184px]" />
           </Link>
         </div>
 
@@ -156,7 +157,7 @@ function PortalShell({ children }: { children: React.ReactNode }) {
         {/* Top bar (mobile) */}
         <div className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-[#1a1a1a] bg-black/80 px-4 backdrop-blur lg:hidden">
           <Link href="/portal" aria-label="PodLab Portal home">
-            <Image src="/portal/podlab-portal-green.png" alt="PodLab Portal" width={720} height={229} unoptimized className="h-auto w-[116px]" />
+            <Image src="/portal/podlab-portal-green.png" alt="PodLab Portal" width={720} height={229} unoptimized className="h-auto w-[136px]" />
           </Link>
           <button
             onClick={() => setSidebarOpen(true)}
