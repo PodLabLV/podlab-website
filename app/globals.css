@@ -82,8 +82,8 @@ body::after {
     radial-gradient(ellipse at 85% 75%, rgba(0, 0, 0, 0.08) 0%, transparent 40%);
 }
 
-/* Smooth Scrolling */
-html {
+/* Smooth Scrolling — native fallback where Lenis isn't running (portal, reduced motion) */
+html:not(.lenis) {
   scroll-behavior: smooth;
 }
 

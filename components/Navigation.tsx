@@ -219,7 +219,7 @@ export default function Navigation() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-[#0a0a0a] border-b border-border min-h-[calc(100vh-5rem)] overflow-y-auto">
+        <div data-lenis-prevent className="md:hidden bg-[#0a0a0a] border-b border-border min-h-[calc(100vh-5rem)] overflow-y-auto">
           <div className="px-6 py-6 flex flex-col gap-2">
             <Link
               href="/about"

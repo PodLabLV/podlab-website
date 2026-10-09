@@ -635,6 +635,7 @@ export default function BeakerApplyPage() {
               {/* contract */}
               <div
                 ref={contractRef}
+                data-lenis-prevent
                 className="print-contract glass-card rounded-2xl border border-border p-6 md:p-8 max-h-[60vh] overflow-y-auto space-y-4 text-sm leading-relaxed text-text-secondary mb-8"
               >
                 <h2 className="text-xl font-bold text-text-primary text-center mb-1">

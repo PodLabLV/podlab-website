@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Michroma, Playfair_Display } from 'next/font/google';
 import Script from 'next/script';
 import ChatBot from '@/components/ChatBot';
+import SmoothScroll from '@/components/SmoothScroll';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -143,6 +144,7 @@ export default function RootLayout({
           </noscript>
         )}
 
+        <SmoothScroll />
         <div id="content-overlay" />
         {children}
         <ChatBot />
