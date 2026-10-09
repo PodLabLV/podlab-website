@@ -23,6 +23,8 @@ export interface PortalCaller {
   crmLeadId: string | null;
   email: string;
   isStaff: boolean;
+  /** Signed in as a teammate (assistant, partner) rather than the owner. */
+  member?: { name: string; role: string } | null;
 }
 
 /**
@@ -56,16 +58,33 @@ export async function resolveCaller(
         .eq('user_id', userData.user.id)
         .maybeSingle());
 
-  if (!client) return null;
+  // Not the owner: maybe a teammate (assistant, partner) of one client.
+  let member: PortalCaller['member'] = null;
+  let owned = client;
+  if (!owned && !viewAs) {
+    const { data: m } = await db
+      .from('portal_client_members')
+      .select('first_name, last_name, role, portal_clients(id, business_name, first_name, last_name, crm_lead_id)')
+      .eq('user_id', userData.user.id)
+      .maybeSingle();
+    const c = (m as { portal_clients?: typeof client } | null)?.portal_clients ?? null;
+    if (m && c) {
+      owned = c;
+      member = { name: [m.first_name, m.last_name].filter(Boolean).join(' ') || (userData.user.email ?? 'Team member'), role: m.role || 'Assistant' };
+    }
+  }
+  if (!owned) return null;
 
-  const name = [client.first_name, client.last_name].filter(Boolean).join(' ');
+  const name = [owned.first_name, owned.last_name].filter(Boolean).join(' ');
   return {
-    clientId: client.id,
-    businessName: client.business_name,
-    displayName: name || client.business_name,
-    crmLeadId: client.crm_lead_id ?? null,
+    clientId: owned.id,
+    businessName: owned.business_name,
+    // Notes and approvals carry who actually sent them.
+    displayName: member ? `${member.name} (${member.role})` : name || owned.business_name,
+    crmLeadId: owned.crm_lead_id ?? null,
     email: userData.user.email ?? '',
     isStaff: viewAs ? false : await isStaff(db, userData.user.email),
+    member,
   };
 }
 

@@ -74,7 +74,14 @@ export async function POST(req: NextRequest) {
       .select('business_name')
       .eq('user_id', verified.data.user!.id)
       .maybeSingle();
-    await notifySlack(`*Portal invite accepted* — ${client?.business_name ?? verified.data.user!.email} set a password and is in.`);
+    let who = client?.business_name ?? null;
+    if (!who) {
+      // A teammate joining someone's portal.
+      const { data: m } = await db.from('portal_client_members').select('first_name, role, portal_clients(business_name)').eq('user_id', verified.data.user!.id).maybeSingle();
+      const biz = (m as { portal_clients?: { business_name?: string } } | null)?.portal_clients?.business_name;
+      if (m && biz) who = `${m.first_name ?? verified.data.user!.email} (${m.role}, ${biz})`;
+    }
+    await notifySlack(`*Portal invite accepted* — ${who ?? verified.data.user!.email} set a password and is in.`);
   }
 
   return done({ access_token: session.access_token, refresh_token: session.refresh_token });

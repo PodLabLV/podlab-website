@@ -29,6 +29,8 @@ import { jobMix, needsScript, type ContentItem } from '@/lib/portal/content-plan
 export interface Overview {
   client: {
     firstName: string | null;
+    /** Set when a teammate (assistant, partner) is signed in, not the owner. */
+    speaker?: { name: string; role: string } | null;
     lastName: string | null;
     businessName: string;
     email: string;
@@ -126,6 +128,7 @@ export async function buildOverview(db: SupabaseClient, caller: PortalCaller): P
       lastName: profile?.last_name ?? null,
       businessName: profile?.business_name ?? caller.businessName,
       email: caller.email,
+      speaker: caller.member ?? null,
       phone: profile?.phone ?? null,
       website: profile?.website ?? null,
       timezone: profile?.timezone ?? null,
@@ -467,6 +470,7 @@ async function brandBlock(db: SupabaseClient, id: string): Promise<Overview['bra
 export function renderOverview(o: Overview): string {
   const L: string[] = [];
   const c = o.client;
+  if (c.speaker) L.push(`SIGNED IN: ${c.speaker.name}, ${c.speaker.role} to the owner below — not the owner. Address them by their name, not the owner's. Business decisions (pricing, offers, sign-offs on strategy) are the owner's: help them prepare, and say when the owner should confirm.`);
   L.push(`Client: ${[c.firstName, c.lastName].filter(Boolean).join(' ') || '(no name)'} — ${c.businessName}. Login email ${c.email}. Phone ${c.phone ?? 'not set'}. Website ${c.website ?? 'not set'}. Timezone ${c.timezone ?? 'not set'}. Plan: ${c.plan ?? 'not set'}.`);
 
   if (o.chain.available) {

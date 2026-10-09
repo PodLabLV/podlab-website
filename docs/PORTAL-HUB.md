@@ -203,6 +203,17 @@ Some boards hold several clients' work (Deal Flow Radio, Power of Influence gues
 
 Scope lives in `lib/production-server.ts` (`clientCardScope`, `cardVisible`, `cardsInScope`, `scopeBoardIds`); every client read goes through it. Table: `portal_client_cards` (migration `20261016_portal_client_cards.sql`, service-role only). Before the migration runs, sharing returns "Run migration 20261016 first" and everything else behaves as before. API: `GET/POST /api/portal/admin/cards` (staff only). Tests: `npm run test:cards`.
 
+## Team access (assistants and partners)
+
+A client can have more than one login. **Manage → Team access**: first name, email, role (default "Assistant"), Invite teammate. They get a branded email ("You have access to {business}'s PodLab Portal") and their own password. Resend link and Remove sit on each row.
+
+- The owner stays `portal_clients.user_id`; teammates live in `portal_client_members` (migration `20261017_portal_client_members.sql`). One login opens one portal: an owner's login can't be a teammate, and a teammate can't join two clients.
+- `resolveCaller` falls back to the members table, so every route works unchanged. `caller.displayName` becomes "Jane Doe (Assistant)", so notes, approvals, the CRM timeline and Slack show who actually sent them. `caller.member` is set for teammates.
+- Database reads go through `public.portal_my_client_ids()` (security definer): every `own_rows` policy and `own_client` now use it instead of `portal_clients.user_id = auth.uid()`. **New client-readable tables must use `client_id in (select public.portal_my_client_ids())`.**
+- TipTop is told a teammate is signed in, addresses them by name, and defers owner decisions (pricing, offers, strategy sign-off) to the owner.
+- The daily digest still goes to the owner only. Removing a teammate cuts access on their next request; their auth user stays but opens nothing.
+- Tests: `npm run test:team`.
+
 ## View as client (staff preview)
 
 Clients → **View as client**, or the button on a client's Manage page, opens `/portal?viewAs=<clientId>`: their portal exactly as they see it (sidebar, potatoes, Production cuts, scripts, Brand, plans), with a yellow **Viewing as client** banner and an **Exit** button. It's remembered for that browser tab only, and signing out ends it.
