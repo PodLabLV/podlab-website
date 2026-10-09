@@ -21,6 +21,7 @@ function overview(patch: Partial<Overview> = {}): Overview {
     document: { has: false, editable: false, historyReady: false, versions: 0 },
     brand: { available: true, logos: [], colors: [], fonts: [], guide: false, broll: { files: 0, links: 0 }, gaps: [] },
     potatoes: [],
+    plans: { available: false, items: [] },
     accountability: [],
     ...patch,
   };

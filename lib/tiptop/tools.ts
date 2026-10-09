@@ -44,8 +44,12 @@ import {
   draftScriptInput,
   readScriptInput,
   readClientFileInput,
+  setGamePlanInput,
+  checkInGamePlanInput,
   type WriteTool,
 } from './schema';
+import { loadPlans, setPlan, checkIn } from '@/lib/portal/game-plan-server';
+import { fmtNumber, paceStatus } from '@/lib/portal/game-plan';
 import { createActionItems, draftScript, nextBrandKit, ownedQuestions, readClientFile, readIntake, readScript, saveBrandKit, saveIntakeAnswers } from './guide';
 import type { z } from 'zod';
 
@@ -180,6 +184,26 @@ export function approvalPolicy(ctx: ToolContext) {
       const { count } = await ctx.db.from('portal_scripts').select('id', { count: 'exact', head: true }).eq('client_id', ctx.caller.clientId).eq('status', 'draft').eq('source', 'tiptop');
       if ((count ?? 0) >= 10) return { type: 'denied', reason: 'There are already 10 TipTop drafts waiting on PodLab review. Tell the client they will be reviewed first.' };
       return { type: 'user-approval', reason: `Save "${input.title}" as a draft in Scripts. PodLab reviews it before it comes back to you to approve; nothing gets shot without that.` };
+    },
+
+    set_game_plan: async (input: z.infer<typeof setGamePlanInput>): Promise<ToolApprovalStatus> => {
+      const { ready, plans } = await loadPlans(ctx.db, ctx.caller.clientId);
+      if (!ready) return { type: 'denied', reason: 'The Game Plan is not switched on yet (migration). Put the actions on their list with create_action_items instead.' };
+      if (input.target !== undefined && input.baseline !== undefined && input.target === input.baseline) return { type: 'denied', reason: 'Target equals baseline: there is nothing to move. Pick a real target.' };
+      const was = plans.find((p) => p.pillar === input.pillar);
+      return {
+        type: 'user-approval',
+        reason: was ? `Replace your ${input.pillar} plan ("${was.outcome}") with: ${input.outcome}.` : `Set your ${input.pillar} plan for the next 90 days: ${input.outcome}.`,
+      };
+    },
+
+    check_in_game_plan: async (input: z.infer<typeof checkInGamePlanInput>): Promise<ToolApprovalStatus> => {
+      const { ready, plans } = await loadPlans(ctx.db, ctx.caller.clientId);
+      const p = plans.find((x) => x.pillar === input.pillar);
+      if (!ready || !p) return { type: 'denied', reason: `There is no ${input.pillar} plan yet. Offer to set one with set_game_plan.` };
+      const status = paceStatus({ ...p, current: input.current ?? p.current });
+      const num = input.current !== null ? `${fmtNumber(input.current)}${p.metric ? ` ${p.metric}` : ''} of ${fmtNumber(p.target)}` : 'no new number';
+      return { type: 'user-approval', reason: `Log this week's ${input.pillar} check-in: ${num}. On pace, that reads as "${status}".` };
     },
   } satisfies Record<WriteTool, unknown>;
 }
@@ -385,6 +409,18 @@ export function makeTools(ctx: ToolContext) {
       description: 'Put the game plan into their Action Items: up to 8 finishable, verb-first actions under one pillar (People, Operations, Sales, Marketing, Content), each with effort and an agreed due date. Agree the list with them in chat first; the client confirms on a card.',
       inputSchema: createActionItemsInput,
       execute: async ({ pillar, items, coaching }) => ({ saved: true, ...(await createActionItems(db, caller, pillar, items, coaching)), page: PAGES.actions.href }),
+    }),
+
+    set_game_plan: tool({
+      description: 'Set (or reset) one pillar of their 90-day Game Plan: the outcome as a number, what is counted, baseline, target, finish line, and three priorities in order, plus the coaching shown on the card. Then put this week\'s moves on their list with create_action_items. The client confirms first.',
+      inputSchema: setGamePlanInput,
+      execute: async ({ coaching: _coaching, ...plan }) => ({ saved: true, plan: await setPlan(db, caller, plan), page: PAGES.plan.href }),
+    }),
+
+    check_in_game_plan: tool({
+      description: "The weekly check-in on one pillar: the number now and one or two lines on what moved. Status (on track / at risk / off track / done) follows pace automatically. Ask for the number first; never invent it. The client confirms first.",
+      inputSchema: checkInGamePlanInput,
+      execute: async ({ pillar, current, note }) => ({ saved: true, plan: await checkIn(db, caller, pillar, current, note), page: PAGES.plan.href }),
     }),
 
     draft_script: tool({

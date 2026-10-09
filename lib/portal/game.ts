@@ -71,6 +71,12 @@ export function missions(o: Overview): Mission[] {
     out.push({ key: 'broll', title: 'Send us b-roll', points: 60, done: b.broll.files + b.broll.links > 0, href: '/portal/brand#broll' });
   }
 
+  if (o.plans.available) {
+    const set = new Set(o.plans.items.map((p) => p.pillar));
+    out.push({ key: 'plan', title: 'Set your 90-day Game Plan', points: 80, done: set.size > 0, href: '/portal/plan' });
+    out.push({ key: 'plan-core', title: 'Plan People, Operations, Sales and Marketing', points: 60, done: ['People', 'Operations', 'Sales', 'Marketing'].every((p) => set.has(p as never)), href: '/portal/plan' });
+  }
+
   // Repeatable: earned per item, and "done" while nothing is waiting on them.
   if (o.scripts.available && o.scripts.items.length) {
     const approved = o.scripts.items.filter((s) => APPROVED_SCRIPT.has(s.status)).length;

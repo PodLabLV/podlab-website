@@ -4,6 +4,8 @@ import { isDoneColumn, PORTAL_COMMENT_SUFFIX } from '@/lib/production';
 import { brandGaps } from '@/lib/portal/brand';
 import { loadBrand } from '@/lib/portal/brand-server';
 import { driveConfigured, modifiedTimes } from '@/lib/portal/drive';
+import { loadPlans } from '@/lib/portal/game-plan-server';
+import { checkInDue } from '@/lib/portal/game-plan';
 import { LOOKS_GOOD_NOTE, POTATO_EPOCH, byHeat, cutHolder, makePotato, type Potato } from '@/lib/portal/potato';
 
 /**
@@ -27,6 +29,7 @@ export async function potatoesFor(db: SupabaseClient, clientId: string, now = Da
     actionItem(db, clientId, you, add).catch(warn('action items')),
     brand(db, clientId, you, client.created_at, add).catch(warn('brand')),
     cuts(db, clientId, you, now, add).catch(warn('production')),
+    checkIns(db, clientId, you, now, add).catch(warn('game plan')),
   ]);
   return out.sort(byHeat);
 }
@@ -84,6 +87,24 @@ async function brand(db: SupabaseClient, id: string, you: string, createdAt: str
   if (!b.ready) return;
   const gap = brandGaps(b)[0];
   if (gap) add({ key: `brand:${id}:client`, holder: 'client', who: you, title: gap, why: 'Your editors need it to brand your videos', since: createdAt, href: '/portal/brand' });
+}
+
+/** One potato for the weekly Game Plan check-in, from the day it fell due. */
+async function checkIns(db: SupabaseClient, id: string, you: string, now: number, add: Add) {
+  const { ready, plans } = await loadPlans(db, id);
+  if (!ready) return;
+  const due = plans.filter((p) => checkInDue(p, now));
+  if (!due.length) return;
+  const since = Math.min(...due.map((p) => Date.parse(p.lastCheckInAt ?? p.createdAt) + 7 * 86_400_000));
+  add({
+    key: `checkin:${id}:client`,
+    holder: 'client',
+    who: you,
+    title: due.length === 1 ? `${due[0].pillar} check-in` : `${due.length} Game Plan check-ins`,
+    why: 'Give TipTop this week\'s numbers',
+    since: new Date(since).toISOString(),
+    href: '/portal/plan',
+  });
 }
 
 async function cuts(db: SupabaseClient, id: string, you: string, now: number, add: Add) {
