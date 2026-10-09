@@ -260,7 +260,7 @@ export default function StaffClientPage() {
         </ul>
       </Section>
 
-      <Section title="Production boards" hint="Linked boards show on their Production page, and their revision notes land on these boards' cards.">
+      <Section title="Production boards" hint="Linked boards show on their Your Videos page, and their revision notes land on these boards' cards.">
         <ul className="grid gap-px border border-p-line bg-p-line sm:grid-cols-2">
           {d.boards.map((b) => (
             <li key={b.id}>
@@ -282,7 +282,7 @@ export default function StaffClientPage() {
         </ul>
       </Section>
 
-      <Section title="Shared cards" hint="Single cards from boards you don't want to link whole, like Deal Flow Radio episodes and clips. Shared cards show on their Production page, and they can watch, comment on and approve them.">
+      <Section title="Shared cards" hint="Single cards from boards you don't want to link whole, like Deal Flow Radio episodes and clips. Shared cards show on their Your Videos page, and they can watch, comment on and approve them.">
         {accessToken && <SharedCards clientId={d.client.id} accessToken={accessToken} />}
       </Section>
 

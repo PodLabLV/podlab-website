@@ -97,6 +97,6 @@ export async function POST(req: Request) {
   if (!rows.length) return NextResponse.json({ error: 'No live cards with those ids.' }, { status: 400 });
   const { error } = await db.from('portal_client_cards').upsert(rows, { onConflict: 'client_id,card_id', ignoreDuplicates: true });
   if (error) return NextResponse.json({ error: /portal_client_cards/.test(error.message) ? 'Run migration 20261016 first.' : 'Could not share that.' }, { status: 500 });
-  await recordActivity(db, p.clientId, 'update', `${rows.length} video${rows.length === 1 ? '' : 's'} added to your Production page`);
+  await recordActivity(db, p.clientId, 'update', `${rows.length} video${rows.length === 1 ? '' : 's'} added to Your Videos`);
   return NextResponse.json({ shared: rows.length });
 }

@@ -28,7 +28,7 @@ export const PAGES = {
   document: { href: '/portal/document', label: 'Clarity Document' },
   intake: { href: '/portal/intake', label: 'Intake' },
   delivery: { href: '/portal/delivery', label: 'Delivery' },
-  production: { href: '/portal/production', label: 'Production' },
+  production: { href: '/portal/production', label: 'Your Videos' },
   brand: { href: '/portal/brand', label: 'Brand' },
   actions: { href: '/portal/actions', label: 'Action Items' },
   deliverables: { href: '/portal/deliverables', label: 'Deliverables' },

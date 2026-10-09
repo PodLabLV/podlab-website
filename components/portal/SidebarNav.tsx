@@ -33,6 +33,7 @@ const GROUPS: Group[] = [
     key: 'turn',
     label: 'Your turn',
     items: [
+      { href: '/portal/production', label: 'Your Videos', show: 'production', badge: 'production' },
       { href: '/portal/intake', label: 'Intake', show: 'intake', badge: 'intake', done: 'intake' },
       { href: '/portal/scripts', label: 'Scripts', show: 'scripts', badge: 'scripts' },
       { href: '/portal/deliverables', label: 'Deliverables', show: 'deliverables', badge: 'deliverables' },
@@ -47,7 +48,6 @@ const GROUPS: Group[] = [
       { href: '/portal/plan', label: 'Game Plan' },
       { href: '/portal/content', label: 'Content Plan' },
       { href: '/portal/growth', label: 'Growth Chain', show: 'growth' },
-      { href: '/portal/production', label: 'Production', show: 'production', badge: 'production' },
       { href: '/portal/document', label: 'Clarity Document', show: 'document' },
       { href: '/portal/delivery', label: 'Delivery', show: 'delivery' },
     ],
