@@ -7,6 +7,7 @@ import { usePortal } from '@/lib/portal-data';
 import { PageHeader, EmptyState } from '@/components/portal/Shared';
 import { ELEMENTS, FOUNDATION, PRODUCTS, chainStatus, type ElementRow, type ElementState, type LayerKey } from '@/lib/growth-chain';
 import SharedCards from '@/components/portal/SharedCards';
+import TeamAccess from '@/components/portal/TeamAccess';
 import type { StaffClientDetail } from '@/app/api/portal/admin/client/route';
 
 function Check() {
@@ -378,6 +379,10 @@ export default function StaffClientPage() {
         >
           {d.client.hasLogin ? 'Send a new sign-in link' : 'Send their invite'} from the client list →
         </Link>
+      </Section>
+
+      <Section title="Team access" hint="An assistant or partner gets their own login to this portal. Their notes and approvals go out under their own name, tagged with their role. Remove them any time.">
+        {accessToken && <TeamAccess clientId={d.client.id} accessToken={accessToken} />}
       </Section>
     </div>
   );

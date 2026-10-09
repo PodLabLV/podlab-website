@@ -92,8 +92,15 @@ const COPY: Record<AccessKind | 'reset', { subject: string; kicker: string; lead
   },
 };
 
-function emailHtml(kind: AccessKind | 'reset', url: string, firstName?: string | null): string {
-  const c = COPY[kind];
+const esc = (v: string) => v.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]!);
+
+function emailHtml(kind: AccessKind | 'reset', url: string, firstName?: string | null, teamOf?: string): string {
+  const c = { ...COPY[kind] };
+  // A teammate (assistant, partner) is joining someone else's portal.
+  if (teamOf && kind !== 'reset') {
+    c.subject = `You have access to ${esc(teamOf)}'s PodLab Portal`;
+    c.lead = `You've been given access to ${esc(teamOf)}'s PodLab Portal: the strategy, the videos in production, the deliverables and the next steps. Notes and approvals you send go out under your own name. Set a password to get in.`;
+  }
   const hello = firstName ? `Hi ${firstName},` : 'Hi there,';
   return emailLayout({
     title: c.subject,
@@ -114,6 +121,7 @@ export async function sendAccessEmail(
   to: string,
   url: string,
   firstName?: string | null,
+  teamOf?: string,
 ): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return false;
@@ -125,8 +133,8 @@ export async function sendAccessEmail(
         from: 'PodLab <info@podlablv.com>',
         to,
         reply_to: 'info@podlablv.com',
-        subject: COPY[kind].subject,
-        html: emailHtml(kind, url, firstName),
+        subject: teamOf && kind !== 'reset' ? `You have access to ${teamOf}'s PodLab Portal` : COPY[kind].subject,
+        html: emailHtml(kind, url, firstName, teamOf),
       }),
     });
     if (!res.ok) console.error('[portal] access email rejected', res.status, (await res.text()).slice(0, 300));
