@@ -10,6 +10,8 @@ import { loadBrand } from '@/lib/portal/brand-server';
 import { gameFor } from '@/lib/portal/game';
 import { potatoesFor } from '@/lib/portal/potato-server';
 import { HEAT_LABEL, type Potato } from '@/lib/portal/potato';
+import { loadPlans } from '@/lib/portal/game-plan-server';
+import { checkInDue, fmtNumber, type GamePlan } from '@/lib/portal/game-plan';
 
 /**
  * Everything TipTop knows about one client, read server-side with the service
@@ -70,6 +72,8 @@ export interface Overview {
   };
   /** Hot Potato: who holds each open item and how long (both sides). */
   potatoes: Potato[];
+  /** The 90-day Game Plan, one per pillar. */
+  plans: { available: boolean; items: GamePlan[] };
   /** Nudges, most important first. */
   accountability: string[];
 }
@@ -88,7 +92,7 @@ async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 export async function buildOverview(db: SupabaseClient, caller: PortalCaller): Promise<Overview> {
   const id = caller.clientId;
 
-  const [profile, chain, phases, production, scripts, deliverables, actionItems, intake, invoices, document, brand, potatoes] = await Promise.all([
+  const [profile, chain, phases, production, scripts, deliverables, actionItems, intake, invoices, document, brand, potatoes, plans] = await Promise.all([
     safe(() => loadProfile(db, id), null),
     safe(() => chainBlock(db, id), emptyChain()),
     safe(() => phasesBlock(db, id), []),
@@ -101,6 +105,10 @@ export async function buildOverview(db: SupabaseClient, caller: PortalCaller): P
     safe(() => documentBlock(db, id), { has: false, editable: false, historyReady: false, versions: 0 }),
     safe(() => brandBlock(db, id), emptyBrand()),
     safe(() => potatoesFor(db, id), [] as Potato[]),
+    safe(async () => {
+      const r = await loadPlans(db, id);
+      return { available: r.ready, items: r.plans };
+    }, { available: false, items: [] as GamePlan[] }),
   ]);
 
   const o: Overview = {
@@ -126,6 +134,7 @@ export async function buildOverview(db: SupabaseClient, caller: PortalCaller): P
     document,
     brand,
     potatoes,
+    plans,
     accountability: [],
   };
 
@@ -159,6 +168,11 @@ function nudges(o: Overview): string[] {
   }
   // Only the first brand gap: it is a nudge, not a checklist.
   if (o.brand.available && o.brand.gaps.length) out.push(`Brand page: ${o.brand.gaps[0].toLowerCase()} (editors need it to brand their videos)`);
+  const dueCheckIns = o.plans.items.filter((p) => checkInDue(p));
+  if (dueCheckIns.length) out.push(`Weekly Game Plan check-in due: ${dueCheckIns.map((p) => p.pillar).join(', ')} (ask for the number, then check_in_game_plan)`);
+  const slipping = o.plans.items.filter((p) => p.status === 'off track' || p.status === 'at risk');
+  if (slipping.length) out.push(`Game Plan ${slipping.map((p) => `${p.pillar} is ${p.status}`).join('; ')}: help them pick the one move that gets it back on pace`);
+  if (o.plans.available && o.plans.items.length === 0) out.push('No Game Plan yet: offer to build the 90-day plan for the pillar holding the rest back');
   if (o.actionItems.open.length) out.push(`${o.actionItems.open.length} open action item${o.actionItems.open.length === 1 ? '' : 's'}`);
   if (o.chain.available && o.chain.answered < 8) out.push(o.chain.answered === 0 ? 'Growth Chain check not taken yet (eight questions, about four minutes)' : `Growth Chain check part-done (${o.chain.answered}/8)`);
   const blocked = o.phases.filter((p) => p.status === 'blocked');
@@ -496,6 +510,15 @@ export function renderOverview(o: Overview): string {
       mine.length ? mine.map((p) => `"${p.title}" (${p.why}; day ${p.days}, ${p.heat})`).join('; ') : 'nothing'
     }. On PodLab: ${ours.length ? ours.map((p) => `"${p.title}" with ${p.who} (${p.why}; day ${p.days}, ${p.heat})`).join('; ') : 'nothing'}.`,
   );
+  if (o.plans.available) {
+    L.push(
+      o.plans.items.length
+        ? `Game Plan (/portal/plan; 90 days per pillar):\n${o.plans.items
+            .map((p) => `  - ${p.pillar}: "${p.outcome}" — ${fmtNumber(p.current ?? p.baseline)} of ${fmtNumber(p.target)}${p.metric ? ` ${p.metric}` : ''}${p.dueOn ? ` by ${p.dueOn}` : ''}, ${p.status}${checkInDue(p) ? ' [CHECK-IN DUE]' : ''}. Priorities: ${p.priorities.join('; ')}${p.lastCheckIn ? `. Last check-in ${p.lastCheckInAt?.slice(0, 10)}: ${p.lastCheckIn}` : ''}`)
+            .join('\n')}`
+        : 'Game Plan: none set yet (pillars: People, Operations, Sales, Marketing, Content).',
+    );
+  }
   const g = gameFor(o);
   L.push(`Build level (sidebar game; points come from their inputs and approvals): Level ${g.level.n} ${g.level.name}, ${g.score} pts${g.level.next !== null ? `, ${g.level.next - g.score} to level ${g.level.n + 1}` : ''}. Next mission: ${g.nextMission ? `${g.nextMission.title} (+${g.nextMission.points})` : 'none, nothing waiting on them'}.`);
   L.push(o.accountability.length ? `Open loops (bring up the top one or two when it fits):\n${o.accountability.map((a) => `  - ${a}`).join('\n')}` : 'Open loops: none. They are on top of everything.');

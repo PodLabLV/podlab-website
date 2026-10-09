@@ -30,6 +30,8 @@ const WRITE_TOOLS = new Set([
   'update_brand_kit',
   'create_action_items',
   'draft_script',
+  'set_game_plan',
+  'check_in_game_plan',
 ]);
 
 let sb: SupabaseClient | null = null;
@@ -475,6 +477,18 @@ function Part({ part, approve, busy, onNavigate }: { part: AnyPart; approve: (id
       );
     case 'draft_script':
       return <Quiet>Saved as a draft · PodLab reviews it, then it comes back to you to approve</Quiet>;
+    case 'set_game_plan':
+    case 'check_in_game_plan': {
+      const plan = o.plan as { pillar?: string; status?: string } | undefined;
+      return (
+        <div className="space-y-2">
+          <Quiet>
+            {tool === 'set_game_plan' ? `${plan?.pillar ?? 'Game'} plan set` : `${plan?.pillar ?? ''} check-in logged · ${plan?.status ?? ''}`}
+          </Quiet>
+          <ActionButton href="/portal/plan" label="Open your Game Plan" onNavigate={onNavigate} />
+        </div>
+      );
+    }
     default:
       return null;
   }
@@ -612,6 +626,35 @@ function ConfirmCard({
       </ol>
       </>
     );
+  } else if (tool === 'set_game_plan') {
+    const pr = (input.priorities as string[] | undefined) ?? [];
+    detail = (
+      <div className="space-y-3 text-sm">
+        {input.coaching ? <p className="whitespace-pre-wrap leading-relaxed text-[#eeeeee]">{String(input.coaching)}</p> : null}
+        <div className="border-l border-[#1a1a1a] pl-3 text-xs">
+          <p className="font-semibold text-[#eeeeee]">{String(input.outcome ?? '')}</p>
+          <p className="mt-1 text-[#eeeeee]/50">
+            {[
+              input.baseline !== undefined ? `from ${String(input.baseline)}` : null,
+              input.target !== undefined ? `to ${String(input.target)}` : null,
+              input.metric ? String(input.metric) : null,
+              input.due_on ? `by ${String(input.due_on)}` : null,
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          </p>
+          {pr.length > 0 && (
+            <ol className="mt-2 list-decimal space-y-0.5 pl-4 text-[#eeeeee]/80">
+              {pr.map((x, i) => (
+                <li key={i}>{x}</li>
+              ))}
+            </ol>
+          )}
+        </div>
+      </div>
+    );
+  } else if (tool === 'check_in_game_plan') {
+    detail = <p className="whitespace-pre-wrap border-l border-[#1a1a1a] pl-3 text-xs leading-relaxed text-[#eeeeee]">{String(input.note ?? '')}</p>;
   } else if (tool === 'draft_script') {
     detail = (
       <div className="max-h-56 overflow-y-auto border-l border-[#1a1a1a] pl-3">

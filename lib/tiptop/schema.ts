@@ -37,6 +37,7 @@ export const PAGES = {
   reports: { href: '/portal/reports', label: 'Reports' },
   invoices: { href: '/portal/invoices', label: 'Invoices' },
   profile: { href: '/portal/profile', label: 'Profile' },
+  plan: { href: '/portal/plan', label: 'Game Plan' },
 } as const;
 export type PageKey = keyof typeof PAGES;
 const PAGE_KEYS = Object.keys(PAGES) as [PageKey, ...PageKey[]];
@@ -138,7 +139,8 @@ export const updateBrandKitInput = z.object({
   mode: z.enum(['merge', 'replace']).default('merge').describe('merge adds to what is there (same hex or font name is updated); replace swaps the list.'),
 });
 
-export const PILLARS = ['People', 'Operations', 'Sales', 'Marketing', 'Content'] as const;
+import { PILLARS } from '@/lib/portal/game-plan';
+export { PILLARS };
 
 export const createActionItemsInput = z.object({
   pillar: z.enum(PILLARS).describe('Which part of the game plan these belong to.'),
@@ -159,6 +161,23 @@ export const createActionItemsInput = z.object({
     )
     .min(1)
     .max(8),
+});
+
+export const setGamePlanInput = z.object({
+  pillar: z.enum(PILLARS),
+  outcome: z.string().trim().min(8).max(200).describe('The 90-day outcome as a sentence with a number: "4 more cohort seats by Nov 30".'),
+  metric: z.string().trim().max(60).optional().describe('What gets counted, plural noun: "seats sold", "booked calls", "videos posted".'),
+  baseline: z.number().optional().describe('Where it stands today.'),
+  target: z.number().optional().describe('The number to hit.'),
+  due_on: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('The finish line, YYYY-MM-DD (about 90 days out unless they chose otherwise).'),
+  priorities: z.array(z.string().trim().min(3).max(160)).min(1).max(5).describe('Three priorities, the big rocks, in order.'),
+  coaching: z.string().trim().min(60).max(900).describe('Shown to the client on the card: why this number, the math, why these priorities in this order.'),
+});
+
+export const checkInGamePlanInput = z.object({
+  pillar: z.enum(PILLARS),
+  current: z.number().nullable().describe('The number now, in the plan\'s metric. null if they don\'t have it.'),
+  note: z.string().trim().min(10).max(500).describe('One or two lines: what moved, what didn\'t, the next move. Their words, tightened.'),
 });
 
 export const SCRIPT_KINDS = ['hook', 'faq', 'short', 'social', 'ad', 'vsl', 'email', 'founder'] as const;
@@ -185,5 +204,7 @@ export const WRITE_TOOLS = [
   'update_brand_kit',
   'create_action_items',
   'draft_script',
+  'set_game_plan',
+  'check_in_game_plan',
 ] as const;
 export type WriteTool = (typeof WRITE_TOOLS)[number];

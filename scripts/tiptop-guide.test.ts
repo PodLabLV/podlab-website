@@ -48,3 +48,35 @@ test('dueLabel', () => {
   assert.equal(dueLabel(undefined), '');
   assert.equal(dueLabel('nope'), '');
 });
+
+test('game plan pace: progress vs clock', async () => {
+  const { paceStatus, progress, checkInDue } = await import('@/lib/portal/game-plan');
+  const start = '2026-10-01T00:00:00Z';
+  const due = '2026-12-29'; // ~90 days
+  const at = (d: string) => Date.parse(d);
+  const plan = (current: number | null) => ({ baseline: 0, target: 4, current, createdAt: start, dueOn: due });
+  assert.equal(progress(plan(2)), 0.5);
+  assert.equal(paceStatus(plan(4), at('2026-10-20T00:00:00Z')), 'done');
+  // ~45% of the clock gone
+  assert.equal(paceStatus(plan(2), at('2026-11-10T00:00:00Z')), 'on track');
+  assert.equal(paceStatus(plan(1), at('2026-11-10T00:00:00Z')), 'at risk');
+  assert.equal(paceStatus(plan(0), at('2026-11-10T00:00:00Z')), 'off track');
+  // no number yet: fine early, at risk after a third of the clock
+  assert.equal(paceStatus(plan(null), at('2026-10-10T00:00:00Z')), 'on track');
+  assert.equal(paceStatus(plan(null), at('2026-11-15T00:00:00Z')), 'at risk');
+  // shrinking targets work too (cost down from 10 to 6)
+  assert.equal(progress({ baseline: 10, target: 6, current: 8 }), 0.5);
+  // weekly check-in
+  assert.ok(!checkInDue({ lastCheckInAt: '2026-10-05T00:00:00Z', createdAt: start, status: 'on track' }, at('2026-10-10T00:00:00Z')));
+  assert.ok(checkInDue({ lastCheckInAt: '2026-10-05T00:00:00Z', createdAt: start, status: 'on track' }, at('2026-10-12T01:00:00Z')));
+  assert.ok(!checkInDue({ lastCheckInAt: null, createdAt: start, status: 'done' }, at('2026-12-01T00:00:00Z')));
+});
+
+test('set_game_plan input: a number-shaped outcome, 1–5 priorities, coaching', async () => {
+  const { setGamePlanInput } = await import('@/lib/tiptop/schema');
+  const ok = { pillar: 'Sales', outcome: '4 more cohort seats by Nov 30', metric: 'seats sold', baseline: 0, target: 4, due_on: '2026-11-30', priorities: ['Offer page', 'Warm list', 'Follow-up'], coaching: 'x'.repeat(70) };
+  assert.ok(setGamePlanInput.safeParse(ok).success);
+  assert.ok(!setGamePlanInput.safeParse({ ...ok, priorities: [] }).success);
+  assert.ok(!setGamePlanInput.safeParse({ ...ok, coaching: 'short' }).success);
+  assert.ok(!setGamePlanInput.safeParse({ ...ok, pillar: 'Finance' }).success);
+});

@@ -96,6 +96,21 @@ TipTop runs on **Opus 5.5** (fallback Sonnet 5.5, then Sonnet 5; override with `
 - **Tested live** against a real client file (no writes): she drafted intake answers from the Clarity Document, said what only the client can answer, built a two-week sales plan with the math, and wrote a 30-second hook with a placeholder CTA instead of inventing one.
 - Code: `lib/tiptop/guide.ts`, tools in `lib/tiptop/tools.ts`, the panel in `components/portal/tiptop/TipTopPanel.tsx`. Tests: `npm run test:guide`.
 
+## Game Plan (90 days, per pillar)
+
+`/portal/plan` (sidebar: Your build → Game Plan). One plan per pillar (People, Operations, Sales, Marketing, Content), kept in `portal_game_plans` (migration `20261014_portal_game_plan.sql`).
+- **Each plan has:** the outcome as a number ("4 more cohort seats by Nov 30"), what's counted, a baseline, a target, a finish line, and three priorities in order. The weekly moves underneath are its Action Items (source `Game Plan · <pillar>`).
+- **Pace, not vibes:** progress from baseline to target is compared with how much of the clock has run. Hit the target → **done**; within 15 points of pace → **on track**; within 35 → **at risk**; worse → **off track**. No number yet: on track for the first third of the clock, then at risk. The bar shows a tick for where the clock is.
+- **TipTop builds and runs it:**
+  - `set_game_plan` sets a pillar's plan; the confirm card shows the coaching, the numbers and the priorities.
+  - `create_action_items` adds this week's moves.
+  - `check_in_game_plan` is the weekly check-in: the number now plus a line, and the status follows pace. Slack pings when a plan slips to at risk or off track, or hits its target.
+- **Weekly rhythm:** a check-in is due 7 days after the last one (or after the plan was set). It shows as **Check-in due** on the card, a TipTop nudge, and a Hot Potato on the client ("Give TipTop this week's numbers").
+- **Levels:** +80 for the first plan, and +60 for planning all four core pillars.
+- **Empty pillars:** "Build it with TipTop" opens her with a starter question.
+- **Staff:** a read-only view at `/portal/plan?client=<id>`.
+- Code: `lib/portal/game-plan.ts` (pure pace math; tests in `npm run test:guide`), `lib/portal/game-plan-server.ts`, `app/api/portal/game-plan`, `app/portal/plan`.
+
 ## Video chapters and timestamped revisions
 
 Chapters use the same lines YouTube reads from a video description, so editors write them once:
@@ -181,7 +196,7 @@ You need a row in `portal_staff`. info@ already has one. Staff get **Clients · 
 
 1. **Database:** run every migration once, in order: `bash ~/podlab-portal-migrations/RUN-ALL.sh` in the macOS Terminal app.
    - Each file is safe to run twice, and the script stops at the first failure.
-   - Copies live in `supabase/migrations/` (2026-10-07 → 2026-10-12).
+   - Copies live in `supabase/migrations/` (2026-10-07 → 2026-10-14).
 2. **Site:** merge the hub PR, then deploy podlab-site to production from the main worktree.
    - Agents can't run production deploys; run them in the Terminal app.
    - The CLI often ends with `fetch failed` even when the deploy worked. Check `vercel ls --prod` before retrying.
