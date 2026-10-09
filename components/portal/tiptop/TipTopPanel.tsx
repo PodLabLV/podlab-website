@@ -672,6 +672,7 @@ function ConfirmCard({
             <li key={i} className="border-l border-[#1a1a1a] pl-3 text-xs leading-relaxed">
               <span className="block text-[#eeeeee]/45">
                 {it.publish_on} · {it.format} · {it.job}
+                {(it as { card_id?: string }).card_id ? ' · already shot' : ''}
               </span>
               <span className="block text-[#eeeeee]">{it.title}</span>
               {it.hook ? <span className="block italic text-[#eeeeee]/55">&ldquo;{it.hook}&rdquo;</span> : null}

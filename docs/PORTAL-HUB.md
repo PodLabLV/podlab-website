@@ -115,6 +115,7 @@ TipTop runs on **Opus 5.5** (fallback Sonnet 5.5, then Sonnet 5; override with `
 
 `/portal/content` (sidebar: Your build → Content Plan). One row per piece in `portal_content_plan` (migration `20261015_portal_content_plan.sql`): date, pillar, format (short, hook, FAQ, authority, story, ad, long, carousel, email), title, hook, job (attract / educate / convert / retain), CTA and status.
 
+- **Already-shot videos come first:** `plan_content` takes a `card_id` (a Production video on the client's boards). That piece goes in as **in edit**, linked to the editors' cut, so nothing gets recorded twice. TipTop is told to schedule inventory before planning anything new, and the approval refuses cards that aren't the client's or are already scheduled.
 - **Lifecycle:** planned → scripted → recorded → in edit → posted (or skipped).
   - **Scripted:** set when TipTop drafts a script for the piece (`draft_script` with `content_item_id`).
   - **Recorded:** the client tells TipTop. Slack pings with a link.

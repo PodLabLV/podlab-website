@@ -50,7 +50,7 @@ import {
   updateContentInput,
   type WriteTool,
 } from './schema';
-import { addContentItems, linkScript, loadContentPlan, ownedItems, updateContentItems } from '@/lib/portal/content-plan-server';
+import { addContentItems, linkScript, loadContentPlan, ownedCards, ownedItems, updateContentItems } from '@/lib/portal/content-plan-server';
 import { loadPlans, setPlan, checkIn } from '@/lib/portal/game-plan-server';
 import { fmtNumber, paceStatus } from '@/lib/portal/game-plan';
 import { createActionItems, draftScript, nextBrandKit, ownedQuestions, readClientFile, readIntake, readScript, saveBrandKit, saveIntakeAnswers } from './guide';
@@ -217,8 +217,19 @@ export function approvalPolicy(ctx: ToolContext) {
       if (past.length) return { type: 'denied', reason: `These dates are in the past: ${past.map((i) => i.publish_on).join(', ')}. Today is ${today}.` };
       const planned = items.filter((i) => i.status === 'planned' && i.publishOn >= today).length;
       if (planned + input.items.length > 60) return { type: 'denied', reason: `They already have ${planned} planned pieces ahead. Don't overplan: finish or skip some first.` };
+      const cardIds = input.items.map((i) => i.card_id).filter((x): x is string => Boolean(x));
+      const mine = await ownedCards(ctx.db, ctx.caller.clientId, cardIds);
+      const bad = cardIds.filter((c) => !mine.has(c));
+      if (bad.length) return { type: 'denied', reason: `Not this client's Production videos: ${bad.join(', ')}. Use video ids from the snapshot, or leave card_id off for new pieces.` };
+      const taken = new Set(items.map((i) => i.crmCardId).filter(Boolean));
+      const dup = cardIds.filter((c) => taken.has(c));
+      if (dup.length) return { type: 'denied', reason: `Already scheduled in the plan: ${dup.join(', ')}. Don't schedule the same cut twice.` };
       const dates = input.items.map((i) => i.publish_on).sort();
-      return { type: 'user-approval', reason: `Add ${input.items.length} piece${input.items.length === 1 ? '' : 's'} to your content plan, ${dates[0]} to ${dates[dates.length - 1]}.` };
+      const shot = cardIds.length;
+      return {
+        type: 'user-approval',
+        reason: `Add ${input.items.length} piece${input.items.length === 1 ? '' : 's'} to your content plan, ${dates[0]} to ${dates[dates.length - 1]}${shot ? `: ${shot} already shot (they post from your editors' cuts), ${input.items.length - shot} new to record` : ''}.`,
+      };
     },
 
     update_content: async (input: z.infer<typeof updateContentInput>): Promise<ToolApprovalStatus> => {

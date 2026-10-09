@@ -196,6 +196,7 @@ export const planContentInput = z.object({
         hook: z.string().trim().max(300).optional().describe('The first line, in their voice.'),
         job: z.enum(JOBS),
         cta: z.string().trim().max(200).optional(),
+        card_id: id.optional().describe('ALREADY SHOT: the Production video id from the snapshot. The piece is scheduled to post from that cut instead of being recorded again.'),
       }),
     )
     .min(1)
