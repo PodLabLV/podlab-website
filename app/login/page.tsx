@@ -15,7 +15,7 @@ function redirectTarget(): string {
 }
 
 const inputClass =
-  'w-full border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3.5 text-[15px] text-[#eeeeee] placeholder:text-[#eeeeee]/25 transition focus:border-[#2add1b] focus:outline-none';
+  'w-full border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3.5 text-[17px] text-[#eeeeee] placeholder:text-[#eeeeee]/65 transition focus:border-[#2add1b] focus:outline-none';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -140,7 +140,7 @@ export default function LoginPage() {
           <Link href="/" aria-label="PodLab home">
             <Image src="/portal/podlab-portal-green.png" alt="PodLab Portal" width={720} height={229} priority unoptimized className="h-auto w-[132px] md:w-[156px]" />
           </Link>
-          <Link href="/" className="portal-label text-[#eeeeee]/50 transition hover:text-[#2add1b]">
+          <Link href="/" className="portal-label text-[#eeeeee]/75 transition hover:text-[#2add1b]">
             Back to site
           </Link>
         </div>
@@ -158,26 +158,26 @@ export default function LoginPage() {
               </>
             )}
           </h1>
-          <p className="mt-5 text-base leading-relaxed text-[#eeeeee]/60">
+          <p className="mt-5 text-lg leading-relaxed text-[#eeeeee]/80">
             {mode === 'login'
               ? 'Your strategy document, delivery schedule, files and invoices. Sign in with the email we set you up with.'
               : 'Enter your email and we’ll send you a link to set a new one.'}
           </p>
 
           {error && (
-            <p role="alert" className="mt-8 border-l-2 border-red-500 bg-red-500/5 px-4 py-3 text-sm text-red-300">
+            <p role="alert" className="mt-8 border-l-2 border-red-500 bg-red-500/5 px-4 py-3 text-base text-red-300">
               {error}
             </p>
           )}
           {resetSent && (
-            <p role="status" className="mt-8 border-l-2 border-[#2add1b] bg-[#2add1b]/5 px-4 py-3 text-sm text-[#eeeeee]/80">
+            <p role="status" className="mt-8 border-l-2 border-[#2add1b] bg-[#2add1b]/5 px-4 py-3 text-base text-[#eeeeee]/80">
               Reset link sent. Check your inbox (and spam) for an email from PodLab.
             </p>
           )}
 
           <form onSubmit={mode === 'login' ? handleLogin : handleReset} className="mt-8 space-y-5">
             <div>
-              <label htmlFor="email" className="portal-label mb-2 block text-[#eeeeee]/50">
+              <label htmlFor="email" className="portal-label mb-2 block text-[#eeeeee]/75">
                 Email
               </label>
               <input
@@ -197,13 +197,13 @@ export default function LoginPage() {
               <>
                 <div>
                   <div className="mb-2 flex items-center justify-between">
-                    <label htmlFor="password" className="portal-label block text-[#eeeeee]/50">
+                    <label htmlFor="password" className="portal-label block text-[#eeeeee]/75">
                       Password
                     </label>
                     <button
                       type="button"
                       onClick={() => switchMode('reset')}
-                      className="text-xs text-[#eeeeee]/50 transition hover:text-[#2add1b]"
+                      className="text-sm text-[#eeeeee]/75 transition hover:text-[#2add1b]"
                     >
                       Forgot it?
                     </button>
@@ -222,14 +222,14 @@ export default function LoginPage() {
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      className="portal-label absolute inset-y-0 right-0 px-4 !text-[9px] text-[#eeeeee]/40 transition hover:text-[#2add1b]"
+                      className="portal-label absolute inset-y-0 right-0 px-4 !text-[12px] text-[#eeeeee]/70 transition hover:text-[#2add1b]"
                     >
                       {showPassword ? 'Hide' : 'Show'}
                     </button>
                   </div>
                 </div>
 
-                <label className="flex cursor-pointer items-center gap-3 text-sm text-[#eeeeee]/60">
+                <label className="flex cursor-pointer items-center gap-3 text-base text-[#eeeeee]/80">
                   <input
                     type="checkbox"
                     checked={rememberMe}
@@ -266,7 +266,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => switchMode('login')}
-                className="portal-label w-full border border-[#1a1a1a] px-6 py-4 text-[#eeeeee]/70 transition hover:border-[#2add1b] hover:text-[#2add1b]"
+                className="portal-label w-full border border-[#1a1a1a] px-6 py-4 text-[#eeeeee]/85 transition hover:border-[#2add1b] hover:text-[#2add1b]"
               >
                 Back to sign in
               </button>
@@ -274,19 +274,19 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <div className="mx-auto grid w-full max-w-md gap-px border border-[#1a1a1a] bg-[#1a1a1a] text-sm sm:grid-cols-2">
+        <div className="mx-auto grid w-full max-w-md gap-px border border-[#1a1a1a] bg-[#1a1a1a] text-base sm:grid-cols-2">
           <Link href="/diagnostic" className="group bg-black p-4 transition hover:bg-[#0a0a0a]">
-            <span className="portal-label block !text-[9px] text-[#eeeeee]/40">Not a client yet</span>
+            <span className="portal-label block !text-[12px] text-[#eeeeee]/70">Not a client yet</span>
             <span className="mt-2 block text-[#eeeeee]/80 transition group-hover:text-[#2add1b]">See if you qualify for a free VSL</span>
           </Link>
           <a href="https://crm.podlablv.com" className="group bg-black p-4 transition hover:bg-[#0a0a0a]">
-            <span className="portal-label block !text-[9px] text-[#eeeeee]/40">PodLab team</span>
+            <span className="portal-label block !text-[12px] text-[#eeeeee]/70">PodLab team</span>
             <span className="mt-2 block text-[#eeeeee]/80 transition group-hover:text-[#2add1b]">Sign in to the CRM instead</span>
           </a>
         </div>
-        <p className="mx-auto mt-5 w-full max-w-md text-xs text-[#eeeeee]/40">
+        <p className="mx-auto mt-5 w-full max-w-md text-sm text-[#eeeeee]/70">
           Trouble signing in?{' '}
-          <a href="mailto:info@podlablv.com" className="text-[#eeeeee]/70 underline-offset-4 transition hover:text-[#2add1b] hover:underline">
+          <a href="mailto:info@podlablv.com" className="text-[#eeeeee]/85 underline-offset-4 transition hover:text-[#2add1b] hover:underline">
             info@podlablv.com
           </a>
         </p>

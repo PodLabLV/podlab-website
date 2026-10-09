@@ -31,11 +31,11 @@ import {
 type Asset = PortalAsset & AssetReviewFields;
 
 const inputClass =
-  'border border-p-line bg-p-paper px-3 py-2.5 text-[15px] text-p-ink placeholder:text-p-ink/25 focus:border-p-brandink focus:outline-none';
+  'border border-p-line bg-p-paper px-3 py-2.5 text-[17px] text-p-ink placeholder:text-p-ink/50 focus:border-p-brandink focus:outline-none';
 const primaryBtn =
-  'portal-label inline-flex items-center justify-center gap-3 bg-p-brand px-5 py-3 !text-[10px] text-black transition hover:bg-p-pop disabled:cursor-not-allowed disabled:opacity-40';
+  'portal-label inline-flex items-center justify-center gap-3 bg-p-brand px-5 py-3 !text-[13px] text-black transition hover:bg-p-pop disabled:cursor-not-allowed disabled:opacity-40';
 const ghostBtn =
-  'portal-label inline-flex items-center justify-center gap-3 border border-p-line px-5 py-3 !text-[10px] text-p-ink/75 transition hover:border-p-brandink hover:text-p-brandink disabled:cursor-not-allowed disabled:opacity-40';
+  'portal-label inline-flex items-center justify-center gap-3 border border-p-line px-5 py-3 !text-[13px] text-p-ink/85 transition hover:border-p-brandink hover:text-p-brandink disabled:cursor-not-allowed disabled:opacity-40';
 
 function ExternalIcon() {
   return (
@@ -148,8 +148,8 @@ function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps)
     <div className="border-t border-p-line p-5 md:p-6">
       {current.note && (
         <div className="mb-5 border-l-2 border-p-brandink pl-4">
-          <span className="portal-label block !text-[9px] text-p-brandink">What changed in v{current.version_no}</span>
-          <p className="mt-1.5 text-sm leading-relaxed text-p-ink/75">{current.note}</p>
+          <span className="portal-label block !text-[12px] text-p-brandink">What changed in v{current.version_no}</span>
+          <p className="mt-1.5 text-base leading-relaxed text-p-ink/85">{current.note}</p>
         </div>
       )}
 
@@ -190,7 +190,7 @@ function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps)
         />
       ) : (
         <>
-      <span className="portal-label block !text-[9px] text-p-ink/45">
+      <span className="portal-label block !text-[12px] text-p-ink/70">
         Notes on v{current.version_no}
         {notes.length ? ` · ${notes.length}` : ''}
       </span>
@@ -202,17 +202,17 @@ function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps)
                 <button
                   onClick={() => seek(Number(c.time_seconds))}
                   disabled={!inlineVideo}
-                  className="portal-label h-fit shrink-0 border border-p-brandink/40 px-1.5 py-1 !text-[9px] !tracking-[0.1em] text-p-brandink transition enabled:hover:bg-p-brand enabled:hover:text-black"
+                  className="portal-label h-fit shrink-0 border border-p-brandink/40 px-1.5 py-1 !text-[12px] !tracking-[0.1em] text-p-brandink transition enabled:hover:bg-p-brand enabled:hover:text-black"
                   aria-label={`Jump to ${clock(Number(c.time_seconds))}`}
                 >
                   {clock(Number(c.time_seconds))}
                 </button>
               ) : (
-                <span className="portal-label h-fit shrink-0 border border-p-ink/15 px-1.5 py-1 !text-[9px] text-p-ink/35">ALL</span>
+                <span className="portal-label h-fit shrink-0 border border-p-ink/15 px-1.5 py-1 !text-[12px] text-p-ink/65">ALL</span>
               )}
               <div className="min-w-0 flex-1">
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-p-ink/80">{c.body}</p>
-                <p className="portal-label mt-1.5 !text-[8px] text-p-ink/30">
+                <p className="whitespace-pre-wrap text-base leading-relaxed text-p-ink/90">{c.body}</p>
+                <p className="portal-label mt-1.5 !text-[11px] text-p-ink/65">
                   {c.author_kind === 'client' ? c.author_name : `${c.author_name} · PodLab`}
                   {c.status === 'resolved' ? '  ·  Resolved' : ''}
                 </p>
@@ -221,7 +221,7 @@ function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps)
           ))}
         </ul>
       ) : (
-        <p className="mt-2 text-sm text-p-ink/40">
+        <p className="mt-2 text-base text-p-ink/70">
           {approved ? 'No notes on this version.' : isVideo ? 'Pause the video where something should change and leave a note. The time fills in for you.' : 'Nothing yet. Open the file, then leave a note here.'}
         </p>
       )}
@@ -258,13 +258,13 @@ function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps)
         </>
       )}
 
-      {err && <p role="alert" className="mt-4 border-l-2 border-red-500 bg-red-500/5 px-4 py-3 text-sm text-red-300">{err}</p>}
-      {flash && <p role="status" className="mt-4 border-l-2 border-p-brandink bg-p-brand/5 px-4 py-3 text-sm text-p-ink/85">{flash}</p>}
+      {err && <p role="alert" className="mt-4 border-l-2 border-red-500 bg-red-500/5 px-4 py-3 text-base text-red-300">{err}</p>}
+      {flash && <p role="status" className="mt-4 border-l-2 border-p-brandink bg-p-brand/5 px-4 py-3 text-base text-p-ink/90">{flash}</p>}
 
       <div className="mt-6 border-t border-p-line pt-5">
         {approved ? (
-          <p className="text-sm leading-relaxed text-p-ink/70">
-            <span className="portal-label mr-2 !text-[9px] text-p-brandink">Approved</span>
+          <p className="text-base leading-relaxed text-p-ink/85">
+            <span className="portal-label mr-2 !text-[12px] text-p-brandink">Approved</span>
             {asset.approved_by ? `${asset.approved_by} approved v${asset.approved_version ?? current.version_no}` : `v${current.version_no} approved`}
             {asset.approved_at ? ` on ${formatDate(asset.approved_at)}` : ''}.
           </p>
@@ -297,7 +297,7 @@ function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps)
 
       {versions.length > 1 && (
         <div className="mt-6">
-          <span className="portal-label block !text-[9px] text-p-ink/35">Earlier versions</span>
+          <span className="portal-label block !text-[12px] text-p-ink/65">Earlier versions</span>
           <div className="mt-2 flex flex-wrap gap-2">
             {versions.slice(1).map((v) => (
               <button
@@ -309,7 +309,7 @@ function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps)
                     setErr(e instanceof Error ? e.message : 'Could not open that file.');
                   }
                 }}
-                className="portal-label border border-p-line px-3 py-2 !text-[9px] text-p-ink/50 transition hover:border-p-brandink hover:text-p-brandink"
+                className="portal-label border border-p-line px-3 py-2 !text-[12px] text-p-ink/75 transition hover:border-p-brandink hover:text-p-brandink"
               >
                 v{v.version_no} · {formatDate(v.created_at)}
               </button>
@@ -372,12 +372,12 @@ function AssetCard({ asset, versions, comments, expanded, onToggle, onChanged }:
         <div className="min-w-0 flex-1">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              {meta.length > 0 && <p className="portal-label !text-[9px] text-p-ink/40">{meta.join('  ·  ')}</p>}
-              <p className="mt-1.5 text-base font-semibold leading-snug text-p-ink">{asset.title}</p>
+              {meta.length > 0 && <p className="portal-label !text-[12px] text-p-ink/70">{meta.join('  ·  ')}</p>}
+              <p className="mt-1.5 text-lg font-semibold leading-snug text-p-ink">{asset.title}</p>
             </div>
             <ScriptStatusBadge status={asset.status} />
           </div>
-          {asset.description && <p className="mt-2 text-sm leading-relaxed text-p-ink/55">{asset.description}</p>}
+          {asset.description && <p className="mt-2 text-base leading-relaxed text-p-ink/75">{asset.description}</p>}
 
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3">
             {current && !(isVideo && current.storage_path && expanded) && (
@@ -395,13 +395,13 @@ function AssetCard({ asset, versions, comments, expanded, onToggle, onChanged }:
               <button
                 onClick={onToggle}
                 aria-expanded={expanded}
-                className="portal-label !text-[9px] text-p-ink/50 transition hover:text-p-brandink"
+                className="portal-label !text-[12px] text-p-ink/75 transition hover:text-p-brandink"
               >
                 {expanded ? 'Close review' : `Review${openNotes ? ` · ${openNotes} note${openNotes === 1 ? '' : 's'}` : ''}`}
               </button>
             )}
           </div>
-          {openErr && <p role="alert" className="mt-3 text-sm text-red-300">{openErr}</p>}
+          {openErr && <p role="alert" className="mt-3 text-base text-red-300">{openErr}</p>}
         </div>
       </div>
       {expanded && current && <ReviewPanel asset={asset} versions={versions} comments={comments} onChanged={onChanged} />}
@@ -448,7 +448,7 @@ export default function DeliverablesPage() {
     return m;
   }, [review.versions]);
 
-  if (loading) return <p className="portal-label !text-[9px] text-p-ink/40">Loading deliverables</p>;
+  if (loading) return <p className="portal-label !text-[12px] text-p-ink/70">Loading deliverables</p>;
 
   const header = (
     <PageHeader
@@ -501,8 +501,8 @@ export default function DeliverablesPage() {
               role="tab"
               aria-selected={lab === l}
               onClick={() => setLab(l)}
-              className={`portal-label flex-1 px-4 py-2.5 !text-[9px] transition sm:flex-none ${
-                lab === l ? 'bg-p-brand text-black' : 'bg-p-paper text-p-ink/50 hover:text-p-ink'
+              className={`portal-label flex-1 px-4 py-2.5 !text-[12px] transition sm:flex-none ${
+                lab === l ? 'bg-p-brand text-black' : 'bg-p-paper text-p-ink/75 hover:text-p-ink'
               }`}
             >
               {l}
@@ -515,7 +515,7 @@ export default function DeliverablesPage() {
         <div className="mb-12">
           <div className="flex items-baseline gap-3">
             <span className="portal-label text-p-warn">Waiting on your review</span>
-            <span className="portal-label !text-[9px] text-p-ink/40">{waiting.length}</span>
+            <span className="portal-label !text-[12px] text-p-ink/70">{waiting.length}</span>
           </div>
           <div className="mt-4 grid gap-4">{waiting.map(card)}</div>
         </div>

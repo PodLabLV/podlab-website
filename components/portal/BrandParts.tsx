@@ -31,7 +31,7 @@ function Thumb({ src, name, className }: { src: string; name: string | null; cla
 
 function ExtMark({ name }: { name: string | null }) {
   const ext = extOf(name ?? '').toUpperCase() || 'FILE';
-  return <span className="portal-label border border-p-ink/20 px-2 py-1 !text-[9px] text-p-ink/60">{ext.slice(0, 5)}</span>;
+  return <span className="portal-label border border-p-ink/20 px-2 py-1 !text-[12px] text-p-ink/80">{ext.slice(0, 5)}</span>;
 }
 
 /** The logo on a light and a dark ground, side by side, so a missing version is obvious. */
@@ -58,8 +58,8 @@ export function MediaThumb({ asset }: { asset: BrandAsset }) {
     } catch {}
     return (
       <div className="flex aspect-video flex-col items-center justify-center gap-2 bg-p-paper">
-        <span className="portal-label border border-p-brandink/40 px-2 py-1 !text-[9px] text-p-brandink">Link</span>
-        <span className="text-xs text-p-ink/40">{host}</span>
+        <span className="portal-label border border-p-brandink/40 px-2 py-1 !text-[12px] text-p-brandink">Link</span>
+        <span className="text-sm text-p-ink/70">{host}</span>
       </div>
     );
   }
@@ -91,8 +91,8 @@ export function Swatches({ colors }: { colors: BrandColor[] }) {
         <div key={`${c.hex}-${i}`} className="bg-p-paper">
           <div className="h-16" style={{ backgroundColor: c.hex }} />
           <div className="p-3">
-            <p className="font-mono text-sm text-p-ink">{c.hex}</p>
-            {c.name && <p className="mt-0.5 truncate text-xs text-p-ink/45">{c.name}</p>}
+            <p className="font-mono text-base text-p-ink">{c.hex}</p>
+            {c.name && <p className="mt-0.5 break-words text-sm text-p-ink/70">{c.name}</p>}
           </div>
         </div>
       ))}
@@ -106,8 +106,8 @@ export function FontList({ fonts }: { fonts: BrandFont[] }) {
     <ul className="divide-y divide-p-line border border-p-line">
       {fonts.map((f, i) => (
         <li key={`${f.name}-${i}`} className="flex items-center justify-between gap-4 bg-p-paper px-4 py-3">
-          <span className="text-[15px] text-p-ink">{f.name}</span>
-          {f.use && <span className="portal-label !text-[9px] text-p-ink/40">{f.use}</span>}
+          <span className="text-[17px] text-p-ink">{f.name}</span>
+          {f.use && <span className="portal-label !text-[12px] text-p-ink/70">{f.use}</span>}
         </li>
       ))}
     </ul>
@@ -121,11 +121,11 @@ export function FileRow({ asset, actions }: { asset: BrandAsset; actions?: React
     <li className="flex flex-wrap items-center gap-3 bg-p-paper px-4 py-3">
       <ExtMark name={asset.filename ?? (asset.externalUrl ? 'link' : null)} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm text-p-ink">{asset.label || asset.filename || asset.externalUrl}</p>
-        <p className="text-xs text-p-ink/35">{[formatBytes(asset.sizeBytes), asset.uploadedBy].filter(Boolean).join(' · ')}</p>
+        <p className="break-words text-base text-p-ink">{asset.label || asset.filename || asset.externalUrl}</p>
+        <p className="text-sm text-p-ink/65">{[formatBytes(asset.sizeBytes), asset.uploadedBy].filter(Boolean).join(' · ')}</p>
       </div>
       {href && (
-        <a href={href} target="_blank" rel="noopener noreferrer" className="portal-label !text-[9px] text-p-brandink hover:text-p-ink">
+        <a href={href} target="_blank" rel="noopener noreferrer" className="portal-label !text-[12px] text-p-brandink hover:text-p-ink">
           {asset.externalUrl ? 'Open ↗' : 'Download'}
         </a>
       )}

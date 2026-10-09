@@ -23,17 +23,17 @@ function Rows({ list, showClient }: { list: Potato[]; showClient: boolean }) {
         <li key={`${p.clientId}-${p.key}`} className="flex items-center gap-3 px-4 py-3">
           <PotatoIcon heat={p.heat} size={24} />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm text-p-ink">{p.title}</p>
-            <p className="truncate text-xs text-p-ink/40">
+            <p className="break-words text-base text-p-ink">{p.title}</p>
+            <p className="break-words text-sm text-p-ink/70">
               {showClient && p.clientName ? `${p.clientName} · ` : ''}
               {p.why}
             </p>
           </div>
-          <span className={`portal-label shrink-0 !text-[8.5px] ${p.heat === 'smoke' || p.heat === 'fire' ? 'text-[#ff8a1f]' : 'text-p-ink/40'}`}>
+          <span className={`portal-label shrink-0 !text-[11px] ${p.heat === 'smoke' || p.heat === 'fire' ? 'text-[#ff8a1f]' : 'text-p-ink/70'}`}>
             {HEAT_LABEL[p.heat]} · day {p.days}
           </span>
           {p.clientId && (
-            <Link href={`/portal/clients/${p.clientId}`} className="portal-label shrink-0 !text-[8.5px] text-p-brandink hover:text-p-ink">
+            <Link href={`/portal/clients/${p.clientId}`} className="portal-label shrink-0 !text-[11px] text-p-brandink hover:text-p-ink">
               Client
             </Link>
           )}
@@ -59,7 +59,7 @@ export default function PotatoBoard() {
       .catch(() => setError('staff'));
   }, [accessToken]);
 
-  if (loading || (!list && !error)) return <p className="portal-label !text-[9px] text-p-ink/40">Heating up</p>;
+  if (loading || (!list && !error)) return <p className="portal-label !text-[12px] text-p-ink/70">Heating up</p>;
   if (error) return <EmptyState title="Staff only" body="This page is for the PodLab team." />;
 
   const team = list!.filter((p) => p.holder === 'team');
@@ -80,7 +80,7 @@ export default function PotatoBoard() {
           <div key={h} className="flex items-center gap-3 bg-p-paper p-4">
             <PotatoIcon heat={h} size={28} />
             <div>
-              <p className="portal-label !text-[8.5px] text-p-ink/40">{HEAT_LABEL[h]}</p>
+              <p className="portal-label !text-[11px] text-p-ink/70">{HEAT_LABEL[h]}</p>
               <p className="text-2xl font-bold text-p-ink">{count(h)}</p>
             </div>
           </div>
@@ -93,7 +93,7 @@ export default function PotatoBoard() {
           <div className="mt-4 space-y-4">
             {group(team, (p) => p.who).map(([who, ps]) => (
               <div key={who} className="border border-p-line">
-                <p className="portal-label border-b border-p-line bg-p-card px-4 py-2.5 !text-[9px] text-p-ink/70">
+                <p className="portal-label border-b border-p-line bg-p-card px-4 py-2.5 !text-[12px] text-p-ink/85">
                   {who} · {ps.length}
                 </p>
                 <Rows list={ps} showClient />
@@ -101,7 +101,7 @@ export default function PotatoBoard() {
             ))}
           </div>
         ) : (
-          <p className="mt-3 text-sm text-p-ink/50">The team isn&apos;t holding anything. Every open item is on a client.</p>
+          <p className="mt-3 text-base text-p-ink/75">The team isn&apos;t holding anything. Every open item is on a client.</p>
         )}
       </section>
 
@@ -110,7 +110,7 @@ export default function PotatoBoard() {
         <div className="mt-4 space-y-4">
           {group(clients, (p) => p.clientName ?? 'Client').map(([name, ps]) => (
             <div key={name} className="border border-p-line">
-              <p className="portal-label border-b border-p-line bg-p-card px-4 py-2.5 !text-[9px] text-p-ink/70">
+              <p className="portal-label border-b border-p-line bg-p-card px-4 py-2.5 !text-[12px] text-p-ink/85">
                 {name} · {ps.length}
               </p>
               <Rows list={ps} showClient={false} />

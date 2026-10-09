@@ -12,7 +12,7 @@ import {
 export default function InvoicesPage() {
   const { loading, client, invoices } = usePortal();
 
-  if (loading) return <p className="text-p-ink/40 text-sm">Loading...</p>;
+  if (loading) return <p className="text-p-ink/70 text-base">Loading...</p>;
 
   if (!client || invoices.length === 0) {
     return (
@@ -45,13 +45,13 @@ export default function InvoicesPage() {
 
       {/* Desktop */}
       <Card className="hidden md:block overflow-hidden">
-        <table className="w-full text-sm">
+        <table className="w-full text-base">
           <thead>
             <tr className="border-b border-p-ink/10">
               {['Invoice', 'Date', 'Description', 'Amount', 'Status'].map((h) => (
                 <th
                   key={h}
-                  className="text-left px-5 py-3 font-display text-[10px] uppercase tracking-widest text-p-ink/40"
+                  className="text-left px-5 py-3 font-display text-[13px] uppercase tracking-widest text-p-ink/70"
                 >
                   {h}
                 </th>
@@ -61,8 +61,8 @@ export default function InvoicesPage() {
           <tbody className="divide-y divide-p-ink/5">
             {invoices.map((i) => (
               <tr key={i.id}>
-                <td className="px-5 py-4 text-p-ink/60">{i.invoice_no || '—'}</td>
-                <td className="px-5 py-4 text-p-ink/60">{formatDate(i.issued_on)}</td>
+                <td className="px-5 py-4 text-p-ink/80">{i.invoice_no || '—'}</td>
+                <td className="px-5 py-4 text-p-ink/80">{formatDate(i.issued_on)}</td>
                 <td className="px-5 py-4 text-p-ink">{i.description}</td>
                 <td className="px-5 py-4 text-p-ink font-semibold">
                   {formatMoney(i.amount_cents)}
@@ -82,8 +82,8 @@ export default function InvoicesPage() {
           <Card key={i.id} className="p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-p-ink text-sm">{i.description}</p>
-                <p className="text-p-ink/30 text-xs mt-1">
+                <p className="text-p-ink text-base">{i.description}</p>
+                <p className="text-p-ink/65 text-sm mt-1">
                   {i.invoice_no ? `${i.invoice_no} · ` : ''}
                   {formatDate(i.issued_on)}
                 </p>

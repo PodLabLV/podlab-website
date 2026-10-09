@@ -25,7 +25,7 @@ function StageTag({ card }: { card: ProductionCard }) {
     : s === 'revising'
       ? 'border-p-warn/40 text-p-warn'
       : 'border-p-brandink/50 text-p-brandink';
-  return <span className={`portal-label inline-block shrink-0 border px-2 py-1 !text-[8.5px] ${tone}`}>{card.stage || 'Queued'}</span>;
+  return <span className={`portal-label inline-block shrink-0 border px-2 py-1 !text-[11px] ${tone}`}>{card.stage || 'Queued'}</span>;
 }
 
 function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: string, c: ProductionComment, movedTo?: string) => void }) {
@@ -90,8 +90,8 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
       >
         <div className="flex w-full items-start justify-between gap-4">
           <span className="min-w-0">
-            <span className="block text-[15px] font-semibold text-p-ink">{card.title}</span>
-            <span className="mt-1 block text-xs text-p-ink/40">
+            <span className="block text-[17px] font-semibold text-p-ink">{card.title}</span>
+            <span className="mt-1 block text-sm text-p-ink/70">
               {[
                 card.dueOn ? `Due ${formatDate(card.dueOn)}` : null,
                 card.chapters.length ? `${card.chapters.length} chapters` : null,
@@ -120,17 +120,17 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
               <button
                 onClick={looksGood}
                 disabled={approving}
-                className="portal-label bg-p-brand px-5 py-3 !text-[10px] text-black transition hover:bg-p-pop disabled:opacity-40"
+                className="portal-label bg-p-brand px-5 py-3 !text-[13px] text-black transition hover:bg-p-pop disabled:opacity-40"
               >
                 {approving ? 'Sending' : approvedAt ? 'Looks good (sent)' : 'Looks good'}
               </button>
-              <span className="text-xs text-p-ink/40">
+              <span className="text-sm text-p-ink/70">
                 {approvedAt ? `You approved this cut ${formatDate(approvedAt)}. The editor moves it on.` : 'Happy with this cut? Tell the editor, and the potato is theirs.'}
               </span>
-              {approveErr && <span className="text-xs text-p-bad">{approveErr}</span>}
+              {approveErr && <span className="text-sm text-p-bad">{approveErr}</span>}
             </div>
           )}
-          <p className="mt-3 text-xs text-p-ink/35">
+          <p className="mt-3 text-sm text-p-ink/65">
             {card.done
               ? card.stage === 'Posted'
                 ? 'This video is already live. A note goes to the team, who will decide on a re-cut with you.'
@@ -151,7 +151,7 @@ function BoardSection({ board, onNote }: { board: ProductionBoard; onNote: (card
     <section className="mt-12">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <span className="portal-label block text-p-brandink">{board.name}</span>
-        <span className="portal-label !text-[9px] text-p-ink/35">
+        <span className="portal-label !text-[12px] text-p-ink/65">
           {active.length} in progress · {done.length} done
         </span>
       </div>
@@ -172,7 +172,7 @@ function BoardSection({ board, onNote }: { board: ProductionBoard; onNote: (card
             <div className="mt-3">
               <button
                 onClick={() => setShowDone((v) => !v)}
-                className="portal-label !text-[9px] text-p-ink/40 transition hover:text-p-brandink"
+                className="portal-label !text-[12px] text-p-ink/70 transition hover:text-p-brandink"
               >
                 {showDone ? 'Hide' : 'Show'} {done.length} finished
               </button>
@@ -208,11 +208,11 @@ function VslStrip({ vsl }: { vsl: VslTrack }) {
       <ol className="mt-4 grid grid-cols-2 gap-px border border-p-line bg-p-line md:grid-cols-4">
         {steps.map((s, i) => (
           <li key={s.label} className="bg-p-paper p-5">
-            <span className={`flex h-7 w-7 items-center justify-center border text-[10px] font-bold ${s.done ? 'border-p-brandink bg-p-brand text-black' : 'border-p-ink/20 text-p-ink/35'}`}>
+            <span className={`flex h-7 w-7 items-center justify-center border text-[13px] font-bold ${s.done ? 'border-p-brandink bg-p-brand text-black' : 'border-p-ink/20 text-p-ink/65'}`}>
               {String(i + 1).padStart(2, '0')}
             </span>
-            <p className={`mt-3 text-sm font-semibold ${s.done ? 'text-p-ink' : 'text-p-ink/50'}`}>{s.label}</p>
-            <p className="mt-1 text-xs text-p-ink/40">{s.detail ?? 'Not yet'}</p>
+            <p className={`mt-3 text-base font-semibold ${s.done ? 'text-p-ink' : 'text-p-ink/75'}`}>{s.label}</p>
+            <p className="mt-1 text-sm text-p-ink/70">{s.detail ?? 'Not yet'}</p>
           </li>
         ))}
       </ol>
@@ -259,7 +259,7 @@ export default function ProductionPage() {
         },
     );
 
-  if (loading || (client && !data && !error)) return <p className="portal-label !text-[9px] text-p-ink/40">Loading production</p>;
+  if (loading || (client && !data && !error)) return <p className="portal-label !text-[12px] text-p-ink/70">Loading production</p>;
 
   const header = (
     <PageHeader
@@ -305,7 +305,7 @@ export default function ProductionPage() {
           <Card className="mt-10 grid grid-cols-3 divide-x divide-p-line">
             {counts.map((c) => (
               <div key={c.label} className="p-5">
-                <p className="portal-label !text-[9px] text-p-ink/40">{c.label}</p>
+                <p className="portal-label !text-[12px] text-p-ink/70">{c.label}</p>
                 <p className="mt-3 text-3xl font-bold tracking-tight text-p-ink">{c.value}</p>
               </div>
             ))}

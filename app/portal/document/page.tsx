@@ -49,7 +49,7 @@ export default function DocumentPage() {
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
-  if (loading) return <p className="text-p-ink/40 text-sm">Loading...</p>;
+  if (loading) return <p className="text-p-ink/70 text-base">Loading...</p>;
 
   if (!client) {
     return (
@@ -100,14 +100,14 @@ export default function DocumentPage() {
       {client.document_url ? (
         <Card className="overflow-hidden mb-8">
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 border-b border-p-ink/10">
-            <p className="font-display text-[10px] uppercase tracking-widest text-p-ink/40">
+            <p className="font-display text-[13px] uppercase tracking-widest text-p-ink/70">
               Business DNA — Clarity Document
             </p>
             <a
               href={docUrl ?? '#'}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-p-brandink text-xs hover:underline"
+              className="text-p-brandink text-sm hover:underline"
             >
               Open full screen
             </a>
@@ -135,18 +135,18 @@ export default function DocumentPage() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         <div>
-          <h2 className="font-display text-p-ink text-sm uppercase tracking-wider mb-4">
+          <h2 className="font-display text-p-ink text-base uppercase tracking-wider mb-4">
             Request a Change
           </h2>
           <Card className="p-5">
             <form onSubmit={submit}>
-              <label className="block font-display text-[10px] uppercase tracking-widest text-p-ink/40 mb-2">
+              <label className="block font-display text-[13px] uppercase tracking-widest text-p-ink/70 mb-2">
                 Section
               </label>
               <select
                 value={section}
                 onChange={(e) => setSection(e.target.value)}
-                className="w-full bg-p-card border border-p-ink/10 rounded-xl px-3 py-2.5 text-sm text-p-ink mb-4 focus:outline-none focus:border-p-brandink/40"
+                className="w-full bg-p-card border border-p-ink/10 rounded-xl px-3 py-2.5 text-base text-p-ink mb-4 focus:outline-none focus:border-p-brandink/40"
               >
                 {SECTIONS.map((s) => (
                   <option key={s} value={s}>
@@ -155,7 +155,7 @@ export default function DocumentPage() {
                 ))}
               </select>
 
-              <label className="block font-display text-[10px] uppercase tracking-widest text-p-ink/40 mb-2">
+              <label className="block font-display text-[13px] uppercase tracking-widest text-p-ink/70 mb-2">
                 What should change?
               </label>
               <textarea
@@ -164,12 +164,12 @@ export default function DocumentPage() {
                 rows={5}
                 maxLength={4000}
                 placeholder="Be as specific as you like — quote the line you want changed and tell us what it should say instead."
-                className="w-full bg-p-card border border-p-ink/10 rounded-xl px-3 py-2.5 text-sm text-p-ink placeholder:text-p-ink/25 resize-y focus:outline-none focus:border-p-brandink/40"
+                className="w-full bg-p-card border border-p-ink/10 rounded-xl px-3 py-2.5 text-base text-p-ink placeholder:text-p-ink/50 resize-y focus:outline-none focus:border-p-brandink/40"
               />
 
-              {error && <p className="text-p-bad text-xs mt-3">{error}</p>}
+              {error && <p className="text-p-bad text-sm mt-3">{error}</p>}
               {sent && (
-                <p className="text-p-brandink text-xs mt-3">
+                <p className="text-p-brandink text-sm mt-3">
                   Sent. The team has been notified.
                 </p>
               )}
@@ -177,7 +177,7 @@ export default function DocumentPage() {
               <button
                 type="submit"
                 disabled={saving || !body.trim()}
-                className="mt-4 w-full px-5 py-2.5 rounded-xl bg-p-brand text-black text-sm font-semibold hover:bg-p-brand/90 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                className="mt-4 w-full px-5 py-2.5 rounded-xl bg-p-brand text-black text-base font-semibold hover:bg-p-brand/90 transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {saving ? 'Sending...' : 'Send to PodLab'}
               </button>
@@ -186,7 +186,7 @@ export default function DocumentPage() {
         </div>
 
         <div>
-          <h2 className="font-display text-p-ink text-sm uppercase tracking-wider mb-4">
+          <h2 className="font-display text-p-ink text-base uppercase tracking-wider mb-4">
             Your Notes
           </h2>
           {comments.length === 0 ? (
@@ -199,21 +199,21 @@ export default function DocumentPage() {
               {comments.map((c) => (
                 <Card key={c.id} className="p-4">
                   <div className="flex items-start justify-between gap-3">
-                    <p className="font-display text-[10px] uppercase tracking-widest text-p-brandink">
+                    <p className="font-display text-[13px] uppercase tracking-widest text-p-brandink">
                       {c.section || 'General'}
                     </p>
                     <StatusBadge status={c.status} />
                   </div>
-                  <p className="text-p-ink/80 text-sm mt-2.5 whitespace-pre-wrap leading-relaxed">
+                  <p className="text-p-ink/90 text-base mt-2.5 whitespace-pre-wrap leading-relaxed">
                     {c.body}
                   </p>
                   {c.resolution && (
-                    <p className="text-p-ink/50 text-xs mt-3 pt-3 border-t border-p-ink/10">
+                    <p className="text-p-ink/75 text-sm mt-3 pt-3 border-t border-p-ink/10">
                       <span className="text-p-brandink">PodLab: </span>
                       {c.resolution}
                     </p>
                   )}
-                  <p className="text-p-ink/25 text-[11px] mt-3">
+                  <p className="text-p-ink/65 text-[14px] mt-3">
                     {formatDate(c.created_at)}
                   </p>
                 </Card>

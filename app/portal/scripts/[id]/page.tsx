@@ -27,11 +27,11 @@ import {
 const LOCKED = ['approved', 'shot', 'published'];
 
 const inputClass =
-  'w-full resize-y border border-p-line bg-p-paper px-3 py-2.5 text-[15px] leading-relaxed text-p-ink placeholder:text-p-ink/25 focus:border-p-brandink focus:outline-none';
+  'w-full resize-y border border-p-line bg-p-paper px-3 py-2.5 text-[17px] leading-relaxed text-p-ink placeholder:text-p-ink/50 focus:border-p-brandink focus:outline-none';
 const primaryBtn =
-  'portal-label inline-flex items-center justify-center gap-3 bg-p-brand px-5 py-3 !text-[10px] text-black transition hover:bg-p-pop disabled:cursor-not-allowed disabled:opacity-40';
+  'portal-label inline-flex items-center justify-center gap-3 bg-p-brand px-5 py-3 !text-[13px] text-black transition hover:bg-p-pop disabled:cursor-not-allowed disabled:opacity-40';
 const ghostBtn =
-  'portal-label inline-flex items-center justify-center gap-3 border border-p-line px-5 py-3 !text-[10px] text-p-ink/75 transition hover:border-p-brandink hover:text-p-brandink disabled:cursor-not-allowed disabled:opacity-40';
+  'portal-label inline-flex items-center justify-center gap-3 border border-p-line px-5 py-3 !text-[13px] text-p-ink/85 transition hover:border-p-brandink hover:text-p-brandink disabled:cursor-not-allowed disabled:opacity-40';
 
 interface NoteProps {
   comment: PortalScriptComment;
@@ -46,17 +46,17 @@ function Note({ comment, replies, version, showQuote }: NoteProps) {
   return (
     <div className="border border-p-line bg-p-card px-4 py-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className={`portal-label !text-[8.5px] ${isClient ? 'text-p-warn' : 'text-p-brandink'}`}>
+        <span className={`portal-label !text-[11px] ${isClient ? 'text-p-warn' : 'text-p-brandink'}`}>
           {isClient ? comment.author_name : `${comment.author_name} · PodLab`}
         </span>
-        <span className="portal-label !text-[8px] text-p-ink/30">{formatDate(comment.created_at)}</span>
-        {comment.status === 'resolved' && <span className="portal-label !text-[8px] text-p-ink/35">Resolved</span>}
-        {carried && !comment.orphaned && <span className="portal-label !text-[8px] text-p-ink/35">From an earlier version</span>}
-        {comment.orphaned && <span className="portal-label !text-[8px] text-p-warn/80">Line rewritten</span>}
+        <span className="portal-label !text-[11px] text-p-ink/65">{formatDate(comment.created_at)}</span>
+        {comment.status === 'resolved' && <span className="portal-label !text-[11px] text-p-ink/65">Resolved</span>}
+        {carried && !comment.orphaned && <span className="portal-label !text-[11px] text-p-ink/65">From an earlier version</span>}
+        {comment.orphaned && <span className="portal-label !text-[11px] text-p-warn/80">Line rewritten</span>}
       </div>
-      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-p-ink/80">{comment.body}</p>
+      <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-p-ink/90">{comment.body}</p>
       {(showQuote || comment.orphaned) && comment.quoted_text && (
-        <p className="mt-2 border-l border-p-ink/15 pl-3 text-xs italic text-p-ink/40">
+        <p className="mt-2 border-l border-p-ink/15 pl-3 text-sm italic text-p-ink/70">
           {comment.orphaned ? 'Was on: ' : ''}&ldquo;{comment.quoted_text.slice(0, 160)}
           {comment.quoted_text.length > 160 ? '…' : ''}&rdquo;
         </p>
@@ -65,10 +65,10 @@ function Note({ comment, replies, version, showQuote }: NoteProps) {
         <div className="mt-3 space-y-2 border-l border-p-brandink/40 pl-3">
           {replies.map((r) => (
             <div key={r.id}>
-              <span className="portal-label !text-[8.5px] text-p-brandink">
+              <span className="portal-label !text-[11px] text-p-brandink">
                 {r.author_kind === 'client' ? r.author_name : `${r.author_name} · PodLab`}
               </span>
-              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-p-ink/70">{r.body}</p>
+              <p className="mt-1 whitespace-pre-wrap text-base leading-relaxed text-p-ink/85">{r.body}</p>
             </div>
           ))}
         </div>
@@ -110,7 +110,7 @@ function Composer({ placeholder, busy, onSubmit, onCancel, autoFocus }: Composer
           {busy ? 'Saving' : 'Save note'}
         </button>
         {onCancel && (
-          <button onClick={onCancel} className="portal-label px-3 !text-[9px] text-p-ink/40 transition hover:text-p-ink">
+          <button onClick={onCancel} className="portal-label px-3 !text-[12px] text-p-ink/70 transition hover:text-p-ink">
             Cancel
           </button>
         )}
@@ -154,7 +154,7 @@ export default function ScriptReviewPage() {
   );
 
   if (portalLoading || (client && !data)) {
-    return <p className="portal-label !text-[9px] text-p-ink/40">Loading script</p>;
+    return <p className="portal-label !text-[12px] text-p-ink/70">Loading script</p>;
   }
 
   if (!client || !script || !version) {
@@ -234,7 +234,7 @@ export default function ScriptReviewPage() {
     <>
       {prompting && <Teleprompter title={script.title} body={version.body} onClose={() => setPrompting(false)} />}
 
-      <Link href="/portal/scripts" className="portal-label mb-6 inline-flex items-center gap-2 !text-[9px] text-p-ink/40 transition hover:text-p-brandink">
+      <Link href="/portal/scripts" className="portal-label mb-6 inline-flex items-center gap-2 !text-[12px] text-p-ink/70 transition hover:text-p-brandink">
         <span aria-hidden="true">←</span> All scripts
       </Link>
 
@@ -246,7 +246,7 @@ export default function ScriptReviewPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-y border-p-line py-3">
-        <span className="portal-label !text-[9px] text-p-ink/45">{meta.join('  ·  ')}</span>
+        <span className="portal-label !text-[12px] text-p-ink/70">{meta.join('  ·  ')}</span>
         {versions.length > 1 && (
           <div className="flex flex-wrap gap-px border border-p-line bg-p-line sm:ml-auto" role="tablist" aria-label="Versions">
             {[...versions].reverse().map((v) => {
@@ -260,8 +260,8 @@ export default function ScriptReviewPage() {
                     setViewNo(v.version_no);
                     setOpenBlock(null);
                   }}
-                  className={`portal-label px-3 py-2 !text-[9px] transition ${
-                    active ? 'bg-p-brand text-black' : 'bg-p-paper text-p-ink/50 hover:text-p-ink'
+                  className={`portal-label px-3 py-2 !text-[12px] transition ${
+                    active ? 'bg-p-brand text-black' : 'bg-p-paper text-p-ink/75 hover:text-p-ink'
                   }`}
                 >
                   v{v.version_no}
@@ -274,7 +274,7 @@ export default function ScriptReviewPage() {
 
       <div className="mt-8 space-y-4">
         {!isCurrent && (
-          <p className="border-l-2 border-p-ink/25 pl-5 text-sm text-p-ink/60">
+          <p className="border-l-2 border-p-ink/25 pl-5 text-base text-p-ink/80">
             You&apos;re reading v{version.version_no}, an earlier version. It&apos;s frozen.{' '}
             <button onClick={() => setViewNo(null)} className="text-p-brandink underline-offset-4 hover:underline">
               Go to v{script.current_version}
@@ -283,27 +283,27 @@ export default function ScriptReviewPage() {
         )}
         {version.note && (
           <div className="border-l-2 border-p-brandink pl-5">
-            <span className="portal-label block !text-[9px] text-p-brandink">What changed in v{version.version_no}</span>
-            <p className="mt-2 text-sm leading-relaxed text-p-ink/75">{version.note}</p>
+            <span className="portal-label block !text-[12px] text-p-brandink">What changed in v{version.version_no}</span>
+            <p className="mt-2 text-base leading-relaxed text-p-ink/85">{version.note}</p>
           </div>
         )}
         {orphaned.length > 0 && (
           <div className="border-l-2 border-p-warn pl-5">
-            <span className="portal-label block !text-[9px] text-p-warn">
+            <span className="portal-label block !text-[12px] text-p-warn">
               {orphaned.length} note{orphaned.length === 1 ? '' : 's'} lost {orphaned.length === 1 ? 'its' : 'their'} line
             </span>
-            <p className="mt-2 text-sm leading-relaxed text-p-ink/60">
+            <p className="mt-2 text-base leading-relaxed text-p-ink/80">
               The line these pointed at was rewritten. They&apos;re listed at the bottom so nothing quietly disappears.
             </p>
           </div>
         )}
         {err && (
-          <p role="alert" className="border-l-2 border-red-500 bg-red-500/5 px-4 py-3 text-sm text-red-300">
+          <p role="alert" className="border-l-2 border-red-500 bg-red-500/5 px-4 py-3 text-base text-red-300">
             {err}
           </p>
         )}
         {flash && (
-          <p role="status" className="border-l-2 border-p-brandink bg-p-brand/5 px-4 py-3 text-sm text-p-ink/85">
+          <p role="status" className="border-l-2 border-p-brandink bg-p-brand/5 px-4 py-3 text-base text-p-ink/90">
             {flash}
           </p>
         )}
@@ -317,16 +317,16 @@ export default function ScriptReviewPage() {
           return (
             <li key={`${version.id}-${i}`} className="group border-b border-p-line">
               <div className={`grid grid-cols-[1.75rem_1fr] gap-3 py-5 sm:grid-cols-[2.5rem_1fr_auto] sm:gap-5 ${active ? 'bg-p-brand/[0.04]' : ''}`}>
-                <span className={`portal-label pt-1 !text-[9px] ${blockNotes.length ? 'text-p-warn' : 'text-p-ink/25'}`}>
+                <span className={`portal-label pt-1 !text-[12px] ${blockNotes.length ? 'text-p-warn' : 'text-p-ink/65'}`}>
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                <p className="whitespace-pre-wrap text-[16px] leading-[1.7] text-p-ink/90 sm:text-[17px]">{text}</p>
+                <p className="whitespace-pre-wrap text-[18px] leading-[1.7] text-p-ink/90 sm:text-[19px]">{text}</p>
                 {canAct && (
                   <button
                     onClick={() => setOpenBlock(active ? null : i)}
                     aria-expanded={active}
-                    className={`portal-label col-start-2 justify-self-start !text-[9px] transition sm:col-start-3 sm:pt-1 ${
-                      active ? 'text-p-brandink' : 'text-p-ink/40 hover:text-p-brandink sm:text-p-ink/25 sm:group-hover:text-p-ink/60'
+                    className={`portal-label col-start-2 justify-self-start !text-[12px] transition sm:col-start-3 sm:pt-1 ${
+                      active ? 'text-p-brandink' : 'text-p-ink/70 hover:text-p-brandink sm:text-p-ink/65 sm:group-hover:text-p-ink/80'
                     }`}
                   >
                     {active ? 'Close' : '+ Note'}
@@ -365,7 +365,7 @@ export default function ScriptReviewPage() {
               <Note key={c.id} comment={c} replies={repliesTo(c.id)} version={version} />
             ))}
             {general.length === 0 && orphaned.length === 0 && !canAct && (
-              <p className="text-sm text-p-ink/40">No general notes on this version.</p>
+              <p className="text-base text-p-ink/70">No general notes on this version.</p>
             )}
             {canAct && (
               <Composer busy={busy} placeholder="Tone, length, anything that isn't about one line." onSubmit={saveNote(null)} />
@@ -377,8 +377,8 @@ export default function ScriptReviewPage() {
           <span className="portal-label block text-p-brandink">Your call</span>
           {approval || (isCurrent && currentApproval) ? (
             <Card className="mt-4 p-5">
-              <p className="portal-label !text-[9px] text-p-brandink">Approved</p>
-              <p className="mt-2 text-sm leading-relaxed text-p-ink/75">
+              <p className="portal-label !text-[12px] text-p-brandink">Approved</p>
+              <p className="mt-2 text-base leading-relaxed text-p-ink/85">
                 {(approval ?? currentApproval)!.approved_by_name} approved v{version.version_no} on{' '}
                 {formatDate((approval ?? currentApproval)!.approved_at)}. This version is locked; it&apos;s what we shoot.
               </p>
@@ -390,7 +390,7 @@ export default function ScriptReviewPage() {
             <Card className="mt-4 p-5">
               {unsent.length > 0 ? (
                 <>
-                  <p className="text-sm leading-relaxed text-p-ink/75">
+                  <p className="text-base leading-relaxed text-p-ink/85">
                     You have <span className="font-semibold text-p-warn">{unsent.length} unsent note{unsent.length === 1 ? '' : 's'}</span>.
                     Send them and we&apos;ll come back with the next version.
                   </p>
@@ -399,7 +399,7 @@ export default function ScriptReviewPage() {
                   </button>
                 </>
               ) : (
-                <p className="text-sm leading-relaxed text-p-ink/60">
+                <p className="text-base leading-relaxed text-p-ink/80">
                   {(script.status || '').toLowerCase() === 'changes requested'
                     ? "We have your notes and we're rewriting. Add more any time."
                     : 'Something to change? Add a note to any paragraph with + Note, then send them in one go.'}
@@ -409,7 +409,7 @@ export default function ScriptReviewPage() {
               <div className="mt-6 border-t border-p-line pt-5">
                 {!confirming ? (
                   <>
-                    <p className="text-sm leading-relaxed text-p-ink/60">
+                    <p className="text-base leading-relaxed text-p-ink/80">
                       Approving locks v{version.version_no} as the script we shoot.
                       {unsent.length > 0 ? ' Your unsent notes will be closed.' : ''}
                     </p>
@@ -419,7 +419,7 @@ export default function ScriptReviewPage() {
                   </>
                 ) : (
                   <>
-                    <p className="text-sm leading-relaxed text-p-ink/75">
+                    <p className="text-base leading-relaxed text-p-ink/85">
                       Lock v{version.version_no} as {[client.first_name, client.last_name].filter(Boolean).join(' ') || client.business_name}? We record who approved it and when.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
@@ -435,7 +435,7 @@ export default function ScriptReviewPage() {
               </div>
             </Card>
           ) : (
-            <p className="mt-4 text-sm leading-relaxed text-p-ink/50">
+            <p className="mt-4 text-base leading-relaxed text-p-ink/75">
               {isCurrent ? 'This script is locked.' : `Decisions happen on the current version, v${script.current_version}.`}
             </p>
           )}

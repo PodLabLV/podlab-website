@@ -29,15 +29,15 @@ export default function BrandKitSharePage() {
     </div>
   );
 
-  if (missing) return shell(<p className="mt-12 text-p-ink/60">This brand kit link has expired or been replaced. Ask PodLab for the current one.</p>);
-  if (!d) return shell(<p className="portal-label mt-12 !text-[9px] text-p-ink/40">Loading the brand kit</p>);
+  if (missing) return shell(<p className="mt-12 text-p-ink/80">This brand kit link has expired or been replaced. Ask PodLab for the current one.</p>);
+  if (!d) return shell(<p className="portal-label mt-12 !text-[12px] text-p-ink/70">Loading the brand kit</p>);
 
   const { brand } = d;
   const by = (k: string) => brand.assets.filter((a) => a.kind === k);
   const head = (t: string, sub?: string) => (
     <div className="mb-4 mt-12">
       <span className="portal-label block text-p-brandink">{t}</span>
-      {sub && <p className="mt-1 text-sm text-p-ink/45">{sub}</p>}
+      {sub && <p className="mt-1 text-base text-p-ink/70">{sub}</p>}
     </div>
   );
 
@@ -46,7 +46,7 @@ export default function BrandKitSharePage() {
       <div className="mt-10">
         <span className="portal-label block text-p-brandink">Brand kit · for editors</span>
         <h1 className="mt-4 text-3xl font-bold tracking-tight text-p-ink md:text-4xl">{d.businessName}</h1>
-        <p className="mt-3 max-w-2xl text-p-ink/55">Everything the client has given us. Download links refresh each time this page loads; reload if one has expired.</p>
+        <p className="mt-3 max-w-2xl text-p-ink/75">Everything the client has given us. Download links refresh each time this page loads; reload if one has expired.</p>
       </div>
 
       {head('Logos')}
@@ -57,11 +57,11 @@ export default function BrandKitSharePage() {
               <LogoPreview asset={a} />
               <div className="flex items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
-                  <p className="text-sm text-p-ink">{VARIANT_LABEL[a.variant ?? 'other']}</p>
-                  <p className="truncate text-xs text-p-ink/35">{a.label || a.filename}</p>
+                  <p className="text-base text-p-ink">{VARIANT_LABEL[a.variant ?? 'other']}</p>
+                  <p className="break-words text-sm text-p-ink/65">{a.label || a.filename}</p>
                 </div>
                 {downloadHref(a) && (
-                  <a href={downloadHref(a)!} className="portal-label shrink-0 !text-[9px] text-p-brandink hover:text-p-ink">
+                  <a href={downloadHref(a)!} className="portal-label shrink-0 !text-[12px] text-p-brandink hover:text-p-ink">
                     Download
                   </a>
                 )}
@@ -70,14 +70,14 @@ export default function BrandKitSharePage() {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-p-ink/40">No logos yet.</p>
+        <p className="text-base text-p-ink/70">No logos yet.</p>
       )}
 
       {head('Colors')}
-      {brand.kit.colors.length ? <Swatches colors={brand.kit.colors} /> : <p className="text-sm text-p-ink/40">No colors yet.</p>}
+      {brand.kit.colors.length ? <Swatches colors={brand.kit.colors} /> : <p className="text-base text-p-ink/70">No colors yet.</p>}
 
       {head('Fonts')}
-      {brand.kit.fonts.length ? <FontList fonts={brand.kit.fonts} /> : <p className="text-sm text-p-ink/40">No fonts named yet.</p>}
+      {brand.kit.fonts.length ? <FontList fonts={brand.kit.fonts} /> : <p className="text-base text-p-ink/70">No fonts named yet.</p>}
       {by('font').length > 0 && (
         <ul className="mt-3 divide-y divide-p-line border border-p-line">
           {by('font').map((a) => (
@@ -89,7 +89,7 @@ export default function BrandKitSharePage() {
       {brand.kit.notes && (
         <>
           {head("Do's and don'ts")}
-          <p className="whitespace-pre-wrap border-l-2 border-p-brandink pl-4 text-[15px] leading-relaxed text-p-ink/80">{brand.kit.notes}</p>
+          <p className="whitespace-pre-wrap border-l-2 border-p-brandink pl-4 text-[17px] leading-relaxed text-p-ink/90">{brand.kit.notes}</p>
         </>
       )}
 
@@ -112,11 +112,11 @@ export default function BrandKitSharePage() {
               <MediaThumb asset={a} />
               <div className="flex items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
-                  <p className="truncate text-sm text-p-ink">{a.label || a.filename || 'Link'}</p>
-                  <p className="truncate text-xs text-p-ink/35">{[formatBytes(a.sizeBytes), a.uploadedBy].filter(Boolean).join(' · ')}</p>
+                  <p className="break-words text-base text-p-ink">{a.label || a.filename || 'Link'}</p>
+                  <p className="break-words text-sm text-p-ink/65">{[formatBytes(a.sizeBytes), a.uploadedBy].filter(Boolean).join(' · ')}</p>
                 </div>
                 {downloadHref(a) && (
-                  <a href={downloadHref(a)!} target="_blank" rel="noopener noreferrer" className="portal-label shrink-0 !text-[9px] text-p-brandink hover:text-p-ink">
+                  <a href={downloadHref(a)!} target="_blank" rel="noopener noreferrer" className="portal-label shrink-0 !text-[12px] text-p-brandink hover:text-p-ink">
                     {a.externalUrl ? 'Open ↗' : a.driveUrl && !a.url ? 'Open in Drive ↗' : 'Download'}
                   </a>
                 )}
@@ -125,7 +125,7 @@ export default function BrandKitSharePage() {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-p-ink/40">No b-roll yet.</p>
+        <p className="text-base text-p-ink/70">No b-roll yet.</p>
       )}
     </>,
   );

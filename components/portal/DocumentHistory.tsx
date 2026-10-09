@@ -80,33 +80,33 @@ export default function DocumentHistory({ accessToken, onChanged }: { accessToke
     <section className="mb-8">
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
         <h2 className="portal-label text-p-ink">Version history</h2>
-        <p className="text-xs text-p-ink/40">Restoring never deletes anything. It saves that version as the newest.</p>
+        <p className="text-sm text-p-ink/70">Restoring never deletes anything. It saves that version as the newest.</p>
       </div>
       <Card>
         <ol className="divide-y divide-p-line">
           {versions.map((v) => (
             <li key={v.version_no} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3.5">
-              <span className={`portal-label w-10 !text-[10px] ${v.version_no === current ? 'text-p-brandink' : 'text-p-ink/40'}`}>v{v.version_no}</span>
+              <span className={`portal-label w-10 !text-[13px] ${v.version_no === current ? 'text-p-brandink' : 'text-p-ink/70'}`}>v{v.version_no}</span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-p-ink">{v.note || 'Edit'}</p>
-                <p className="mt-0.5 text-xs text-p-ink/40">
+                <p className="break-words text-base text-p-ink">{v.note || 'Edit'}</p>
+                <p className="mt-0.5 text-sm text-p-ink/70">
                   {WHO[v.author_kind] ?? 'PodLab'}
                   {v.author_kind === 'ai' && v.author_name ? ` · ${v.author_name.replace(/^TipTop for /, 'for ')}` : ''} · {when(v.created_at)}
                 </p>
               </div>
               {v.version_no === current ? (
-                <span className="portal-label !text-[9px] text-p-brandink">Current</span>
+                <span className="portal-label !text-[12px] text-p-brandink">Current</span>
               ) : confirm === v.version_no ? (
                 <span className="flex items-center gap-2">
                   <button
                     type="button"
                     disabled={busy !== null}
                     onClick={() => restore(v.version_no)}
-                    className="portal-label bg-p-brand px-3 py-2 !text-[9px] text-black transition hover:bg-p-pop disabled:opacity-40"
+                    className="portal-label bg-p-brand px-3 py-2 !text-[12px] text-black transition hover:bg-p-pop disabled:opacity-40"
                   >
                     {busy === v.version_no ? 'Restoring' : `Restore v${v.version_no}`}
                   </button>
-                  <button type="button" onClick={() => setConfirm(null)} className="portal-label px-2 py-2 !text-[9px] text-p-ink/50 hover:text-p-ink">
+                  <button type="button" onClick={() => setConfirm(null)} className="portal-label px-2 py-2 !text-[12px] text-p-ink/75 hover:text-p-ink">
                     Cancel
                   </button>
                 </span>
@@ -114,7 +114,7 @@ export default function DocumentHistory({ accessToken, onChanged }: { accessToke
                 <button
                   type="button"
                   onClick={() => setConfirm(v.version_no)}
-                  className="portal-label border border-p-line px-3 py-2 !text-[9px] text-p-ink/70 transition hover:border-p-brandink hover:text-p-brandink"
+                  className="portal-label border border-p-line px-3 py-2 !text-[12px] text-p-ink/85 transition hover:border-p-brandink hover:text-p-brandink"
                 >
                   Restore
                 </button>
@@ -123,7 +123,7 @@ export default function DocumentHistory({ accessToken, onChanged }: { accessToke
           ))}
         </ol>
       </Card>
-      {error && <p className="mt-3 text-xs text-p-bad">{error}</p>}
+      {error && <p className="mt-3 text-sm text-p-bad">{error}</p>}
     </section>
   );
 }

@@ -11,7 +11,7 @@ export default function DeliveryPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  if (loading) return <p className="text-p-ink/40 text-sm">Loading...</p>;
+  if (loading) return <p className="text-p-ink/70 text-base">Loading...</p>;
 
   if (!client || phases.length === 0) {
     return (
@@ -61,11 +61,11 @@ export default function DeliveryPage() {
 
       <Card className="mb-6 p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="text-sm text-p-ink">
+          <p className="text-base text-p-ink">
             {done} of {phases.length} phases complete
           </p>
           {isStaff && (
-            <span className="rounded-full border border-p-brandink/40 px-3 py-1 font-display text-[9.5px] uppercase tracking-[0.2em] text-p-brandink">
+            <span className="rounded-full border border-p-brandink/40 px-3 py-1 font-display text-[12px] uppercase tracking-[0.2em] text-p-brandink">
               Staff view
             </span>
           )}
@@ -80,16 +80,16 @@ export default function DeliveryPage() {
 
       {blocked.length > 0 && (
         <Card className="mb-6 border-red-500/25 bg-red-500/[0.06] p-5">
-          <p className="text-sm text-p-ink">
+          <p className="text-base text-p-ink">
             {blocked.length === 1 ? 'One phase is blocked' : `${blocked.length} phases are blocked`}
           </p>
-          <p className="mt-1.5 text-[13px] text-p-ink/55">
+          <p className="mt-1.5 text-[16px] text-p-ink/75">
             {blocked.map((b) => b.title).join(', ')}. We will be in touch about what we need.
           </p>
         </Card>
       )}
 
-      {error && <p className="mb-4 text-xs text-p-bad">{error}</p>}
+      {error && <p className="mb-4 text-sm text-p-bad">{error}</p>}
 
       <div className="space-y-4">
         {phases.map((phase, i) => (
@@ -100,23 +100,23 @@ export default function DeliveryPage() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="font-display text-[10px] uppercase tracking-widest text-p-brandink">
+                  <span className="font-display text-[13px] uppercase tracking-widest text-p-brandink">
                     Phase {String(i + 1).padStart(2, '0')}
                   </span>
                   {phase.owner && (
-                    <span className="font-display text-[10px] uppercase tracking-widest text-p-ink/30">
+                    <span className="font-display text-[13px] uppercase tracking-widest text-p-ink/65">
                       {phase.owner}
                     </span>
                   )}
                   {phase.due_label && (
-                    <span className="font-display text-[10px] uppercase tracking-widest text-p-ink/30">
+                    <span className="font-display text-[13px] uppercase tracking-widest text-p-ink/65">
                       {phase.due_label}
                     </span>
                   )}
                 </div>
-                <p className="mt-1.5 text-[15px] font-semibold text-p-ink">{phase.title}</p>
+                <p className="mt-1.5 text-[17px] font-semibold text-p-ink">{phase.title}</p>
                 {phase.detail && (
-                  <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-p-ink/55">
+                  <p className="mt-2 max-w-2xl text-[16px] leading-relaxed text-p-ink/75">
                     {phase.detail}
                   </p>
                 )}
@@ -131,17 +131,17 @@ export default function DeliveryPage() {
                     key={s}
                     onClick={() => update(phase.id, s)}
                     disabled={busy === phase.id || phase.status === s}
-                    className={`rounded-lg border px-3 py-1.5 text-[11px] capitalize transition disabled:opacity-40 ${
+                    className={`rounded-lg border px-3 py-1.5 text-[14px] capitalize transition disabled:opacity-40 ${
                       phase.status === s
                         ? 'border-p-brandink/40 bg-p-brand/10 text-p-brandink'
-                        : 'border-p-ink/15 text-p-ink/50 hover:border-p-ink/35 hover:text-p-ink'
+                        : 'border-p-ink/15 text-p-ink/75 hover:border-p-ink/35 hover:text-p-ink'
                     }`}
                   >
                     {s}
                   </button>
                 ))}
                 {phase.updated_at && (
-                  <span className="ml-auto self-center text-[11px] text-p-ink/25">
+                  <span className="ml-auto self-center text-[14px] text-p-ink/65">
                     updated {formatDate(phase.updated_at)}
                   </span>
                 )}
@@ -151,7 +151,7 @@ export default function DeliveryPage() {
         ))}
       </div>
 
-      <h2 className="font-display mb-4 mt-10 text-sm uppercase tracking-wider text-p-ink">
+      <h2 className="font-display mb-4 mt-10 text-base uppercase tracking-wider text-p-ink">
         Delivered assets
       </h2>
       {assets.length === 0 ? (
@@ -164,9 +164,9 @@ export default function DeliveryPage() {
           {assets.map((a) => (
             <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
               <div className="min-w-0">
-                <p className="text-[14px] text-p-ink">{a.title}</p>
+                <p className="text-[16px] text-p-ink">{a.title}</p>
                 {a.lab && (
-                  <p className="font-display mt-1 text-[10px] uppercase tracking-widest text-p-ink/30">
+                  <p className="font-display mt-1 text-[13px] uppercase tracking-widest text-p-ink/65">
                     {a.lab}
                   </p>
                 )}
@@ -178,7 +178,7 @@ export default function DeliveryPage() {
                     href={a.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[13px] text-p-brandink hover:underline"
+                    className="text-[16px] text-p-brandink hover:underline"
                   >
                     Open
                   </a>

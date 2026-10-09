@@ -33,10 +33,10 @@ interface Upload {
 
 const FONT_USES = ['Headings', 'Body', 'Accent', 'Logo only'];
 const inputCls =
-  'w-full border border-p-line bg-p-paper px-3 py-2.5 text-sm text-p-ink placeholder:text-p-ink/25 focus:border-p-brandink focus:outline-none';
-const btnPrimary = 'portal-label bg-p-brand px-5 py-3 !text-[10px] text-black transition hover:bg-p-pop disabled:cursor-not-allowed disabled:opacity-40';
+  'w-full border border-p-line bg-p-paper px-3 py-2.5 text-base text-p-ink placeholder:text-p-ink/50 focus:border-p-brandink focus:outline-none';
+const btnPrimary = 'portal-label bg-p-brand px-5 py-3 !text-[13px] text-black transition hover:bg-p-pop disabled:cursor-not-allowed disabled:opacity-40';
 const btnGhost =
-  'portal-label border border-p-line px-4 py-2.5 !text-[9px] text-p-ink/70 transition hover:border-p-brandink hover:text-p-brandink disabled:opacity-40';
+  'portal-label border border-p-line px-4 py-2.5 !text-[12px] text-p-ink/85 transition hover:border-p-brandink hover:text-p-brandink disabled:opacity-40';
 
 /** PUT straight to storage with progress; the file never touches our functions. */
 function putFile(signedUrl: string, file: File, onProgress: (pct: number) => void): Promise<void> {
@@ -125,7 +125,7 @@ function Section({ id, title, hint, children, aside }: { id: string; title: stri
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <span className="portal-label block text-p-brandink">{title}</span>
-          {hint && <p className="mt-2 max-w-2xl text-sm text-p-ink/50">{hint}</p>}
+          {hint && <p className="mt-2 max-w-2xl text-base text-p-ink/75">{hint}</p>}
         </div>
         {aside}
       </div>
@@ -138,17 +138,17 @@ function RemoveButton({ onConfirm }: { onConfirm: () => void }) {
   const [ask, setAsk] = useState(false);
   if (!ask)
     return (
-      <button onClick={() => setAsk(true)} className="portal-label !text-[9px] text-p-ink/35 hover:text-p-bad">
+      <button onClick={() => setAsk(true)} className="portal-label !text-[12px] text-p-ink/65 hover:text-p-bad">
         Remove
       </button>
     );
   return (
-    <span className="portal-label flex items-center gap-2 !text-[9px]">
-      <span className="text-p-ink/50">Remove?</span>
+    <span className="portal-label flex items-center gap-2 !text-[12px]">
+      <span className="text-p-ink/75">Remove?</span>
       <button onClick={onConfirm} className="text-p-bad hover:text-p-ink">
         Yes
       </button>
-      <button onClick={() => setAsk(false)} className="text-p-ink/40 hover:text-p-ink">
+      <button onClick={() => setAsk(false)} className="text-p-ink/70 hover:text-p-ink">
         No
       </button>
     </span>
@@ -161,16 +161,16 @@ function UploadQueue({ items }: { items: Upload[] }) {
     <ul className="mt-4 space-y-2">
       {items.map((u) => (
         <li key={u.key} className="border border-p-line bg-p-paper px-4 py-3">
-          <div className="flex items-center justify-between gap-3 text-sm">
-            <span className="truncate text-p-ink/80">{u.name}</span>
-            <span className={`portal-label shrink-0 !text-[9px] ${u.status === 'error' ? 'text-p-bad' : u.status === 'done' ? 'text-p-brandink' : 'text-p-ink/45'}`}>
+          <div className="flex items-center justify-between gap-3 text-base">
+            <span className="break-words text-p-ink/90">{u.name}</span>
+            <span className={`portal-label shrink-0 !text-[12px] ${u.status === 'error' ? 'text-p-bad' : u.status === 'done' ? 'text-p-brandink' : 'text-p-ink/70'}`}>
               {u.status === 'error' ? 'Failed' : u.status === 'done' ? 'Done' : `${u.progress}% · ${formatBytes(u.size)}`}
             </span>
           </div>
           <div className="mt-2 h-px bg-p-line">
             <div className={`h-full transition-all ${u.status === 'error' ? 'bg-p-bad' : 'bg-p-brand'}`} style={{ width: `${u.status === 'error' ? 100 : u.progress}%` }} />
           </div>
-          {u.error && <p className="mt-2 text-xs text-p-bad">{u.error}</p>}
+          {u.error && <p className="mt-2 text-sm text-p-bad">{u.error}</p>}
         </li>
       ))}
     </ul>
@@ -197,8 +197,8 @@ function DropZone({ kind, onFiles, label, sub, disabled }: { kind: BrandKind; on
         over ? 'border-p-brandink bg-p-brand/5' : 'border-p-ink/15'
       }`}
     >
-      <p className="text-[15px] text-p-ink">{label}</p>
-      <p className="text-xs text-p-ink/40">{sub}</p>
+      <p className="text-[17px] text-p-ink">{label}</p>
+      <p className="text-sm text-p-ink/70">{sub}</p>
       <button onClick={() => input.current?.click()} disabled={disabled} className={btnPrimary}>
         Choose files
       </button>
@@ -409,7 +409,7 @@ function BrandPageInner() {
     return () => window.removeEventListener('portal:refresh', reload);
   }, [load]);
 
-  if (loading) return <p className="text-sm text-p-ink/40">Loading...</p>;
+  if (loading) return <p className="text-base text-p-ink/70">Loading...</p>;
   if (isStaff && !staffClient) {
     return (
       <>
@@ -437,7 +437,7 @@ function BrandPageInner() {
       </>
     );
   }
-  if (!data) return <p className="portal-label !text-[9px] text-p-ink/40">Loading your brand</p>;
+  if (!data) return <p className="portal-label !text-[12px] text-p-ink/70">Loading your brand</p>;
   if (!data.ready) {
     return (
       <>
@@ -463,7 +463,7 @@ function BrandPageInner() {
   return (
     <div>
       {staffClient && (
-        <Link href={`/portal/clients/${staffClient}`} className="portal-label !text-[9px] text-p-ink/40 transition hover:text-p-brandink">
+        <Link href={`/portal/clients/${staffClient}`} className="portal-label !text-[12px] text-p-ink/70 transition hover:text-p-brandink">
           ← Back to the client
         </Link>
       )}
@@ -478,23 +478,23 @@ function BrandPageInner() {
 
       {/* Where they stand */}
       <div className={`border-l-2 px-5 py-4 ${gaps.length ? 'border-p-warn bg-p-warn/5' : 'border-p-brandink bg-p-brand/5'}`}>
-        <p className="portal-label !text-[9px] text-p-ink/50">{gaps.length ? 'Still needed' : 'Kit complete'}</p>
+        <p className="portal-label !text-[12px] text-p-ink/75">{gaps.length ? 'Still needed' : 'Kit complete'}</p>
         {gaps.length ? (
-          <ul className="mt-2 space-y-1 text-sm text-p-ink/80">
+          <ul className="mt-2 space-y-1 text-base text-p-ink/90">
             {gaps.map((g) => (
               <li key={g}>{g}</li>
             ))}
           </ul>
         ) : (
-          <p className="mt-2 text-sm text-p-ink/80">Your editors have everything they need to brand your videos. Keep adding b-roll whenever you have it.</p>
+          <p className="mt-2 text-base text-p-ink/90">Your editors have everything they need to brand your videos. Keep adding b-roll whenever you have it.</p>
         )}
       </div>
 
       {staffClient && (
         <Card className="mt-6 p-5">
-          <p className="portal-label !text-[9px] text-p-brandink">Editor link</p>
-          <p className="mt-2 text-sm text-p-ink/55">A read-only page with this kit and download links. No login needed, so editors outside the portal can use it.</p>
-          {shareUrl && <p className="mt-3 break-all font-mono text-xs text-p-ink/70">{shareUrl}</p>}
+          <p className="portal-label !text-[12px] text-p-brandink">Editor link</p>
+          <p className="mt-2 text-base text-p-ink/75">A read-only page with this kit and download links. No login needed, so editors outside the portal can use it.</p>
+          {shareUrl && <p className="mt-3 break-all font-mono text-sm text-p-ink/85">{shareUrl}</p>}
           <div className="mt-4 flex flex-wrap gap-2">
             {shareUrl ? (
               <button
@@ -526,7 +526,7 @@ function BrandPageInner() {
         </Card>
       )}
 
-      {flash && <p className="mt-6 border-l-2 border-p-brandink bg-p-brand/5 px-4 py-3 text-sm text-p-ink/80">{flash}</p>}
+      {flash && <p className="mt-6 border-l-2 border-p-brandink bg-p-brand/5 px-4 py-3 text-base text-p-ink/90">{flash}</p>}
 
       <nav aria-label="Brand sections" className="mt-8 flex flex-wrap gap-2">
         {[
@@ -551,7 +551,7 @@ function BrandPageInner() {
             <span
               key={n.variant}
               title={n.why}
-              className={`portal-label border px-3 py-1.5 !text-[9px] ${haveVariants.has(n.variant) ? 'border-p-brandink bg-p-brand text-black' : 'border-p-ink/15 text-p-ink/45'}`}
+              className={`portal-label border px-3 py-1.5 !text-[12px] ${haveVariants.has(n.variant) ? 'border-p-brandink bg-p-brand text-black' : 'border-p-ink/15 text-p-ink/70'}`}
             >
               <span className="inline-flex items-center gap-1.5">
                 {haveVariants.has(n.variant) && (
@@ -567,14 +567,14 @@ function BrandPageInner() {
 
         <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
           <div className="grid gap-px border border-p-line bg-p-line sm:grid-cols-2">
-            {logos.length === 0 && <p className="bg-p-paper p-6 text-sm text-p-ink/45 sm:col-span-2">No logos yet. Start with your main logo.</p>}
+            {logos.length === 0 && <p className="bg-p-paper p-6 text-base text-p-ink/70 sm:col-span-2">No logos yet. Start with your main logo.</p>}
             {logos.map((a) => (
               <LogoTile key={a.id} asset={a} onPatch={patchAsset} onRemove={remove} />
             ))}
           </div>
           <div>
             <label className="block">
-              <span className="portal-label block !text-[9px] text-p-ink/45">What are you uploading?</span>
+              <span className="portal-label block !text-[12px] text-p-ink/70">What are you uploading?</span>
               <select value={logoVariant} onChange={(e) => setLogoVariant(e.target.value)} className={`${inputCls} mt-2`}>
                 {LOGO_VARIANTS.map((v) => (
                   <option key={v} value={v}>
@@ -595,7 +595,7 @@ function BrandPageInner() {
       <Section id="kit" title="Colors, fonts and guide" hint="The hex codes and font names your editors match. Not sure of the codes? Upload your brand guide and we'll pull them out.">
         <div className="grid gap-6 lg:grid-cols-2">
           <Card className="p-5">
-            <p className="portal-label !text-[9px] text-p-ink/45">Colors</p>
+            <p className="portal-label !text-[12px] text-p-ink/70">Colors</p>
             <ul className="mt-3 space-y-2">
               {colors.map((c, i) => (
                 <li key={i} className="flex items-center gap-2">
@@ -620,7 +620,7 @@ function BrandPageInner() {
                     aria-label="Color name"
                     className={`${inputCls} min-w-0`}
                   />
-                  <button onClick={() => editColors(colors.filter((_, j) => j !== i))} aria-label="Remove color" className="px-2 text-p-ink/35 hover:text-p-bad">
+                  <button onClick={() => editColors(colors.filter((_, j) => j !== i))} aria-label="Remove color" className="px-2 text-p-ink/65 hover:text-p-bad">
                     ×
                   </button>
                 </li>
@@ -632,7 +632,7 @@ function BrandPageInner() {
           </Card>
 
           <Card className="p-5">
-            <p className="portal-label !text-[9px] text-p-ink/45">Fonts</p>
+            <p className="portal-label !text-[12px] text-p-ink/70">Fonts</p>
             <ul className="mt-3 space-y-2">
               {fonts.map((f, i) => (
                 <li key={i} className="flex items-center gap-2">
@@ -651,7 +651,7 @@ function BrandPageInner() {
                     aria-label="Used for"
                     className={`${inputCls} w-32 shrink-0`}
                   />
-                  <button onClick={() => editFonts(fonts.filter((_, j) => j !== i))} aria-label="Remove font" className="px-2 text-p-ink/35 hover:text-p-bad">
+                  <button onClick={() => editFonts(fonts.filter((_, j) => j !== i))} aria-label="Remove font" className="px-2 text-p-ink/65 hover:text-p-bad">
                     ×
                   </button>
                 </li>
@@ -670,7 +670,7 @@ function BrandPageInner() {
 
         <Card className="mt-6 p-5">
           <label className="block">
-            <span className="portal-label block !text-[9px] text-p-ink/45">Do&apos;s and don&apos;ts</span>
+            <span className="portal-label block !text-[12px] text-p-ink/70">Do&apos;s and don&apos;ts</span>
             <textarea
               value={notes}
               onChange={(e) => editNotes(e.target.value)}
@@ -684,10 +684,10 @@ function BrandPageInner() {
             <button onClick={saveKit} disabled={!kitDirty || savingKit} className={btnPrimary}>
               {savingKit ? 'Saving' : 'Save colors, fonts and notes'}
             </button>
-            {kitDirty && !savingKit && <span className="text-sm text-p-warn">Unsaved changes</span>}
-            {kitStatus && (kitStatus.tone === 'err' || !kitDirty) && <span className={`text-sm ${kitStatus.tone === 'ok' ? 'text-p-brandink' : 'text-p-bad'}`}>{kitStatus.text}</span>}
+            {kitDirty && !savingKit && <span className="text-base text-p-warn">Unsaved changes</span>}
+            {kitStatus && (kitStatus.tone === 'err' || !kitDirty) && <span className={`text-base ${kitStatus.tone === 'ok' ? 'text-p-brandink' : 'text-p-bad'}`}>{kitStatus.text}</span>}
             {!kitStatus && data.kit.updatedAt && (
-              <span className="text-xs text-p-ink/35">
+              <span className="text-sm text-p-ink/65">
                 Last saved {new Date(data.kit.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 {data.kit.updatedBy ? ` by ${data.kit.updatedBy}` : ''}
               </span>
@@ -698,7 +698,7 @@ function BrandPageInner() {
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           {(['guide', 'font'] as const).map((k) => (
             <div key={k}>
-              <p className="portal-label mb-3 !text-[9px] text-p-ink/45">{k === 'guide' ? 'Brand guide' : 'Font files'}</p>
+              <p className="portal-label mb-3 !text-[12px] text-p-ink/70">{k === 'guide' ? 'Brand guide' : 'Font files'}</p>
               {by(k).length > 0 && (
                 <ul className="mb-3 divide-y divide-p-line border border-p-line">
                   {by(k).map((a) => (
@@ -726,7 +726,7 @@ function BrandPageInner() {
         hint="Your space, your team at work, your product, before-and-afters. Phone footage is fine; shoot it horizontal and hold for five seconds. Large files are fine: they go straight to your PodLab folder and pick up where they left off if your connection drops. For whole folders, paste a link."
         aside={
           broll.length > 0 && (
-            <p className="portal-label !text-[9px] text-p-ink/40">
+            <p className="portal-label !text-[12px] text-p-ink/70">
               {broll.length - brollLinks} file{broll.length - brollLinks === 1 ? '' : 's'}
               {brollBytes ? ` · ${formatBytes(brollBytes)}` : ''}
               {brollLinks ? ` · ${brollLinks} link${brollLinks === 1 ? '' : 's'}` : ''}
@@ -768,7 +768,7 @@ function LabelInput({ asset, onPatch, placeholder }: { asset: BrandAsset; onPatc
       onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
       placeholder={placeholder}
       aria-label="Label"
-      className="w-full border-0 border-b border-transparent bg-transparent px-0 py-1 text-sm text-p-ink placeholder:text-p-ink/30 focus:border-p-brandink focus:outline-none"
+      className="w-full border-0 border-b border-transparent bg-transparent px-0 py-1 text-base text-p-ink placeholder:text-p-ink/50 focus:border-p-brandink focus:outline-none"
     />
   );
 }
@@ -783,7 +783,7 @@ function LogoTile({ asset, onPatch, onRemove }: { asset: BrandAsset; onPatch: (i
           value={asset.variant ?? 'other'}
           onChange={(e) => onPatch(asset.id, { variant: e.target.value })}
           aria-label="Logo type"
-          className="w-full border border-p-line bg-p-paper px-2 py-1.5 text-xs text-p-ink/80 focus:border-p-brandink focus:outline-none"
+          className="w-full border border-p-line bg-p-paper px-2 py-1.5 text-sm text-p-ink/90 focus:border-p-brandink focus:outline-none"
         >
           {LOGO_VARIANTS.map((v) => (
             <option key={v} value={v}>
@@ -794,7 +794,7 @@ function LogoTile({ asset, onPatch, onRemove }: { asset: BrandAsset; onPatch: (i
         <LabelInput asset={asset} onPatch={onPatch} placeholder={asset.filename ?? 'Add a note'} />
         <div className="flex items-center justify-between">
           {href ? (
-            <a href={href} target="_blank" rel="noopener noreferrer" className="portal-label !text-[9px] text-p-brandink hover:text-p-ink">
+            <a href={href} target="_blank" rel="noopener noreferrer" className="portal-label !text-[12px] text-p-brandink hover:text-p-ink">
               Download
             </a>
           ) : (
@@ -816,14 +816,14 @@ function BrollTile({ asset, onPatch, onRemove, team }: { asset: BrandAsset; onPa
       <MediaThumb asset={asset} />
       <div className="space-y-1 p-4">
         <LabelInput asset={asset} onPatch={onPatch} placeholder="What's in it? (office, team, product…)" />
-        <p className="truncate text-xs text-p-ink/35">{[asset.filename, formatBytes(asset.sizeBytes)].filter(Boolean).join(' · ') || asset.externalUrl}</p>
+        <p className="break-words text-sm text-p-ink/65">{[asset.filename, formatBytes(asset.sizeBytes)].filter(Boolean).join(' · ') || asset.externalUrl}</p>
         <div className="flex items-center justify-between pt-1">
           {href ? (
-            <a href={href} target="_blank" rel="noopener noreferrer" className="portal-label !text-[9px] text-p-brandink hover:text-p-ink">
+            <a href={href} target="_blank" rel="noopener noreferrer" className="portal-label !text-[12px] text-p-brandink hover:text-p-ink">
               {asset.externalUrl ? 'Open ↗' : teamOnly ? 'Open in Drive ↗' : 'Download'}
             </a>
           ) : (
-            <span className="portal-label !text-[9px] text-p-ink/35">{asset.driveUrl ? 'In your PodLab folder' : ''}</span>
+            <span className="portal-label !text-[12px] text-p-ink/65">{asset.driveUrl ? 'In your PodLab folder' : ''}</span>
           )}
           <RemoveButton onConfirm={() => onRemove(asset.id)} />
         </div>
@@ -834,7 +834,7 @@ function BrollTile({ asset, onPatch, onRemove, team }: { asset: BrandAsset; onPa
 
 export default function BrandPage() {
   return (
-    <Suspense fallback={<p className="portal-label !text-[9px] text-p-ink/40">Loading your brand</p>}>
+    <Suspense fallback={<p className="portal-label !text-[12px] text-p-ink/70">Loading your brand</p>}>
       <BrandPageInner />
     </Suspense>
   );
