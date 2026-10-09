@@ -13,7 +13,8 @@
     "test:game": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-game.test.ts",
     "test:potato": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-potato.test.ts",
     "test:guide": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/tiptop-guide.test.ts",
-    "test:viewas": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-viewas.test.ts"
+    "test:viewas": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-viewas.test.ts",
+    "test:cards": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-cards.test.ts"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.136",

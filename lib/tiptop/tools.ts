@@ -11,6 +11,7 @@
 // and asks again) or asks the client with a server-written description. The
 // approval is HMAC-signed by the route, so a doctored history can't approve.
 
+import { cardVisible, clientCardScope } from '@/lib/production-server';
 import { tool, type ToolApprovalStatus } from 'ai';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { PortalCaller } from '@/lib/portal-server';
@@ -83,10 +84,9 @@ async function resolveRevisionTarget(
   const { db, caller } = ctx;
   if (input.timestamp && parseClock(input.timestamp) === null) return { ok: false, reason: `"${input.timestamp}" is not a time. Use a form like 0:42.` };
   if (input.target === 'video') {
-    const { data: links } = await db.from('portal_client_boards').select('board_id').eq('client_id', caller.clientId);
-    const boardIds = (links ?? []).map((r: { board_id: string }) => r.board_id);
-    const { data: card } = await db.schema('crm').from('content_cards').select('title, board_id').eq('id', input.id).maybeSingle();
-    if (!card || !boardIds.includes(card.board_id)) return { ok: false, reason: 'No video with that id on this client\'s boards. Check the overview.' };
+    const scope = await clientCardScope(db, caller.clientId);
+    const { data: card } = await db.schema('crm').from('content_cards').select('id, title, board_id').eq('id', input.id).maybeSingle();
+    if (!card || !scope || !cardVisible(scope, card)) return { ok: false, reason: 'No video with that id on this client\'s boards. Check the overview.' };
     return { ok: true, title: card.title, where: 'Production' };
   }
   if (input.target === 'script') {

@@ -1,3 +1,4 @@
+import { cardsInScope, clientCardScope, scopeBoardIds } from '@/lib/production-server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { PORTAL_COMMENT_SUFFIX } from '@/lib/production';
 import { sendPortalEmail } from '@/lib/portal-email';
@@ -84,27 +85,23 @@ export async function loadLiveState(
 ): Promise<LiveState> {
   const crm = db.schema('crm');
 
-  const links = must(await db.from('portal_client_boards').select('board_id').eq('client_id', clientId), 'board links');
-  const linked = (links as Array<{ board_id: string }>).map((r) => r.board_id);
+  // Their boards' cards plus cards shared with them one by one.
+  const scope = await clientCardScope(db, clientId);
+  if (!scope) throw new Error('board links unreadable');
+  const inScope = await cardsInScope<{ id: string; board_id: string; list_id: string; title: string; video_url: string | null }>(db, scope, 'id, board_id, list_id, title, video_url');
+  if (inScope.error) throw new Error(`cards: ${inScope.error}`);
 
   let boards: string[] = [];
   let cards: LiveCard[] = [];
-  if (linked.length) {
-    const boardRows = must(await crm.from('content_boards').select('id').in('id', linked).eq('archived', false), 'boards');
+  const touched = scopeBoardIds(scope, inScope.data);
+  if (touched.length) {
+    const boardRows = must(await crm.from('content_boards').select('id').in('id', touched).eq('archived', false), 'boards');
     boards = (boardRows as Array<{ id: string }>).map((b) => b.id);
   }
   if (boards.length) {
-    const [lists, cardRows] = await Promise.all([
-      crm.from('content_lists').select('id, name').in('board_id', boards),
-      crm
-        .from('content_cards')
-        .select('id, board_id, list_id, title, video_url')
-        .in('board_id', boards)
-        .eq('archived', false)
-        .eq('is_template', false),
-    ]);
+    const lists = await crm.from('content_lists').select('id, name').in('board_id', boards);
     const listName = new Map((must(lists, 'lists') as Array<{ id: string; name: string }>).map((l) => [l.id, l.name]));
-    const rows = must(cardRows, 'cards') as Array<{ id: string; board_id: string; list_id: string; title: string; video_url: string | null }>;
+    const rows = inScope.data.filter((c) => boards.includes(c.board_id));
 
     const resolved = new Map<string, Array<{ id: string; body: string }>>();
     for (const ids of chunks(rows.map((c) => c.id), 150)) {

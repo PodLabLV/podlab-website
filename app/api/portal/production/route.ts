@@ -10,7 +10,7 @@ import {
 } from '@/lib/production';
 import { driveFileId, parseChapters, readNote } from '@/lib/chapters';
 import { driveConfigured, streamUrl } from '@/lib/portal/drive';
-import { approveCut, linkedBoardIds, postClientNote } from '@/lib/production-server';
+import { approveCut, cardsInScope, clientCardScope, postClientNote, scopeBoardIds } from '@/lib/production-server';
 import { LOOKS_GOOD_NOTE } from '@/lib/portal/potato';
 
 export const runtime = 'nodejs';
@@ -43,28 +43,25 @@ export async function GET(req: Request) {
   if (!caller) return NextResponse.json({ error: 'Not authorized' }, { status: 401 });
 
   const crm = db.schema('crm');
-  const boardIds = (await linkedBoardIds(db, caller.clientId)) ?? [];
+  const scope = (await clientCardScope(db, caller.clientId)) ?? { boardIds: [], sharedIds: [] };
 
   const payload: ProductionPayload = { boards: [], vsl: null };
 
-  if (boardIds.length > 0) {
-    const [boards, lists, cards] = await Promise.all([
+  if (scope.boardIds.length > 0 || scope.sharedIds.length > 0) {
+    // Their boards' cards plus cards shared one by one; a shared card's board
+    // shows up holding only the cards shared with them.
+    const cards = await cardsInScope<CrmCard>(db, scope, 'id, board_id, list_id, title, sort, due_on, video_url, description');
+    const boardIds = scopeBoardIds(scope, cards.data);
+    const [boards, lists] = await Promise.all([
       crm.from('content_boards').select('id, name, board_type').in('id', boardIds).eq('archived', false),
       crm.from('content_lists').select('id, board_id, name, sort').in('board_id', boardIds).eq('archived', false).order('sort'),
-      crm
-        .from('content_cards')
-        .select('id, board_id, list_id, title, sort, due_on, video_url, description')
-        .in('board_id', boardIds)
-        .eq('archived', false)
-        .eq('is_template', false)
-        .order('sort'),
     ]);
     if (boards.error || lists.error || cards.error) {
-      console.error('[portal] production read failed', boards.error?.message, lists.error?.message, cards.error?.message);
+      console.error('[portal] production read failed', boards.error?.message, lists.error?.message, cards.error);
       return NextResponse.json({ error: 'Could not load production.' }, { status: 500 });
     }
 
-    const cardRows = (cards.data ?? []) as CrmCard[];
+    const cardRows = cards.data;
     const comments = cardRows.length
       ? await crm
           .from('content_comments')

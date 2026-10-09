@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { isDoneColumn, stageFor } from '@/lib/production';
-import { linkedBoardIds } from '@/lib/production-server';
+import { cardsInScope, clientCardScope, scopeBoardIds } from '@/lib/production-server';
 
 export interface DeliveredItem {
   kind: 'video' | 'file' | 'script' | 'phase';
@@ -20,17 +20,22 @@ export interface DeliveredItem {
 export async function deliveredFor(db: SupabaseClient, clientId: string): Promise<DeliveredItem[]> {
   const items: DeliveredItem[] = [];
 
-  const boardIds = (await linkedBoardIds(db, clientId)) ?? [];
-  if (boardIds.length) {
+  const scope = (await clientCardScope(db, clientId)) ?? { boardIds: [], sharedIds: [] };
+  if (scope.boardIds.length || scope.sharedIds.length) {
     const crm = db.schema('crm');
-    const [lists, cards, boards] = await Promise.all([
+    const cards = await cardsInScope<{ id: string; title: string; list_id: string; board_id: string; video_url: string | null; completed_on: string | null }>(
+      db,
+      scope,
+      'id, title, list_id, board_id, video_url, completed_on',
+    );
+    const boardIds = scopeBoardIds(scope, cards.data);
+    const [lists, boards] = await Promise.all([
       crm.from('content_lists').select('id, name').in('board_id', boardIds),
-      crm.from('content_cards').select('id, title, list_id, board_id, video_url, completed_on').in('board_id', boardIds).eq('archived', false).eq('is_template', false),
       crm.from('content_boards').select('id, name').in('id', boardIds),
     ]);
     const listName = new Map((lists.data ?? []).map((l: { id: string; name: string }) => [l.id, l.name]));
     const boardName = new Map((boards.data ?? []).map((b: { id: string; name: string }) => [b.id, b.name]));
-    for (const c of (cards.data ?? []) as Array<{ title: string; list_id: string; board_id: string; video_url: string | null; completed_on: string | null }>) {
+    for (const c of cards.data) {
       const column = String(listName.get(c.list_id) ?? '');
       if (!isDoneColumn(column)) continue;
       items.push({ kind: 'video', title: c.title, detail: `${stageFor(column)} · ${boardName.get(c.board_id) ?? 'Production'}`, at: c.completed_on, href: '/portal/production', url: c.video_url });

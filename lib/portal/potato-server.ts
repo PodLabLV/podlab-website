@@ -1,3 +1,4 @@
+import { cardsInScope, clientCardScope, scopeBoardIds } from '@/lib/production-server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { driveFileId } from '@/lib/chapters';
 import { isDoneColumn, PORTAL_COMMENT_SUFFIX } from '@/lib/production';
@@ -137,22 +138,17 @@ async function contentPlan(db: SupabaseClient, id: string, you: string, now: num
 }
 
 async function cuts(db: SupabaseClient, id: string, you: string, now: number, add: Add) {
-  const { data: links } = await db.from('portal_client_boards').select('board_id').eq('client_id', id);
-  const boardIds = (links ?? []).map((l: { board_id: string }) => l.board_id);
-  if (!boardIds.length) return;
+  const scope = await clientCardScope(db, id);
+  if (!scope || (!scope.boardIds.length && !scope.sharedIds.length)) return;
   const crm = db.schema('crm');
-  const [lists, cards] = await Promise.all([
-    crm.from('content_lists').select('id, name').in('board_id', boardIds),
-    crm
-      .from('content_cards')
-      .select('id, title, list_id, video_url, due_on, editor, assignee_name, started_on, created_at')
-      .in('board_id', boardIds)
-      .eq('archived', false)
-      .eq('is_template', false)
-      .limit(300),
-  ]);
+  const cards = await cardsInScope<{ id: string; board_id: string; title: string; list_id: string; video_url: string | null; due_on: string | null; editor: string | null; assignee_name: string | null; started_on: string | null; created_at: string }>(
+    db,
+    scope,
+    'id, board_id, title, list_id, video_url, due_on, editor, assignee_name, started_on, created_at',
+  );
+  const lists = await crm.from('content_lists').select('id, name').in('board_id', scopeBoardIds(scope, cards.data));
   const column = new Map((lists.data ?? []).map((l: { id: string; name: string }) => [l.id, l.name]));
-  const live = (cards.data ?? []).filter((c) => !isDoneColumn(column.get(c.list_id) ?? '') && !/scrap/i.test(column.get(c.list_id) ?? ''));
+  const live = cards.data.slice(0, 300).filter((c) => !isDoneColumn(column.get(c.list_id) ?? '') && !/scrap/i.test(column.get(c.list_id) ?? ''));
   if (!live.length) return;
 
   const [comments, times] = await Promise.all([

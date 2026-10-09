@@ -29,6 +29,58 @@ export async function linkedBoardIds(db: SupabaseClient, clientId: string): Prom
   return (data ?? []).map((r: { board_id: string }) => r.board_id);
 }
 
+/**
+ * Every card a client may see: the cards on their linked boards, plus cards
+ * shared with them one by one (portal_client_cards: a podcast guest's clips on
+ * the show's shared boards). Null when the board links can't be read.
+ */
+export interface CardScope {
+  boardIds: string[];
+  sharedIds: string[];
+}
+
+export async function clientCardScope(db: SupabaseClient, clientId: string): Promise<CardScope | null> {
+  const boardIds = await linkedBoardIds(db, clientId);
+  if (boardIds === null) return null;
+  // Before the migration runs the table doesn't exist: no shared cards, nothing breaks.
+  const { data } = await db.from('portal_client_cards').select('card_id').eq('client_id', clientId);
+  return { boardIds, sharedIds: (data ?? []).map((r: { card_id: string }) => r.card_id) };
+}
+
+export function cardVisible(scope: CardScope, card: { id: string; board_id: string }): boolean {
+  return scope.boardIds.includes(card.board_id) || scope.sharedIds.includes(card.id);
+}
+
+/**
+ * The live cards in scope, with the given columns (must include id and
+ * board_id). Two reads (by board, by id), merged, so a shared card that also
+ * sits on a linked board appears once.
+ */
+export async function cardsInScope<T extends { id: string; board_id: string }>(
+  db: SupabaseClient,
+  scope: CardScope,
+  columns: string,
+): Promise<{ data: T[]; error: string | null }> {
+  const crm = db.schema('crm');
+  const [byBoard, byId] = await Promise.all([
+    scope.boardIds.length
+      ? crm.from('content_cards').select(columns).in('board_id', scope.boardIds).eq('archived', false).eq('is_template', false).order('sort')
+      : Promise.resolve({ data: [] as T[], error: null }),
+    scope.sharedIds.length
+      ? crm.from('content_cards').select(columns).in('id', scope.sharedIds).eq('archived', false).order('sort')
+      : Promise.resolve({ data: [] as T[], error: null }),
+  ]);
+  const error = byBoard.error?.message ?? byId.error?.message ?? null;
+  const seen = new Set<string>();
+  const data = [...((byBoard.data ?? []) as unknown as T[]), ...((byId.data ?? []) as unknown as T[])].filter((c) => (seen.has(c.id) ? false : (seen.add(c.id), true)));
+  return { data, error };
+}
+
+/** Boards that hold any card in scope: the linked ones, plus the boards shared cards sit on. */
+export function scopeBoardIds(scope: CardScope, cards: Array<{ board_id: string }>): string[] {
+  return [...new Set([...scope.boardIds, ...cards.map((c) => c.board_id)])];
+}
+
 interface CardRef { id: string; board_id: string; list_id: string }
 
 /** Sends a card that already passed review back to Revising. Posted cards stay put. */
@@ -107,10 +159,10 @@ export async function postClientNote(
     .select('id, title, board_id, list_id, description, editor, assignee_name')
     .eq('id', cardId)
     .maybeSingle();
-  const boardIds = await linkedBoardIds(db, caller.clientId);
-  if (boardIds === null) return { ok: false, status: 503, message: 'Video notes are not switched on for your account yet.' };
+  const scope = await clientCardScope(db, caller.clientId);
+  if (scope === null) return { ok: false, status: 503, message: 'Video notes are not switched on for your account yet.' };
   // A guessed id from someone else's board is indistinguishable from a missing one.
-  if (!card || !boardIds.includes(card.board_id)) return { ok: false, status: 404, message: 'Not found' };
+  if (!card || !cardVisible(scope, card)) return { ok: false, status: 404, message: 'Not found' };
 
   const t = typeof seconds === 'number' && Number.isFinite(seconds) && seconds >= 0 ? seconds : null;
   const { data: comment, error } = await crm
@@ -150,9 +202,9 @@ export async function approveCut(
 ): Promise<{ ok: true } | { ok: false; status: number; message: string }> {
   const crm = db.schema('crm');
   const { data: card } = await crm.from('content_cards').select('id, title, board_id, video_url, editor, assignee_name').eq('id', cardId).maybeSingle();
-  const boardIds = await linkedBoardIds(db, caller.clientId);
-  if (boardIds === null) return { ok: false, status: 503, message: 'Video notes are not switched on for your account yet.' };
-  if (!card || !boardIds.includes(card.board_id)) return { ok: false, status: 404, message: 'Not found' };
+  const scope = await clientCardScope(db, caller.clientId);
+  if (scope === null) return { ok: false, status: 503, message: 'Video notes are not switched on for your account yet.' };
+  if (!card || !cardVisible(scope, card)) return { ok: false, status: 404, message: 'Not found' };
   if (!card.video_url) return { ok: false, status: 400, message: 'There is no cut to approve yet.' };
 
   const { error } = await crm

@@ -17,7 +17,7 @@ The portal is the one place a client goes for everything PodLab. Staff keep work
 | **Intake** | The portal questionnaire. Saves as they type. | `portal_intake_*` |
 | **Your Answers** | What they told us (free-VSL application, studio intake, portal intake), read-only, with links to what we built from it. | `crm.leads` + `portal_intake_answers` |
 | **Delivery** | The phases of their build. | `portal_delivery_phases` |
-| **Production** | Every video on their CRM boards, live, with its stage. Chapters, a player, and **timestamped revision notes** that land on the editor's card. | `crm.content_*` via `portal_client_boards` |
+| **Production** | Every video on their CRM boards, live, with its stage. Chapters, a player, and **timestamped revision notes** that land on the editor's card. | `crm.content_*` via `portal_client_boards` + `portal_client_cards` |
 | **Brand** | Logos (each shown on light and dark, tagged main / icon / white / dark), colors (hex), fonts, brand guide, font files, do's and don'ts, and b-roll (uploads up to 5 GB per file, or a pasted Drive/Dropbox link). "Still needed" lists what editors are missing. | `portal_brand_kits`, `portal_brand_assets`, private bucket `client-brand` |
 | **Deliverables** | Versioned files. Video cuts get chapters and timestamped notes. Approve or send notes. | `portal_assets` + `portal_asset_versions` / `_comments` |
 | **Scripts** | Versioned scripts, notes pinned to a line, approval with evidence, teleprompter. | `portal_scripts*` |
@@ -196,6 +196,12 @@ How it works:
   - **New link** rotates the token; the old link stops working at once. Run "Put it on their cards" again after.
 - **Upload size:** the bucket allows 5 GB per file, but Supabase also has a project-wide limit (Dashboard → Storage → Settings → Upload file size limit). It must be at least 5 GB, or bigger files fail with "too big" and the page tells the client to paste a link.
 - Code: `lib/portal/brand.ts` (validation, gaps), `lib/portal/brand-server.ts` (loader), `lib/portal/drive.ts` (Drive auth, folders, sessions, signed previews), `app/api/portal/brand`, `app/api/portal/kit`, `app/portal/brand`, `app/portal/kit/[token]`. Tests: `npm run test:brand`.
+
+## Shared cards (single cards off shared boards)
+
+Some boards hold several clients' work (Deal Flow Radio, Power of Influence guests), so linking the whole board would show a client everyone else's videos. **Manage → Shared cards** shares cards one at a time: search titles across every live board, Share (or Share all), Remove. Shared cards appear on the client's Production page alongside their linked boards and behave the same everywhere: notes, Looks good, Hot Potato, the digest, TipTop's overview and revision tool, delivered videos, and the content plan's "already shot" links.
+
+Scope lives in `lib/production-server.ts` (`clientCardScope`, `cardVisible`, `cardsInScope`, `scopeBoardIds`); every client read goes through it. Table: `portal_client_cards` (migration `20261016_portal_client_cards.sql`, service-role only). Before the migration runs, sharing returns "Run migration 20261016 first" and everything else behaves as before. API: `GET/POST /api/portal/admin/cards` (staff only). Tests: `npm run test:cards`.
 
 ## View as client (staff preview)
 

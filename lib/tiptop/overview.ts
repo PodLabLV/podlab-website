@@ -1,3 +1,4 @@
+import { cardsInScope, clientCardScope, scopeBoardIds } from '@/lib/production-server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { PortalCaller } from '@/lib/portal-server';
 import { chainStatus, productByKey, type ElementRow, type PhaseRow } from '@/lib/growth-chain';
@@ -242,27 +243,20 @@ async function phasesBlock(db: SupabaseClient, id: string): Promise<Overview['ph
 
 /** Same reads as GET /api/portal/production, trimmed to what a guide needs. */
 async function productionBlock(db: SupabaseClient, id: string): Promise<Overview['production']> {
-  const { data: links, error } = await db.from('portal_client_boards').select('board_id').eq('client_id', id);
-  if (error) return { available: false, videos: [] };
-  const boardIds = (links ?? []).map((r: { board_id: string }) => r.board_id);
-  if (!boardIds.length) return { available: true, videos: [] };
+  const scope = await clientCardScope(db, id);
+  if (!scope) return { available: false, videos: [] };
+  if (!scope.boardIds.length && !scope.sharedIds.length) return { available: true, videos: [] };
 
   const crm = db.schema('crm');
-  const [boards, lists, cards] = await Promise.all([
+  const cards = await cardsInScope<{ id: string; board_id: string; list_id: string; title: string; due_on: string | null; video_url: string | null }>(db, scope, 'id, board_id, list_id, title, due_on, video_url');
+  const boardIds = scopeBoardIds(scope, cards.data);
+  const [boards, lists] = await Promise.all([
     crm.from('content_boards').select('id, name').in('id', boardIds).eq('archived', false),
     crm.from('content_lists').select('id, board_id, name').in('board_id', boardIds).eq('archived', false),
-    crm
-      .from('content_cards')
-      .select('id, board_id, list_id, title, due_on, video_url')
-      .in('board_id', boardIds)
-      .eq('archived', false)
-      .eq('is_template', false)
-      .order('sort')
-      .limit(60),
   ]);
   if (boards.error || lists.error || cards.error) return { available: false, videos: [] };
 
-  const cardRows = (cards.data ?? []) as Array<{ id: string; board_id: string; list_id: string; title: string; due_on: string | null; video_url: string | null }>;
+  const cardRows = cards.data.slice(0, 60);
   const lastNote = new Map<string, boolean>();
   if (cardRows.length) {
     const { data: comments } = await crm

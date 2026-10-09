@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { usePortal } from '@/lib/portal-data';
 import { PageHeader, EmptyState } from '@/components/portal/Shared';
 import { ELEMENTS, FOUNDATION, PRODUCTS, chainStatus, type ElementRow, type ElementState, type LayerKey } from '@/lib/growth-chain';
+import SharedCards from '@/components/portal/SharedCards';
 import type { StaffClientDetail } from '@/app/api/portal/admin/client/route';
 
 function Check() {
@@ -278,6 +279,10 @@ export default function StaffClientPage() {
             </li>
           ))}
         </ul>
+      </Section>
+
+      <Section title="Shared cards" hint="Single cards from boards you don't want to link whole, like Deal Flow Radio episodes and clips. Shared cards show on their Production page, and they can watch, comment on and approve them.">
+        {accessToken && <SharedCards clientId={d.client.id} accessToken={accessToken} />}
       </Section>
 
       {d.videoAssets.length > 0 && (
