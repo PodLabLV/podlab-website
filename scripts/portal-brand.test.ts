@@ -118,3 +118,21 @@ test('stream links are scoped to one card or version and expire', async () => {
   assert.ok(!verifyStream('card', 'card-1', p.get('exp')!, p.get('sig')!));
   assert.ok(verifyPreview('card-1', 'file', p.get('exp')!, p.get('sig')!));
 });
+
+test('brand pings: one post per run of uploads, from the last upload in it', async () => {
+  const { brandBurst } = await import('@/lib/portal/brand');
+  const t0 = Date.parse('2026-10-09T21:28:00Z');
+  const at = (s: number) => ({ created_at: new Date(t0 + s * 1000).toISOString() });
+  // John's three drops at 2:28: 0s, 40s, 90s. Yesterday's file is a separate run.
+  const rows = [at(-86_400), at(0), at(1), at(40), at(90)];
+  // The first two announces see newer files and stay quiet.
+  assert.equal(brandBurst(rows, t0 + 5_000).post, false);
+  assert.equal(brandBurst(rows, t0 + 45_000).post, false);
+  // The last one posts all four from today, not yesterday's.
+  const last = brandBurst(rows, t0 + 95_000);
+  assert.equal(last.post, true);
+  assert.equal(last.rows.length, 4);
+  // A lone upload posts itself.
+  assert.deepEqual(brandBurst([at(0)], t0 + 5_000).rows.length, 1);
+  assert.equal(brandBurst([], t0).post, false);
+});

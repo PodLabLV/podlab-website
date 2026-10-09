@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { admin, notifySlack, logToCrm, type PortalCaller } from '@/lib/portal-server';
 import { resolveActor, recordActivity } from '@/lib/portal/server';
@@ -9,7 +9,9 @@ import {
   BRAND_KINDS,
   LOGO_VARIANTS,
   MAX_UPLOAD_BYTES,
+  BRAND_QUIET_MS,
   allowedFile,
+  brandBurst,
   formatBytes,
   validateKit,
   type BrandKind,
@@ -19,6 +21,8 @@ import { DRIVE_PREFIX, driveConfigured, driveFolderUrl, folderIdFromUrl, getFile
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// The Slack ping waits out a quiet window after the response (see announce).
+export const maxDuration = 300;
 
 /**
  * Brand page: logos, brand kit, b-roll.
@@ -26,7 +30,7 @@ export const dynamic = 'force-dynamic';
  * GET     the client's kit and files (signed links). Staff pass ?clientId=.
  * POST    intent sign       → a signed upload URL; the file goes straight to storage
  *         intent register   → record an uploaded file, or a pasted link
- *         intent announce   → one Slack ping + timeline line after a batch finishes
+ *         intent announce   → timeline line now; one Slack ping per run of uploads (2 quiet minutes)
  *         intent kit        → save colors, fonts, notes
  *         intent share      → staff: make (or rotate) the editors' read-only link
  *         intent cards      → staff: put that link on every card of their linked boards
@@ -243,16 +247,35 @@ export async function POST(req: Request) {
     const { data: c } = await db.from('portal_clients').select('business_name').eq('id', actor.clientId).maybeSingle();
     const biz = c?.business_name ?? 'A client';
     const by = actor.kind === 'client' ? `${actor.name} (${biz})` : `${actor.name} for ${biz}`;
-    // Point the team at the Drive folder the files landed in, when they did.
-    let where = '';
-    const root = await driveRootOf(db, actor.clientId);
-    if (root) {
-      try {
-        where = ` Drive: ${driveFolderUrl(await targetFolder(root, kind))}`;
-      } catch {}
-    }
+    // Slack gets one post per run of uploads: wait for the client to stop
+    // adding files, then the last upload in the run posts them all.
+    const clientId = actor.clientId;
+    const announcedAt = Date.now();
+    after(async () => {
+      await new Promise((r) => setTimeout(r, BRAND_QUIET_MS));
+      const since = new Date(announcedAt - 6 * 3_600_000).toISOString();
+      const { data: rows } = await db.from('portal_brand_assets').select('kind, size_bytes, created_at').eq('client_id', clientId).is('removed_at', null).gte('created_at', since);
+      const burst = brandBurst((rows ?? []) as Array<{ kind: BrandKind; size_bytes: number | null; created_at: string }>, announcedAt + 5_000);
+      if (!burst.post) return;
+      const kinds = [...new Set(burst.rows.map((r) => r.kind))];
+      const parts = kinds.map((k) => {
+        const n = burst.rows.filter((r) => r.kind === k).length;
+        return `${n} ${KIND_WORD[k][n === 1 ? 0 : 1]}`;
+      });
+      const bytes = burst.rows.reduce((t, r) => t + (r.size_bytes ?? 0), 0);
+      const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
+      // Point the team at the Drive folders the files landed in, when they did.
+      let where = '';
+      const root = await driveRootOf(db, clientId);
+      if (root) {
+        try {
+          const links = await Promise.all(kinds.map(async (k) => (kinds.length > 1 ? `${KIND_WORD[k][1]}: ` : '') + driveFolderUrl(await targetFolder(root, k))));
+          where = ` Drive: ${links.join(' · ')}`;
+        } catch {}
+      }
+      await notifySlack(`*Brand* · ${by} added ${list}${bytes ? ` (${formatBytes(bytes)})` : ''}. ${SITE_URL}/portal/brand?client=${clientId}${where}`, 'revisions');
+    });
     await Promise.all([
-      notifySlack(`*Brand* · ${by} added ${what}. ${SITE_URL}/portal/brand?client=${actor.clientId}${where}`, 'revisions'),
       actor.caller ? logToCrm(db, actor.caller, `Added ${what} on the portal Brand page.`) : Promise.resolve(),
       recordActivity(db, actor.clientId, 'update', actor.kind === 'client' ? `You added ${what}` : `PodLab added ${what} to your Brand page`),
     ]);
