@@ -84,7 +84,7 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
       {open && (
         <div className="border-t border-[#1a1a1a] px-5 pb-6 pt-5">
           <VideoReview
-            source={videoSource(card.videoUrl)}
+            source={card.streamUrl && card.videoUrl ? { kind: 'file', url: card.streamUrl, fallback: { url: card.videoUrl, host: 'Google Drive' } } : videoSource(card.videoUrl)}
             chapters={card.chapters}
             notes={notes}
             onAddNote={addNote}

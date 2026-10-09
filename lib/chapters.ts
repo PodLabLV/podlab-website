@@ -88,9 +88,25 @@ export function readNote(body: string): { t: number | null; text: string } {
 // ── where a cut lives ────────────────────────────────────────────────────
 
 export type VideoSource =
-  | { kind: 'file'; url: string }
+  // `fallback`: where to send the viewer if inline playback fails (a Drive cut
+  // streamed through our proxy falls back to opening it on Drive).
+  | { kind: 'file'; url: string; fallback?: { url: string; host: string } }
   | { kind: 'youtube'; id: string; url: string }
   | { kind: 'link'; url: string; host: string };
+
+/** The file id in a Google Drive file link (…/file/d/<id>/…, open?id=, uc?id=), or null. Folders don't count. */
+export function driveFileId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return null;
+  }
+  if (!/(^|\.)drive\.google\.com$|(^|\.)docs\.google\.com$/.test(u.hostname)) return null;
+  const id = u.pathname.match(/\/file\/d\/([\w-]{20,})/)?.[1] ?? (/^\/(open|uc)$/.test(u.pathname) ? u.searchParams.get('id') : null);
+  return id && /^[\w-]{20,}$/.test(id) ? id : null;
+}
 
 /**
  * Uploaded files and YouTube play inline with a readable clock (so pausing

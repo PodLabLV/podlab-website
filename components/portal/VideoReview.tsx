@@ -4,9 +4,10 @@
  * Watch a cut, jump by chapter, and pin revision notes to the exact moment.
  *
  * Used by Production (videos on the CRM boards) and Deliverables (versioned
- * cuts). Uploaded files and YouTube play inline with a live clock, so pausing
- * fills in the time. Other hosts (Drive, Frame.io, Vimeo) open in a new tab and
- * the client picks the moment by chapter or types it.
+ * cuts). Uploaded files, Drive cuts (streamed through /api/portal/stream) and
+ * YouTube play inline with a live clock, so pausing fills in the time. Other
+ * hosts (Frame.io, Vimeo), or a Drive cut the portal can't reach, open in a new
+ * tab and the client picks the moment by chapter or types it.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -92,7 +93,15 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const inline = source?.kind === 'file' || source?.kind === 'youtube';
+  // A streamed Drive cut that won't play drops back to "open it on Drive".
+  const [failed, setFailed] = useState(false);
+  const fileUrl = source?.kind === 'file' ? source.url : null;
+  useEffect(() => setFailed(false), [fileUrl]);
+  const fallback = source?.kind === 'file' ? source.fallback ?? null : null;
+  const showLink = source?.kind === 'link' || (failed && fallback !== null);
+  const link = source?.kind === 'link' ? { url: source.url, host: source.host } : fallback;
+
+  const inline = (source?.kind === 'file' && !showLink) || source?.kind === 'youtube';
   // Keyed on the id, not the object: parents rebuild `source` every render.
   const ytId = source?.kind === 'youtube' ? source.id : null;
 
@@ -182,7 +191,8 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
   return (
     <div>
       {/* Player */}
-      {source?.kind === 'file' && (
+      {source?.kind === 'file' && !showLink && (
+        <>
         <video
           ref={videoRef}
           src={source.url}
@@ -193,8 +203,19 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
           onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || null)}
           onTimeUpdate={(e) => setNow(e.currentTarget.currentTime)}
           onPause={(e) => setStamp(clock(e.currentTarget.currentTime))}
-          onError={onSourceError}
+          onError={() => (fallback ? setFailed(true) : onSourceError?.())}
         />
+          {fallback && (
+            <a
+              href={fallback.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="portal-label mt-2 inline-block !text-[8.5px] text-[#eeeeee]/35 transition hover:text-[#2add1b]"
+            >
+              Won&apos;t play here? Open on {fallback.host} ↗
+            </a>
+          )}
+        </>
       )}
       {source?.kind === 'youtube' && (
         <>
@@ -210,13 +231,13 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
           </a>
         </>
       )}
-      {source?.kind === 'link' && (
+      {showLink && link && (
         <div className="flex flex-col gap-3 border border-[#1a1a1a] bg-[#0a0a0a] p-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-[#eeeeee]/60">
-            This cut plays on {source.host}. Watch it there, then pick the chapter or type the time for each note.
+            This cut plays on {link.host}. Watch it there, then pick the chapter or type the time for each note.
           </p>
           <a
-            href={source.url}
+            href={link.url}
             target="_blank"
             rel="noopener noreferrer"
             className="portal-label inline-flex shrink-0 items-center gap-2 border border-[#2add1b]/50 px-4 py-2.5 !text-[9.5px] text-[#2add1b] transition hover:bg-[#2add1b] hover:text-black"

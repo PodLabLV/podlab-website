@@ -15,7 +15,7 @@ import { usePortal, formatDate, type PortalAsset } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState, FileMark } from '@/components/portal/Shared';
 import ScriptStatusBadge from '@/components/portal/ScriptStatusBadge';
 import VideoReview from '@/components/portal/VideoReview';
-import { parseChapters, videoSource } from '@/lib/chapters';
+import { driveFileId, parseChapters, videoSource } from '@/lib/chapters';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { loadAssetReview, portalCall, type AssetReviewData } from '@/lib/portal/browser';
 import {
@@ -45,13 +45,13 @@ function ExternalIcon() {
   );
 }
 
-async function signedUrl(versionId: string): Promise<{ url: string; external: boolean }> {
-  const res = await portalCall<{ url: string | null; external?: boolean }>(
+async function signedUrl(versionId: string): Promise<{ url: string; external: boolean; fallback: string | null }> {
+  const res = await portalCall<{ url: string | null; external?: boolean; fallback?: string }>(
     `/api/portal/deliverables?versionId=${encodeURIComponent(versionId)}`,
     'GET',
   );
   if (!res.url) throw new Error('Could not open that file.');
-  return { url: res.url, external: Boolean(res.external) };
+  return { url: res.url, external: Boolean(res.external), fallback: res.fallback ?? null };
 }
 
 // ── review panel ────────────────────────────────────────────────────────
@@ -66,11 +66,13 @@ interface ReviewPanelProps {
 function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps) {
   const current = versions[0];
   const isVideo = (asset.file_type || '').toUpperCase() === 'VIDEO';
-  const inlineVideo = isVideo && Boolean(current.storage_path);
+  // Uploaded files, and Drive cuts (streamed through our proxy), play inline.
+  const inlineVideo = isVideo && Boolean(current.storage_path || driveFileId(current.external_url));
   const approved = (asset.status || '').toLowerCase() === 'approved';
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [src, setSrc] = useState<string | null>(null);
+  const [fallback, setFallback] = useState<string | null>(null);
   const [retried, setRetried] = useState(false);
   const [draft, setDraft] = useState('');
   const [stamp, setStamp] = useState('');
@@ -89,7 +91,9 @@ function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps)
 
   const mint = useCallback(async () => {
     try {
-      setSrc((await signedUrl(current.id)).url);
+      const r = await signedUrl(current.id);
+      setSrc(r.url);
+      setFallback(r.fallback);
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Could not load the video.');
     }
@@ -151,7 +155,13 @@ function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps)
 
       {isVideo ? (
         <VideoReview
-          source={current.storage_path ? (src ? { kind: 'file', url: src } : null) : videoSource(current.external_url)}
+          source={
+            inlineVideo
+              ? src
+                ? { kind: 'file', url: src, ...(fallback ? { fallback: { url: fallback, host: 'Google Drive' } } : {}) }
+                : null
+              : videoSource(current.external_url)
+          }
           chapters={parseChapters(current.chapters ?? [])}
           notes={notes.map((c) => ({
             id: c.id,
