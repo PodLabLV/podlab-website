@@ -6,6 +6,8 @@ import { loadBrand } from '@/lib/portal/brand-server';
 import { driveConfigured, modifiedTimes } from '@/lib/portal/drive';
 import { loadPlans } from '@/lib/portal/game-plan-server';
 import { checkInDue } from '@/lib/portal/game-plan';
+import { loadContentPlan } from '@/lib/portal/content-plan-server';
+import { needsScript } from '@/lib/portal/content-plan';
 import { LOOKS_GOOD_NOTE, POTATO_EPOCH, byHeat, cutHolder, makePotato, type Potato } from '@/lib/portal/potato';
 
 /**
@@ -30,6 +32,7 @@ export async function potatoesFor(db: SupabaseClient, clientId: string, now = Da
     brand(db, clientId, you, client.created_at, add).catch(warn('brand')),
     cuts(db, clientId, you, now, add).catch(warn('production')),
     checkIns(db, clientId, you, now, add).catch(warn('game plan')),
+    contentPlan(db, clientId, you, now, add).catch(warn('content plan')),
   ]);
   return out.sort(byHeat);
 }
@@ -105,6 +108,32 @@ async function checkIns(db: SupabaseClient, id: string, you: string, now: number
     since: new Date(since).toISOString(),
     href: '/portal/plan',
   });
+}
+
+/**
+ * Content plan, both sides. Client: pieces going out within 5 days with no
+ * script (one potato, from 5 days before the first one). Team: pieces the
+ * client recorded that nobody has sent to the editors yet.
+ */
+async function contentPlan(db: SupabaseClient, id: string, you: string, now: number, add: Add) {
+  const { ready, items } = await loadContentPlan(db, id);
+  if (!ready) return;
+  const bare = items.filter((i) => needsScript(i, now));
+  if (bare.length) {
+    const first = bare.reduce((m, i) => (i.publishOn < m.publishOn ? i : m));
+    add({
+      key: `content-script:${id}:client`,
+      holder: 'client',
+      who: you,
+      title: bare.length === 1 ? `Script for "${first.title}"` : `${bare.length} pieces need scripts`,
+      why: 'Write it with TipTop before it goes out',
+      since: new Date(Date.parse(`${first.publishOn}T00:00:00Z`) - 5 * 86_400_000).toISOString(),
+      href: '/portal/content',
+    });
+  }
+  for (const i of items.filter((x) => x.status === 'recorded' && !x.crmCardId)) {
+    add({ key: `content-rec:${i.id}:team`, holder: 'team', who: 'PodLab', title: i.title, why: 'Recorded: send it to the editors', since: i.updatedAt, href: '/portal/content' });
+  }
 }
 
 async function cuts(db: SupabaseClient, id: string, you: string, now: number, add: Add) {

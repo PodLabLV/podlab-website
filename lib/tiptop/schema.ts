@@ -38,6 +38,7 @@ export const PAGES = {
   invoices: { href: '/portal/invoices', label: 'Invoices' },
   profile: { href: '/portal/profile', label: 'Profile' },
   plan: { href: '/portal/plan', label: 'Game Plan' },
+  content: { href: '/portal/content', label: 'Content Plan' },
 } as const;
 export type PageKey = keyof typeof PAGES;
 const PAGE_KEYS = Object.keys(PAGES) as [PageKey, ...PageKey[]];
@@ -140,6 +141,7 @@ export const updateBrandKitInput = z.object({
 });
 
 import { PILLARS } from '@/lib/portal/game-plan';
+import { FORMATS, JOBS } from '@/lib/portal/content-plan';
 export { PILLARS };
 
 export const createActionItemsInput = z.object({
@@ -180,6 +182,42 @@ export const checkInGamePlanInput = z.object({
   note: z.string().trim().min(10).max(500).describe('One or two lines: what moved, what didn\'t, the next move. Their words, tightened.'),
 });
 
+const DATE = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD');
+
+export const planContentInput = z.object({
+  coaching: z.string().trim().min(60).max(900).describe('Shown on the card: the pillars, the cadence and why it is sustainable, the job mix (attract/educate/convert/retain) and what to record first.'),
+  items: z
+    .array(
+      z.object({
+        publish_on: DATE,
+        pillar: z.string().trim().min(2).max(80).describe('One of their 3–4 content pillars.'),
+        format: z.enum(FORMATS),
+        title: z.string().trim().min(3).max(160),
+        hook: z.string().trim().max(300).optional().describe('The first line, in their voice.'),
+        job: z.enum(JOBS),
+        cta: z.string().trim().max(200).optional(),
+      }),
+    )
+    .min(1)
+    .max(24),
+});
+
+export const updateContentInput = z.object({
+  changes: z
+    .array(
+      z.object({
+        id: id.describe('Content plan item id from the snapshot.'),
+        status: z.enum(['planned', 'recorded', 'posted', 'skipped']).optional().describe('scripted and in edit are set by the system, not by you.'),
+        publish_on: DATE.optional(),
+        title: z.string().trim().min(3).max(160).optional(),
+        hook: z.string().trim().max(300).optional(),
+        notes: z.string().trim().max(500).optional(),
+      }),
+    )
+    .min(1)
+    .max(20),
+});
+
 export const SCRIPT_KINDS = ['hook', 'faq', 'short', 'social', 'ad', 'vsl', 'email', 'founder'] as const;
 
 export const draftScriptInput = z.object({
@@ -187,6 +225,7 @@ export const draftScriptInput = z.object({
   kind: z.enum(SCRIPT_KINDS),
   body: z.string().trim().min(40).max(12000).describe('The script, spoken-word, blocks separated by blank lines. PodLab voice rules apply.'),
   note: z.string().trim().max(400).default('').describe('One line for the PodLab reviewer: the goal, the angle, what it is built from.'),
+  content_item_id: id.optional().describe('The content plan piece this script is for, from the snapshot. Links them and marks the piece scripted.'),
 });
 
 export const readScriptInput = z.object({ id: id.describe('Script id from the overview.') });
@@ -206,5 +245,7 @@ export const WRITE_TOOLS = [
   'draft_script',
   'set_game_plan',
   'check_in_game_plan',
+  'plan_content',
+  'update_content',
 ] as const;
 export type WriteTool = (typeof WRITE_TOOLS)[number];
