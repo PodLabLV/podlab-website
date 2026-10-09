@@ -117,7 +117,7 @@ export default function BrandKitSharePage() {
                 </div>
                 {downloadHref(a) && (
                   <a href={downloadHref(a)!} target="_blank" rel="noopener noreferrer" className="portal-label shrink-0 !text-[9px] text-[#2add1b] hover:text-[#eeeeee]">
-                    {a.externalUrl ? 'Open ↗' : 'Download'}
+                    {a.externalUrl ? 'Open ↗' : a.driveUrl && !a.url ? 'Open in Drive ↗' : 'Download'}
                   </a>
                 )}
               </div>

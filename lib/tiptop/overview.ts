@@ -5,7 +5,8 @@ import { isDoneColumn, stageFor, PORTAL_COMMENT_SUFFIX } from '@/lib/production'
 import { isWaitingOnClient, unsentClientNotes, vocab } from '@/lib/portal/scripts';
 import { loadProfile } from '@/lib/portal/profile';
 import { clientDocumentInfo, listVersions } from '@/lib/portal/documents';
-import { loadBrand, brandGaps } from '@/lib/portal/brand';
+import { brandGaps } from '@/lib/portal/brand';
+import { loadBrand } from '@/lib/portal/brand-server';
 import { gameFor } from '@/lib/portal/game';
 
 /**

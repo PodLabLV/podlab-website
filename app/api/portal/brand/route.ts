@@ -11,10 +11,11 @@ import {
   MAX_UPLOAD_BYTES,
   allowedFile,
   formatBytes,
-  loadBrand,
   validateKit,
   type BrandKind,
 } from '@/lib/portal/brand';
+import { loadBrand } from '@/lib/portal/brand-server';
+import { DRIVE_PREFIX, driveConfigured, driveFolderUrl, folderIdFromUrl, getFile, openUploadSession, targetFolder } from '@/lib/portal/drive';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,8 +33,9 @@ export const dynamic = 'force-dynamic';
  * PATCH   relabel a file, or change a logo's variant
  * DELETE  ?assetId= hide a file (the object stays in storage until staff purge it)
  *
- * The bucket is private with no policies; every read is a signed URL minted
- * after an ownership check.
+ * Uploads go straight to the client's PodLab OS Drive folder (lib/portal/drive.ts)
+ * when one is linked; otherwise to the private bucket, where every read is a
+ * signed URL minted after an ownership check.
  */
 
 interface Actor {
@@ -51,6 +53,20 @@ async function actorFor(req: Request, db: SupabaseClient, clientIdHint?: string 
     if (data) return { clientId: data.id, name: staff.name, kind: 'staff', caller: null };
   }
   return null;
+}
+
+/** The client's PodLab OS folder, when Drive uploads are switched on and the folder is linked. */
+async function driveRootOf(db: SupabaseClient, clientId: string): Promise<string | null> {
+  if (!driveConfigured()) return null;
+  const { data } = await db.from('portal_clients').select('drive_folder_url').eq('id', clientId).maybeSingle();
+  return folderIdFromUrl(data?.drive_folder_url);
+}
+
+/** Google lets the browser PUT only from the origin that opened the session. */
+function uploadOrigin(req: Request): string {
+  const o = req.headers.get('origin');
+  const ok = o && (/^https:\/\/([a-z0-9-]+\.)?podlablv\.com$/.test(o) || /^https:\/\/podlab-site[a-z0-9-]*\.vercel\.app$/.test(o) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o));
+  return ok ? o! : SITE_URL;
 }
 
 function shareUrl(token: string): string {
@@ -88,6 +104,7 @@ interface PostPayload {
   sizeBytes?: number;
   mimeType?: string | null;
   path?: string;
+  driveFileId?: string;
   externalUrl?: string;
   count?: number;
   colors?: unknown;
@@ -122,6 +139,20 @@ export async function POST(req: Request) {
     if (!allowedFile(kind, filename)) {
       return NextResponse.json({ error: `${filename} isn't a file type we take here.` }, { status: 400 });
     }
+    if (!p.sizeBytes || p.sizeBytes < 1) return NextResponse.json({ error: `${filename} is empty.` }, { status: 400 });
+
+    // Straight into their PodLab OS folder when we can; the bucket otherwise.
+    const root = await driveRootOf(db, actor.clientId);
+    if (root) {
+      try {
+        const folderId = await targetFolder(root, kind);
+        const sessionUrl = await openUploadSession({ folderId, name: filename.slice(0, 200), mimeType: p.mimeType ?? '', size: p.sizeBytes, origin: uploadOrigin(req) });
+        return NextResponse.json({ target: 'drive', sessionUrl });
+      } catch (err) {
+        console.error('[portal] drive upload session failed; using the bucket', err instanceof Error ? err.message : err);
+      }
+    }
+
     if ((p.sizeBytes ?? 0) > MAX_UPLOAD_BYTES) {
       return NextResponse.json({ error: `${filename} is over 5 GB. Paste a Drive or Dropbox link to it instead.` }, { status: 400 });
     }
@@ -132,16 +163,32 @@ export async function POST(req: Request) {
       console.error('[portal] brand signed upload failed', error?.message);
       return NextResponse.json({ error: /bucket/i.test(error?.message ?? '') ? 'Uploads are not switched on yet.' : 'Could not start that upload.' }, { status: 500 });
     }
-    return NextResponse.json({ path, signedUrl: data.signedUrl });
+    return NextResponse.json({ target: 'bucket', path, signedUrl: data.signedUrl });
   }
 
   // ── record an uploaded file, or a link
   if (p.intent === 'register') {
     if (!kind) return NextResponse.json({ error: 'kind required' }, { status: 400 });
     const external = (p.externalUrl ?? '').trim();
-    if (!p.path && !external) return NextResponse.json({ error: 'A file or a link is required.' }, { status: 400 });
+    if (!p.path && !external && !p.driveFileId) return NextResponse.json({ error: 'A file or a link is required.' }, { status: 400 });
 
-    if (p.path) {
+    let drive: { id: string; name: string; size: number | null; mime: string | null } | null = null;
+    if (p.driveFileId) {
+      // The id came from the browser: it only counts if the file sits in this
+      // client's folder for this kind.
+      const root = await driveRootOf(db, actor.clientId);
+      if (!root) return NextResponse.json({ error: 'Drive uploads are not switched on for this account.' }, { status: 400 });
+      try {
+        const [f, folderId] = await Promise.all([getFile(p.driveFileId), targetFolder(root, kind)]);
+        if (f.trashed || !f.parents?.includes(folderId)) {
+          return NextResponse.json({ error: 'That upload does not belong to this account.' }, { status: 400 });
+        }
+        drive = { id: f.id, name: f.name, size: f.size ? Number(f.size) : null, mime: f.mimeType ?? null };
+      } catch (err) {
+        console.error('[portal] drive register check failed', err instanceof Error ? err.message : err);
+        return NextResponse.json({ error: 'The upload did not finish. Try that file again.' }, { status: 400 });
+      }
+    } else if (p.path) {
       // A path is not an ownership proof unless it sits in this client's folder,
       // and it must really be there (the upload can fail after signing).
       if (!p.path.startsWith(`${actor.clientId}/${kind}/`)) {
@@ -170,11 +217,11 @@ export async function POST(req: Request) {
         kind,
         variant,
         label: (p.label ?? '').trim().slice(0, 120) || null,
-        storage_path: p.path ?? null,
-        external_url: p.path ? null : external,
-        filename: p.path ? (p.filename ?? '').slice(0, 200) || null : null,
-        size_bytes: p.path && p.sizeBytes ? Math.round(p.sizeBytes) : null,
-        mime_type: p.path ? (p.mimeType ?? '').slice(0, 100) || null : null,
+        storage_path: drive ? `${DRIVE_PREFIX}${drive.id}` : p.path ?? null,
+        external_url: drive || p.path ? null : external,
+        filename: drive ? drive.name.slice(0, 200) : p.path ? (p.filename ?? '').slice(0, 200) || null : null,
+        size_bytes: drive ? drive.size : p.path && p.sizeBytes ? Math.round(p.sizeBytes) : null,
+        mime_type: drive ? drive.mime : p.path ? (p.mimeType ?? '').slice(0, 100) || null : null,
         uploaded_by: actor.name,
         uploaded_by_kind: actor.kind,
       })
@@ -196,8 +243,16 @@ export async function POST(req: Request) {
     const { data: c } = await db.from('portal_clients').select('business_name').eq('id', actor.clientId).maybeSingle();
     const biz = c?.business_name ?? 'A client';
     const by = actor.kind === 'client' ? `${actor.name} (${biz})` : `${actor.name} for ${biz}`;
+    // Point the team at the Drive folder the files landed in, when they did.
+    let where = '';
+    const root = await driveRootOf(db, actor.clientId);
+    if (root) {
+      try {
+        where = ` Drive: ${driveFolderUrl(await targetFolder(root, kind))}`;
+      } catch {}
+    }
     await Promise.all([
-      notifySlack(`*Brand* · ${by} added ${what}. ${SITE_URL}/portal/brand?client=${actor.clientId}`, 'revisions'),
+      notifySlack(`*Brand* · ${by} added ${what}. ${SITE_URL}/portal/brand?client=${actor.clientId}${where}`, 'revisions'),
       actor.caller ? logToCrm(db, actor.caller, `Added ${what} on the portal Brand page.`) : Promise.resolve(),
       recordActivity(db, actor.clientId, 'update', actor.kind === 'client' ? `You added ${what}` : `PodLab added ${what} to your Brand page`),
     ]);

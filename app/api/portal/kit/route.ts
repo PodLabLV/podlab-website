@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { admin } from '@/lib/portal-server';
-import { loadBrand } from '@/lib/portal/brand';
+import { loadBrand } from '@/lib/portal/brand-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

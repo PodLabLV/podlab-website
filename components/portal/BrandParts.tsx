@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- signed storage URLs expire hourly; next/image would cache them */
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { extOf, formatBytes, isImage, isVideo, type BrandAsset, type BrandColor, type BrandFont } from '@/lib/portal/brand';
 
 export const VARIANT_LABEL: Record<string, string> = {
@@ -15,9 +15,18 @@ export const VARIANT_LABEL: Record<string, string> = {
 
 /** A signed URL that downloads instead of opening (Supabase honours ?download=). */
 export function downloadHref(a: BrandAsset): string | null {
+  // Drive: small files download through our proxy; big ones open in Drive (team only).
+  if (a.driveUrl) return a.url ? `${a.url}&dl=1` : a.driveUrl;
   if (!a.url) return null;
   if (a.externalUrl) return a.url;
   return `${a.url}${a.url.includes('?') ? '&' : '?'}download=${encodeURIComponent(a.filename ?? 'file')}`;
+}
+
+/** Drive generates thumbnails a little after upload; until then, fall back to the file type. */
+function Thumb({ src, name, className }: { src: string; name: string | null; className: string }) {
+  const [broken, setBroken] = useState(false);
+  if (broken) return <ExtMark name={name} />;
+  return <img src={src} alt="" loading="lazy" onError={() => setBroken(true)} className={className} />;
 }
 
 function ExtMark({ name }: { name: string | null }) {
@@ -27,10 +36,10 @@ function ExtMark({ name }: { name: string | null }) {
 
 /** The logo on a light and a dark ground, side by side, so a missing version is obvious. */
 export function LogoPreview({ asset }: { asset: BrandAsset }) {
-  const img = asset.url && isImage(asset.filename, asset.mimeType);
+  const src = isImage(asset.filename, asset.mimeType) ? asset.thumbUrl ?? asset.url : asset.thumbUrl;
   const cell = (bg: string) => (
     <div className={`flex h-28 items-center justify-center p-4 ${bg}`}>
-      {img ? <img src={asset.url!} alt="" className="max-h-full max-w-full object-contain" loading="lazy" /> : <ExtMark name={asset.filename} />}
+      {src ? <Thumb src={src} name={asset.filename} className="max-h-full max-w-full object-contain" /> : <ExtMark name={asset.filename} />}
     </div>
   );
   return (
@@ -51,6 +60,13 @@ export function MediaThumb({ asset }: { asset: BrandAsset }) {
       <div className="flex aspect-video flex-col items-center justify-center gap-2 bg-black">
         <span className="portal-label border border-[#2add1b]/40 px-2 py-1 !text-[9px] text-[#2add1b]">Link</span>
         <span className="text-xs text-[#eeeeee]/40">{host}</span>
+      </div>
+    );
+  }
+  if (asset.driveUrl) {
+    return (
+      <div className="flex aspect-video items-center justify-center bg-black">
+        {asset.thumbUrl ? <Thumb src={asset.thumbUrl} name={asset.filename} className="aspect-video w-full object-cover" /> : <ExtMark name={asset.filename} />}
       </div>
     );
   }
