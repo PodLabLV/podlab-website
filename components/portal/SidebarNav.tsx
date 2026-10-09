@@ -24,7 +24,6 @@ interface Group {
   key: string;
   label: string | null;
   items: Item[];
-  collapsible?: boolean;
 }
 
 const GROUPS: Group[] = [
@@ -63,7 +62,6 @@ const GROUPS: Group[] = [
   {
     key: 'account',
     label: 'Account',
-    collapsible: true,
     items: [
       { href: '/portal/answers', label: 'Your Answers' },
       { href: '/portal/invoices', label: 'Invoices', show: 'invoices' },
@@ -107,11 +105,36 @@ function useNav(): { nav: NavPayload | null; reload: () => void } {
   return { nav, reload };
 }
 
+/**
+ * Open/closed per sidebar section, remembered per browser. Storage can be
+ * blocked (private windows); then sections just start in their default state.
+ */
+const FOLD_KEY = 'podlab:sidebar-folds';
+function useFolds(defaults: Record<string, boolean>): [Record<string, boolean>, (key: string) => void] {
+  const [folds, setFolds] = useState<Record<string, boolean>>(defaults);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(FOLD_KEY) ?? '{}') as Record<string, boolean>;
+      setFolds((f) => ({ ...f, ...saved }));
+    } catch {}
+  }, []);
+  const toggle = useCallback((key: string) => {
+    setFolds((f) => {
+      const next = { ...f, [key]: !f[key] };
+      try {
+        localStorage.setItem(FOLD_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+  return [folds, toggle];
+}
+
 /** A repeatable mission with nothing waiting but nothing earned yet isn't "done" to the eye. */
 const earned = (m: Mission) => m.done && (m.count === undefined || m.count > 0);
 
 /** The level card: level, bar, and the one mission that moves it. */
-function LevelCard({ nav, clientId, onNavigate }: { nav: NavPayload; clientId: string; onNavigate: () => void }) {
+function LevelCard({ nav, clientId, onNavigate, folded, onFold }: { nav: NavPayload; clientId: string; onNavigate: () => void; folded: boolean; onFold: () => void }) {
   const { game } = nav;
   const [open, setOpen] = useState(false);
   const [levelUp, setLevelUp] = useState(false);
@@ -136,12 +159,17 @@ function LevelCard({ nav, clientId, onNavigate }: { nav: NavPayload; clientId: s
 
   return (
     <div className={`mx-4 mt-4 border p-4 transition-colors ${levelUp ? 'border-p-brandink bg-p-brand/10' : 'border-p-line bg-p-card'}`}>
-      <div className="flex items-baseline justify-between gap-2">
-        <p className="portal-label !text-[9px] text-p-brandink">
+      <button onClick={onFold} aria-expanded={!folded} className="flex w-full items-center justify-between gap-2 text-left">
+        <span className="portal-label !text-[9px] text-p-brandink">
           {levelUp ? 'Level up · ' : ''}Level {game.level.n} · {game.level.name}
-        </p>
-        <p className="portal-label !text-[8.5px] text-p-ink/35">{game.score} pts</p>
-      </div>
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="portal-label !text-[8.5px] text-p-ink/35">{game.score} pts</span>
+          <span className="text-p-ink/40">
+            <Chevron open={!folded} />
+          </span>
+        </span>
+      </button>
       <div
         className="mt-3 h-1.5 bg-p-line"
         role="progressbar"
@@ -152,6 +180,8 @@ function LevelCard({ nav, clientId, onNavigate }: { nav: NavPayload; clientId: s
       >
         <div className="h-full bg-p-brand transition-[width] duration-700" style={{ width: `${Math.max(3, game.pct)}%` }} />
       </div>
+      {!folded && (
+      <>
       <p className="mt-2 text-[11px] text-p-ink/40">{game.level.next === null ? 'Top level. Record once, sell forever.' : `${left} pts to level ${game.level.n + 1}`}</p>
 
       {next ? (
@@ -188,6 +218,8 @@ function LevelCard({ nav, clientId, onNavigate }: { nav: NavPayload; clientId: s
           ))}
         </ul>
       )}
+      </>
+      )}
     </div>
   );
 }
@@ -197,11 +229,8 @@ export default function SidebarNav({ isStaff, onNavigate }: { isStaff: boolean; 
   const { client } = usePortal();
   const { nav } = useNav();
   const isActive = (href: string) => (href === '/portal' ? pathname === '/portal' : pathname.startsWith(href));
-  const accountActive = GROUPS.find((g) => g.key === 'account')!.items.some((i) => isActive(i.href));
-  const [accountOpen, setAccountOpen] = useState(accountActive);
-  useEffect(() => {
-    if (accountActive) setAccountOpen(true);
-  }, [accountActive]);
+  // true = folded. Account starts folded; everything else starts open.
+  const [folds, toggleFold] = useFolds({ level: false, account: true });
 
   // Without a payload (staff, or the call failed) everything shows: hiding is a nicety, never a lockout.
   const visible = (i: Item) => !nav || !i.show || nav.show[i.show] || isActive(i.href);
@@ -214,7 +243,7 @@ export default function SidebarNav({ isStaff, onNavigate }: { isStaff: boolean; 
 
   return (
     <>
-      {nav && client && <LevelCard nav={nav} clientId={client.id} onNavigate={onNavigate} />}
+      {nav && client && <LevelCard nav={nav} clientId={client.id} onNavigate={onNavigate} folded={Boolean(folds.level)} onFold={() => toggleFold('level')} />}
       {client && !isStaff && <PotatoTray onNavigate={onNavigate} />}
 
       <nav aria-label="Portal" className="flex-1 overflow-y-auto py-4">
@@ -222,24 +251,24 @@ export default function SidebarNav({ isStaff, onNavigate }: { isStaff: boolean; 
           const items = g.items.filter(visible);
           if (!items.length) return null;
           const waiting = nav ? items.reduce((n, i) => n + (i.badge ? nav.badges[i.badge] ?? 0 : 0), 0) : 0;
-          const collapsed = g.collapsible && !accountOpen;
+          // The group holding the page you're on never hides it.
+          const here = items.some((i) => isActive(i.href));
+          const collapsed = Boolean(g.label) && Boolean(folds[g.key]) && !here;
           return (
             <div key={g.key} className={g.label ? 'mt-4' : ''}>
-              {g.label &&
-                (g.collapsible ? (
-                  <button
-                    onClick={() => setAccountOpen(!accountOpen)}
-                    aria-expanded={!collapsed}
-                    className="portal-label flex w-full items-center justify-between px-6 pb-1.5 !text-[8.5px] text-p-ink/30 hover:text-p-ink/60"
-                  >
-                    {g.label} <Chevron open={!collapsed} />
-                  </button>
-                ) : (
-                  <p className="portal-label flex items-center justify-between px-6 pb-1.5 !text-[8.5px] text-p-ink/30">
-                    {g.label}
+              {g.label && (
+                <button
+                  onClick={() => toggleFold(g.key)}
+                  aria-expanded={!collapsed}
+                  className="portal-label flex w-full items-center justify-between gap-2 px-6 pb-1.5 !text-[8.5px] text-p-ink/30 hover:text-p-ink/60"
+                >
+                  <span>{g.label}</span>
+                  <span className="flex items-center gap-2">
                     {waiting > 0 && <span className="text-p-brandink">{waiting} waiting</span>}
-                  </p>
-                ))}
+                    <Chevron open={!collapsed} />
+                  </span>
+                </button>
+              )}
               {!collapsed &&
                 items.map((item) => {
                   const active = isActive(item.href);
