@@ -64,3 +64,29 @@ test('view-as header must be a real id', () => {
   assert.equal(viewAsId(req('GET', `${CLIENT}' or 1=1`)), null);
   assert.equal(viewAsId(req('GET', CLIENT)), CLIENT);
 });
+
+test('browser reads go through the proxy even when the env URL has a stray newline or slash', async () => {
+  const { viewAsSupabaseFetch } = await import('@/lib/portal/view-as');
+  const seen: string[] = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    seen.push(String(input));
+    return new Response('[]');
+  }) as typeof fetch;
+  try {
+    for (const env of ['https://abc.supabase.co', 'https://abc.supabase.co\n', 'https://abc.supabase.co/']) {
+      seen.length = 0;
+      const f = viewAsSupabaseFetch(env, '11111111-1111-1111-1111-111111111111');
+      await f('https://abc.supabase.co/rest/v1/portal_clients?select=*&limit=1', { headers: { authorization: 'Bearer t' } });
+      assert.equal(seen[0], '/api/portal/view-as/rest?t=portal_clients&q=select%3D*%26limit%3D1', JSON.stringify(env));
+    }
+    // Writes never leave the browser; auth calls pass straight through.
+    const f = viewAsSupabaseFetch('https://abc.supabase.co', '11111111-1111-1111-1111-111111111111');
+    assert.equal((await f('https://abc.supabase.co/rest/v1/portal_clients', { method: 'PATCH' })).status, 403);
+    seen.length = 0;
+    await f('https://abc.supabase.co/auth/v1/user');
+    assert.equal(seen[0], 'https://abc.supabase.co/auth/v1/user');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

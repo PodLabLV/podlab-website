@@ -67,13 +67,24 @@ export function installViewAs(): string | null {
  * through the pinned staff proxy; writes are refused; auth calls pass through.
  */
 export function viewAsSupabaseFetch(supabaseUrl: string, id: string): typeof fetch {
+  const host = new URL(supabaseUrl.trim()).host;
   return (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-    const rest = `${supabaseUrl}/rest/v1/`;
-    if (!url.startsWith(rest)) return fetch(input, init);
+    // Match on the parsed URL, not the raw env string: supabase-js normalizes
+    // the project URL (a stray newline or trailing slash in the env value is
+    // dropped), so a string prefix check let reads slip past the proxy and run
+    // as the staff login, which sees no client ("Loading…", "No client record yet").
+    let u: URL;
+    try {
+      u = new URL(url);
+    } catch {
+      return fetch(input, init);
+    }
+    if (u.host !== host || !u.pathname.startsWith('/rest/v1/')) return fetch(input, init);
     const method = (init?.method ?? 'GET').toUpperCase();
     if (!READ.has(method)) return Promise.resolve(refuse());
-    const [table, query = ''] = url.slice(rest.length).split('?');
+    const table = decodeURIComponent(u.pathname.slice('/rest/v1/'.length));
+    const query = u.search.replace(/^\?/, '');
     const src = new Headers(init?.headers);
     const headers = new Headers({ 'x-portal-view-as': id });
     for (const h of ['authorization', 'accept', 'range', 'range-unit', 'prefer']) {
