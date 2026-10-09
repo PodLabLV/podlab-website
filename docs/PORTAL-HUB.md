@@ -203,6 +203,15 @@ Some boards hold several clients' work (Deal Flow Radio, Power of Influence gues
 
 Scope lives in `lib/production-server.ts` (`clientCardScope`, `cardVisible`, `cardsInScope`, `scopeBoardIds`); every client read goes through it. Table: `portal_client_cards` (migration `20261016_portal_client_cards.sql`, service-role only). Before the migration runs, sharing returns "Run migration 20261016 first" and everything else behaves as before. API: `GET/POST /api/portal/admin/cards` (staff only). Tests: `npm run test:cards`.
 
+## Client-approval gate (what a client sees)
+
+A board with a **Pending Client Approval** column shows the client a video only once its card reaches that column or anything after it (Approved, Posted). Editing, Revising and our own Pending Quality Control stay internal. A card the client already left notes on stays visible when it goes back to Revising, so their notes never vanish. Scrapped is never shown. **Boards without the column show every card, as before.**
+
+- New CRM boards get the column (podlab-crm phase114 + `BOARD_LADDER`). Existing boards are untouched; to switch one over, add a column named "Pending Client Approval" between Pending Quality Control and Approved.
+- CRM work queue: QC **approve** moves the card to Pending Client Approval when the board has it.
+- Portal: the stage reads **"Ready for your review"** (orange), with a "Ready for you" count. The client's **Looks good** moves the card to Approved by itself; a note sends it back to Revising.
+- Enforced in one place: `openToClient` / `cardOpen` / `gateOpen` in `lib/production-server.ts`, applied inside `cardsInScope`, so Your Videos, Hot Potato, the digest, TipTop and Delivered all follow it. If the columns can't be read it fails closed. Tests: `npm run test:cards`.
+
 ## Team access (assistants and partners)
 
 A client can have more than one login. **Manage → Team access**: first name, email, role (default "Assistant"), Invite teammate. They get a branded email ("You have access to {business}'s PodLab Portal") and their own password. Resend link and Remove sit on each row.

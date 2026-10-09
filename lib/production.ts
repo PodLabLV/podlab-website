@@ -76,6 +76,7 @@ const STAGE_WORDS: Record<string, string> = {
   'piecing episode': 'Editing',
   revising: 'Revising',
   'pending quality control': 'Quality check',
+  'pending client approval': 'Ready for your review',
   approved: 'Approved',
   posted: 'Posted',
 };

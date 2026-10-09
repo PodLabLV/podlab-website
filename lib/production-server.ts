@@ -16,7 +16,7 @@ import { LOOKS_GOOD_NOTE } from '@/lib/portal/potato';
  *  3. Slack (#revisions when configured) names the card's editor.
  */
 
-const REOPEN_FROM = new Set(['pending quality control', 'quality control', 'qc', 'approved']);
+const REOPEN_FROM = new Set(['pending quality control', 'quality control', 'qc', 'pending client approval', 'client approval', 'approved']);
 const LIVE = new Set(['posted', 'published', 'live']);
 
 export type NoteResult =
@@ -52,6 +52,58 @@ export function cardVisible(scope: CardScope, card: { id: string; board_id: stri
 }
 
 /**
+ * The client-approval gate. A board with a "Pending Client Approval" column
+ * shows the client a card only once it reaches that column (or anything
+ * after it): editing and our own quality check stay internal. A card the
+ * client has already left notes on stays visible when it goes back to
+ * Revising, so their notes never vanish. Boards without the column (older
+ * boards) show every card, as before.
+ */
+export const CLIENT_GATE = /client\s*approval/i;
+
+interface GateList { id: string; board_id: string; name: string; sort: number; role: string | null }
+
+export function gateOpen(
+  lists: GateList[],
+  card: { board_id: string; list_id: string },
+): boolean {
+  const own = lists.filter((l) => l.board_id === card.board_id);
+  const gate = own.filter((l) => (l.role ?? 'step') === 'step' && CLIENT_GATE.test(l.name)).sort((a, b) => a.sort - b.sort)[0];
+  if (!gate) return true;
+  const col = own.find((l) => l.id === card.list_id);
+  if (!col || col.role === 'scrap') return false;
+  return col.sort >= gate.sort;
+}
+
+/** The cards in this list the client may see under the gate (see CLIENT_GATE). */
+export async function openToClient<T extends { id: string; board_id: string; list_id: string }>(db: SupabaseClient, cards: T[]): Promise<T[]> {
+  if (!cards.length) return cards;
+  const crm = db.schema('crm');
+  const { data: lists, error } = await crm
+    .from('content_lists')
+    .select('id, board_id, name, sort, role')
+    .in('board_id', [...new Set(cards.map((c) => c.board_id))])
+    .eq('archived', false);
+  // Can't read the columns: fail closed, never leak an unreviewed cut.
+  if (error) return [];
+  const rows = (lists ?? []) as GateList[];
+  const open = cards.filter((c) => gateOpen(rows, c));
+  const held = cards.filter((c) => !gateOpen(rows, c));
+  if (!held.length) return open;
+  // Already in the client's hands once: their own notes keep it on their page.
+  const { data: notes } = await crm.from('content_comments').select('card_id').in('card_id', held.map((c) => c.id)).like('author_name', `%${PORTAL_COMMENT_SUFFIX}`);
+  const engaged = new Set((notes ?? []).map((n: { card_id: string }) => n.card_id));
+  const keep = new Set([...open.map((c) => c.id), ...held.filter((c) => engaged.has(c.id)).map((c) => c.id)]);
+  return cards.filter((c) => keep.has(c.id));
+}
+
+/** One card: in scope AND past the gate. */
+export async function cardOpen(db: SupabaseClient, scope: CardScope, card: { id: string; board_id: string; list_id: string }): Promise<boolean> {
+  if (!cardVisible(scope, card)) return false;
+  return (await openToClient(db, [card])).length === 1;
+}
+
+/**
  * The live cards in scope, with the given columns (must include id and
  * board_id). Two reads (by board, by id), merged, so a shared card that also
  * sits on a linked board appears once.
@@ -62,6 +114,8 @@ export async function cardsInScope<T extends { id: string; board_id: string }>(
   columns: string,
 ): Promise<{ data: T[]; error: string | null }> {
   const crm = db.schema('crm');
+  // The gate needs each card's column.
+  if (!/\blist_id\b/.test(columns)) columns = `${columns}, list_id`;
   const [byBoard, byId] = await Promise.all([
     scope.boardIds.length
       ? crm.from('content_cards').select(columns).in('board_id', scope.boardIds).eq('archived', false).eq('is_template', false).order('sort')
@@ -72,8 +126,9 @@ export async function cardsInScope<T extends { id: string; board_id: string }>(
   ]);
   const error = byBoard.error?.message ?? byId.error?.message ?? null;
   const seen = new Set<string>();
-  const data = [...((byBoard.data ?? []) as unknown as T[]), ...((byId.data ?? []) as unknown as T[])].filter((c) => (seen.has(c.id) ? false : (seen.add(c.id), true)));
-  return { data, error };
+  const merged = [...((byBoard.data ?? []) as unknown as T[]), ...((byId.data ?? []) as unknown as T[])].filter((c) => (seen.has(c.id) ? false : (seen.add(c.id), true)));
+  const open = new Set((await openToClient(db, merged as unknown as Array<{ id: string; board_id: string; list_id: string }>)).map((c) => c.id));
+  return { data: merged.filter((c) => open.has(c.id)), error };
 }
 
 /** Boards that hold any card in scope: the linked ones, plus the boards shared cards sit on. */
@@ -162,7 +217,7 @@ export async function postClientNote(
   const scope = await clientCardScope(db, caller.clientId);
   if (scope === null) return { ok: false, status: 503, message: 'Video notes are not switched on for your account yet.' };
   // A guessed id from someone else's board is indistinguishable from a missing one.
-  if (!card || !cardVisible(scope, card)) return { ok: false, status: 404, message: 'Not found' };
+  if (!card || !(await cardOpen(db, scope, card))) return { ok: false, status: 404, message: 'Not found' };
 
   const t = typeof seconds === 'number' && Number.isFinite(seconds) && seconds >= 0 ? seconds : null;
   const { data: comment, error } = await crm
@@ -201,10 +256,10 @@ export async function approveCut(
   cardId: string,
 ): Promise<{ ok: true } | { ok: false; status: number; message: string }> {
   const crm = db.schema('crm');
-  const { data: card } = await crm.from('content_cards').select('id, title, board_id, video_url, editor, assignee_name').eq('id', cardId).maybeSingle();
+  const { data: card } = await crm.from('content_cards').select('id, title, board_id, list_id, video_url, editor, assignee_name').eq('id', cardId).maybeSingle();
   const scope = await clientCardScope(db, caller.clientId);
   if (scope === null) return { ok: false, status: 503, message: 'Video notes are not switched on for your account yet.' };
-  if (!card || !cardVisible(scope, card)) return { ok: false, status: 404, message: 'Not found' };
+  if (!card || !(await cardOpen(db, scope, card))) return { ok: false, status: 404, message: 'Not found' };
   if (!card.video_url) return { ok: false, status: 400, message: 'There is no cut to approve yet.' };
 
   const { error } = await crm
@@ -215,8 +270,18 @@ export async function approveCut(
     return { ok: false, status: 500, message: 'Could not send that.' };
   }
   const who = card.editor || card.assignee_name;
+  // Waiting on the client's approval: their "Looks good" is the approval, so the card moves on by itself.
+  const { data: lists } = await crm.from('content_lists').select('id, name').eq('board_id', card.board_id).eq('archived', false);
+  const here = (lists ?? []).find((l: { id: string }) => l.id === card.list_id);
+  const approved = (lists ?? []).find((l: { name: string }) => l.name.trim().toLowerCase() === 'approved');
+  let moved = false;
+  if (here && CLIENT_GATE.test(here.name) && approved) {
+    const { error: moveErr } = await crm.from('content_cards').update({ list_id: approved.id }).eq('id', card.id);
+    if (moveErr) console.error('[portal] approve move failed', moveErr.message);
+    else moved = true;
+  }
   await Promise.all([
-    notifySlack(`*Looks good* — ${caller.businessName} approved "${card.title}" in the portal${who ? ` · editor: *${who}*` : ''}. Move it to Approved.`, 'revisions'),
+    notifySlack(`*Looks good* — ${caller.businessName} approved "${card.title}" in the portal${who ? ` · editor: *${who}*` : ''}. ${moved ? 'Moved to *Approved*.' : 'Move it to Approved.'}`, 'revisions'),
     logToCrm(db, caller, `Approved the cut of "${card.title}" in the portal.`),
   ]);
   return { ok: true };

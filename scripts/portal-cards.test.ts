@@ -45,3 +45,19 @@ test('an empty scope reads nothing', async () => {
   const { data } = await cardsInScope<Row>(fakeDb([{ id: 'c1', board_id: 'b1' }]), { boardIds: [], sharedIds: [] }, 'id, board_id');
   assert.deepEqual(data, []);
 });
+
+test('client-approval gate: hidden while in the edit or QC, visible from Pending Client Approval on', async () => {
+  const { gateOpen } = await import('@/lib/production-server');
+  const L = (id: string, name: string, sort: number, role = 'step', board_id = 'b') => ({ id, board_id, name, sort, role });
+  const gated = [L('e', 'Editing', 1000), L('r', 'Revising', 2000), L('q', 'Pending Quality Control', 3000), L('p', 'Pending Client Approval', 3500), L('a', 'Approved', 4000), L('x', 'Scrapped', 9000, 'scrap')];
+  const at = (list_id: string) => ({ board_id: 'b', list_id });
+  assert.equal(gateOpen(gated, at('e')), false);
+  assert.equal(gateOpen(gated, at('r')), false);
+  assert.equal(gateOpen(gated, at('q')), false);
+  assert.equal(gateOpen(gated, at('p')), true);
+  assert.equal(gateOpen(gated, at('a')), true);
+  assert.equal(gateOpen(gated, at('x')), false);
+  // Older boards without the column: everything shows, as before.
+  const legacy = [L('e', 'Editing', 1000), L('q', 'Pending Quality Control', 3000)];
+  assert.equal(gateOpen(legacy, at('e')), true);
+});
