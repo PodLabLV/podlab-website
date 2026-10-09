@@ -1,3 +1,4 @@
+import { cardVisible, clientCardScope } from '@/lib/production-server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logToCrm, notifySlack, type PortalCaller } from '@/lib/portal-server';
 import { recordActivity } from '@/lib/portal/server';
@@ -83,14 +84,13 @@ export async function addContentItems(db: SupabaseClient, caller: PortalCaller, 
   return { created: rows.length };
 }
 
-/** Which of these production card ids are on this client's linked boards. */
+/** Which of these production card ids this client can see (linked boards or shared one by one). */
 export async function ownedCards(db: SupabaseClient, clientId: string, ids: string[]): Promise<Set<string>> {
   if (!ids.length) return new Set();
-  const { data: links } = await db.from('portal_client_boards').select('board_id').eq('client_id', clientId);
-  const boards = (links ?? []).map((l: { board_id: string }) => l.board_id);
-  if (!boards.length) return new Set();
-  const { data } = await db.schema('crm').from('content_cards').select('id').in('id', ids).in('board_id', boards);
-  return new Set((data ?? []).map((r: { id: string }) => r.id));
+  const scope = await clientCardScope(db, clientId);
+  if (!scope) return new Set();
+  const { data } = await db.schema('crm').from('content_cards').select('id, board_id').in('id', ids);
+  return new Set(((data ?? []) as Array<{ id: string; board_id: string }>).filter((c) => cardVisible(scope, c)).map((c) => c.id));
 }
 
 /** The ids that belong to this client. */
