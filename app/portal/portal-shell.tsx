@@ -10,6 +10,7 @@ import TipTop from '@/components/portal/tiptop/TipTop';
 import SidebarNav from '@/components/portal/SidebarNav';
 import { PotatoBadge, PotatoSmoke } from '@/components/portal/HotPotato';
 import { usePortalTheme, logoFor } from '@/components/portal/theme';
+import { exitViewAs, installViewAs, viewAsClientId } from '@/lib/portal/view-as';
 
 
 interface UserInfo {
@@ -25,6 +26,7 @@ function PortalShell({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [checking, setChecking] = useState(true);
   const [theme, toggleTheme] = usePortalTheme();
+  const [viewAs] = useState(() => viewAsClientId());
   const { client, isStaff } = usePortal();
   const businessName = client?.business_name ?? '';
 
@@ -58,6 +60,7 @@ function PortalShell({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const handleLogout = async () => {
+    exitViewAs();
     const supabase = getSupabaseBrowser();
     await supabase.auth.signOut();
     router.replace('/');
@@ -161,17 +164,37 @@ function PortalShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
+        {viewAs && (
+          <div role="status" className="sticky top-16 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-p-warn/50 bg-p-warn/10 px-4 py-3 backdrop-blur sm:px-8 lg:top-0 lg:px-12">
+            <p className="text-base text-p-ink">
+              <span className="portal-label mr-2 !text-[12px] text-p-warn">Viewing as client</span>
+              {client?.business_name ?? 'Loading…'} · read-only, nothing you click changes their account.
+            </p>
+            <button
+              onClick={() => {
+                exitViewAs();
+                window.location.href = `/portal/clients/${viewAs}`;
+              }}
+              className="portal-label border border-p-ink/40 px-4 py-2 !text-[12px] text-p-ink transition hover:border-p-brandink hover:text-p-brandink"
+            >
+              Exit
+            </button>
+          </div>
+        )}
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:px-12 lg:py-12">{children}</div>
       </main>
 
       {!isStaff && <PotatoSmoke />}
-      <TipTop />
+      {/* TipTop acts for the client; never in a staff preview. */}
+      {!viewAs && <TipTop />}
     </div>
   );
 }
 
 export default function PortalShellRoot({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // Staff preview: wrap fetch during render, before PortalProvider's effects read anything.
+  if (typeof window !== 'undefined') installViewAs();
   // The editors' brand kit link is public (the token is the credential): no
   // session check, no sidebar, no TipTop.
   if (pathname?.startsWith('/portal/kit/')) return <div className="portal min-h-svh bg-p-paper">{children}</div>;

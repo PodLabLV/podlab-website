@@ -92,6 +92,10 @@ function ClientRow({ c, token, onDone }: { c: StaffClientRow; token: string; onD
           <Link href={`/portal/clients/${c.id}`} className="text-p-brandink hover:text-p-ink">
             Manage
           </Link>
+          {' · '}
+          <a href={`/portal?viewAs=${c.id}`} className="text-p-brandink hover:text-p-ink">
+            View as client
+          </a>
           {c.driveFolderUrl && (
             <>
               {' · '}
