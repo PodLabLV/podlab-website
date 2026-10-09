@@ -7,6 +7,7 @@ import { usePortal } from '@/lib/portal-data';
 import type { NavPayload } from '@/app/api/portal/nav/route';
 import type { Mission } from '@/lib/portal/game';
 import { PotatoTray } from '@/components/portal/HotPotato';
+import { viewAsClientId } from '@/lib/portal/view-as';
 
 type ShowKey = keyof NavPayload['show'];
 type BadgeKey = keyof NavPayload['badges'];
@@ -228,6 +229,7 @@ export default function SidebarNav({ isStaff, onNavigate }: { isStaff: boolean; 
   const pathname = usePathname();
   const { client } = usePortal();
   const { nav } = useNav();
+  const [previewing] = useState(() => Boolean(viewAsClientId()));
   const isActive = (href: string) => (href === '/portal' ? pathname === '/portal' : pathname.startsWith(href));
   // true = folded. Everything starts open; a reader folds what they don't need.
   const [folds, toggleFold] = useFolds({ level: false, account: false });
@@ -247,6 +249,16 @@ export default function SidebarNav({ isStaff, onNavigate }: { isStaff: boolean; 
       {client && !isStaff && <PotatoTray onNavigate={onNavigate} />}
 
       <nav aria-label="Portal" className="flex-1 overflow-y-auto py-4">
+        {/* Whose portal this is. In a staff preview it says so, so you always know whose account you're on. */}
+        {client && (
+          <div className={`mx-4 mb-3 border-l-2 px-3 py-2 ${previewing ? 'border-p-warn bg-p-warn/10' : 'border-p-brandink'}`}>
+            {previewing && <p className="portal-label !text-[11px] text-p-warn">Viewing as</p>}
+            <p className="break-words text-base font-semibold leading-snug text-p-ink">{client.business_name}</p>
+            {[client.first_name, client.last_name].filter(Boolean).join(' ') && (
+              <p className="break-words text-sm text-p-ink/70">{[client.first_name, client.last_name].filter(Boolean).join(' ')}</p>
+            )}
+          </div>
+        )}
         {groups.map((g) => {
           const items = g.items.filter(visible);
           if (!items.length) return null;
