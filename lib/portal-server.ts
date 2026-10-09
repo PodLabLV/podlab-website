@@ -40,11 +40,21 @@ export async function resolveCaller(
   const { data: userData, error: userErr } = await db.auth.getUser(token);
   if (userErr || !userData?.user) return null;
 
-  const { data: client } = await db
-    .from('portal_clients')
-    .select('id, business_name, first_name, last_name, crm_lead_id')
-    .eq('user_id', userData.user.id)
-    .maybeSingle();
+  // Staff "view as client": a staff session plus x-portal-view-as answers as
+  // that client, for reads only. Any write in view-as mode is refused here,
+  // so no route can act on a client's account from a preview.
+  const viewAs = viewAsId(req);
+  if (viewAs) {
+    if (!['GET', 'HEAD'].includes(req.method) || !(await isStaff(db, userData.user.email))) return null;
+  }
+
+  const { data: client } = await (viewAs
+    ? db.from('portal_clients').select('id, business_name, first_name, last_name, crm_lead_id').eq('id', viewAs).maybeSingle()
+    : db
+        .from('portal_clients')
+        .select('id, business_name, first_name, last_name, crm_lead_id')
+        .eq('user_id', userData.user.id)
+        .maybeSingle());
 
   if (!client) return null;
 
@@ -55,8 +65,14 @@ export async function resolveCaller(
     displayName: name || client.business_name,
     crmLeadId: client.crm_lead_id ?? null,
     email: userData.user.email ?? '',
-    isStaff: await isStaff(db, userData.user.email),
+    isStaff: viewAs ? false : await isStaff(db, userData.user.email),
   };
+}
+
+/** The client id a staff session is previewing as, from the x-portal-view-as header. */
+export function viewAsId(req: Request): string | null {
+  const v = req.headers.get('x-portal-view-as');
+  return v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v) ? v : null;
 }
 
 /**
@@ -81,6 +97,8 @@ export async function resolveStaff(
   req: Request,
   db: SupabaseClient,
 ): Promise<{ email: string; name: string } | null> {
+  // Previewing as a client: every route should see the client, not the staffer.
+  if (viewAsId(req)) return null;
   const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
   if (!token) return null;
   const { data, error } = await db.auth.getUser(token);

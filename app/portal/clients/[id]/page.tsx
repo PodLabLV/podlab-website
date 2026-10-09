@@ -103,6 +103,12 @@ export default function StaffClientPage() {
         ← All clients
       </Link>
       <div className="mt-6">
+        <a
+          href={`/portal?viewAs=${d.client.id}`}
+          className="portal-label float-right ml-4 inline-flex items-center gap-2 bg-p-brand px-5 py-3 !text-[12px] text-black transition hover:bg-p-pop"
+        >
+          View as client
+        </a>
         <PageHeader
           eyebrow={d.client.planLabel ?? 'Client'}
           title={d.client.businessName}

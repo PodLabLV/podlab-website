@@ -197,6 +197,19 @@ How it works:
 - **Upload size:** the bucket allows 5 GB per file, but Supabase also has a project-wide limit (Dashboard → Storage → Settings → Upload file size limit). It must be at least 5 GB, or bigger files fail with "too big" and the page tells the client to paste a link.
 - Code: `lib/portal/brand.ts` (validation, gaps), `lib/portal/brand-server.ts` (loader), `lib/portal/drive.ts` (Drive auth, folders, sessions, signed previews), `app/api/portal/brand`, `app/api/portal/kit`, `app/portal/brand`, `app/portal/kit/[token]`. Tests: `npm run test:brand`.
 
+## View as client (staff preview)
+
+Clients → **View as client**, or the button on a client's Manage page, opens `/portal?viewAs=<clientId>`: their portal exactly as they see it (sidebar, potatoes, Production cuts, scripts, Brand, plans), with a yellow **Viewing as client** banner and an **Exit** button. It's remembered for that browser tab only, and signing out ends it.
+
+- **Read-only, enforced twice:**
+  - The browser refuses any non-GET `/api/portal` call and any non-GET database write before it leaves.
+  - `resolveCaller` refuses any non-GET request carrying `x-portal-view-as`.
+- **How it answers as the client:**
+  - Every `/api/portal` request carries `x-portal-view-as`. `resolveStaff` then returns nobody and `resolveCaller` returns that client, so routes behave exactly as for the client. Only a `portal_staff` login can do this.
+  - The portal's direct database reads (`usePortal`, scripts, deliverables) go through `/api/portal/view-as/rest`. It verifies staff, only allows the 19 portal tables the client UI reads, and appends `client_id=eq.<id>` (`id=eq.` on `portal_clients`) to every query.
+- **TipTop is hidden** in the preview, because she acts for the client.
+- **Tests:** `npm run test:viewas` (staff only, GET only, client logins can't borrow it, ids validated).
+
 ## Staff: running it
 
 You need a row in `portal_staff`. info@ already has one. Staff get **Clients · staff** in the portal sidebar.
