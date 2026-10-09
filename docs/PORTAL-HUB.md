@@ -80,7 +80,7 @@ Every open item has one holder, client or team. The potato passes when the item 
 
 ## TipTop as business guide
 
-TipTop runs on **Opus 5.5** (fallback Sonnet 5.5, then Sonnet 5; override with `TIPTOP_MODEL` / `TIPTOP_FALLBACK_MODELS`), with up to 12 tool steps and 4,500 output tokens a turn. A heavy "read the file and draft" turn costs about $0.30; a normal chat turn about $0.05–0.10 (prompt caching is on).
+TipTop runs on **Sonnet 5.5** (fallback Sonnet 5, then Opus 5.5; override with `TIPTOP_MODEL` / `TIPTOP_FALLBACK_MODELS`), with up to 12 tool steps and 4,500 output tokens a turn. Side-by-side on the same guide jobs (Oct 9 2026): Sonnet 5.5 matched Opus 5.5 at about $0.10 a heavy turn vs $0.25–0.40; Haiku 5.5 ($0.01) couldn't finish them. A normal chat turn is a few cents (prompt caching is on).
 
 | Tool | What it does | Confirm card |
 |---|---|---|

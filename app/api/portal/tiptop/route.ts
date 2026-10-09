@@ -25,9 +25,11 @@ export const maxDuration = 300;
 // tool steps, HTML stripped from what the client types, and a scripted reply
 // whenever the model can't be reached. This file never logs what anyone said.
 
-// Opus for the business-guide work (plans, scripts, drafting answers); Sonnet if it's unavailable.
-const MODEL = process.env.TIPTOP_MODEL || 'anthropic/claude-opus-5.5';
-const FALLBACK_MODELS = (process.env.TIPTOP_FALLBACK_MODELS || 'anthropic/claude-sonnet-5.5,anthropic/claude-sonnet-5')
+// Sonnet 5.5: in side-by-side trials on the guide work (a sales game plan, a
+// 30-day content plan) it matched Opus 5.5 at about a third of the cost and
+// faster; Haiku 5.5 couldn't finish either job. Opus is the last fallback.
+const MODEL = process.env.TIPTOP_MODEL || 'anthropic/claude-sonnet-5.5';
+const FALLBACK_MODELS = (process.env.TIPTOP_FALLBACK_MODELS || 'anthropic/claude-sonnet-5,anthropic/claude-opus-5.5')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
