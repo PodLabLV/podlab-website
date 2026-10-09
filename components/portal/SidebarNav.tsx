@@ -45,6 +45,7 @@ const GROUPS: Group[] = [
     label: 'Your build',
     items: [
       { href: '/portal/plan', label: 'Game Plan' },
+      { href: '/portal/content', label: 'Content Plan' },
       { href: '/portal/growth', label: 'Growth Chain', show: 'growth' },
       { href: '/portal/production', label: 'Production', show: 'production', badge: 'production' },
       { href: '/portal/document', label: 'Clarity Document', show: 'document' },

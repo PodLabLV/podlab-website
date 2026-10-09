@@ -32,6 +32,8 @@ const WRITE_TOOLS = new Set([
   'draft_script',
   'set_game_plan',
   'check_in_game_plan',
+  'plan_content',
+  'update_content',
 ]);
 
 let sb: SupabaseClient | null = null;
@@ -477,6 +479,14 @@ function Part({ part, approve, busy, onNavigate }: { part: AnyPart; approve: (id
       );
     case 'draft_script':
       return <Quiet>Saved as a draft · PodLab reviews it, then it comes back to you to approve</Quiet>;
+    case 'plan_content':
+    case 'update_content':
+      return (
+        <div className="space-y-2">
+          <Quiet>{tool === 'plan_content' ? `Planned ${String(o.created)} piece${o.created === 1 ? '' : 's'}` : `Updated ${String(o.updated)} piece${o.updated === 1 ? '' : 's'}`}</Quiet>
+          <ActionButton href="/portal/content" label="Open your content plan" onNavigate={onNavigate} />
+        </div>
+      );
     case 'set_game_plan':
     case 'check_in_game_plan': {
       const plan = o.plan as { pillar?: string; status?: string } | undefined;
@@ -652,6 +662,23 @@ function ConfirmCard({
           )}
         </div>
       </div>
+    );
+  } else if (tool === 'plan_content' && Array.isArray(input.items)) {
+    detail = (
+      <>
+        {input.coaching ? <p className="mb-3 whitespace-pre-wrap text-sm leading-relaxed text-[#eeeeee]">{String(input.coaching)}</p> : null}
+        <ol className="max-h-64 space-y-2 overflow-y-auto">
+          {(input.items as Array<{ publish_on?: string; format?: string; job?: string; title?: string; hook?: string }>).map((it, i) => (
+            <li key={i} className="border-l border-[#1a1a1a] pl-3 text-xs leading-relaxed">
+              <span className="block text-[#eeeeee]/45">
+                {it.publish_on} · {it.format} · {it.job}
+              </span>
+              <span className="block text-[#eeeeee]">{it.title}</span>
+              {it.hook ? <span className="block italic text-[#eeeeee]/55">&ldquo;{it.hook}&rdquo;</span> : null}
+            </li>
+          ))}
+        </ol>
+      </>
     );
   } else if (tool === 'check_in_game_plan') {
     detail = <p className="whitespace-pre-wrap border-l border-[#1a1a1a] pl-3 text-xs leading-relaxed text-[#eeeeee]">{String(input.note ?? '')}</p>;

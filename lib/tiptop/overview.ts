@@ -12,6 +12,8 @@ import { potatoesFor } from '@/lib/portal/potato-server';
 import { HEAT_LABEL, type Potato } from '@/lib/portal/potato';
 import { loadPlans } from '@/lib/portal/game-plan-server';
 import { checkInDue, fmtNumber, type GamePlan } from '@/lib/portal/game-plan';
+import { loadContentPlan } from '@/lib/portal/content-plan-server';
+import { jobMix, needsScript, type ContentItem } from '@/lib/portal/content-plan';
 
 /**
  * Everything TipTop knows about one client, read server-side with the service
@@ -74,6 +76,8 @@ export interface Overview {
   potatoes: Potato[];
   /** The 90-day Game Plan, one per pillar. */
   plans: { available: boolean; items: GamePlan[] };
+  /** The content calendar from two weeks back. */
+  content: { available: boolean; items: ContentItem[] };
   /** Nudges, most important first. */
   accountability: string[];
 }
@@ -92,7 +96,7 @@ async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 export async function buildOverview(db: SupabaseClient, caller: PortalCaller): Promise<Overview> {
   const id = caller.clientId;
 
-  const [profile, chain, phases, production, scripts, deliverables, actionItems, intake, invoices, document, brand, potatoes, plans] = await Promise.all([
+  const [profile, chain, phases, production, scripts, deliverables, actionItems, intake, invoices, document, brand, potatoes, plans, content] = await Promise.all([
     safe(() => loadProfile(db, id), null),
     safe(() => chainBlock(db, id), emptyChain()),
     safe(() => phasesBlock(db, id), []),
@@ -109,6 +113,10 @@ export async function buildOverview(db: SupabaseClient, caller: PortalCaller): P
       const r = await loadPlans(db, id);
       return { available: r.ready, items: r.plans };
     }, { available: false, items: [] as GamePlan[] }),
+    safe(async () => {
+      const r = await loadContentPlan(db, id);
+      return { available: r.ready, items: r.items };
+    }, { available: false, items: [] as ContentItem[] }),
   ]);
 
   const o: Overview = {
@@ -135,6 +143,7 @@ export async function buildOverview(db: SupabaseClient, caller: PortalCaller): P
     brand,
     potatoes,
     plans,
+    content,
     accountability: [],
   };
 
@@ -172,6 +181,8 @@ function nudges(o: Overview): string[] {
   if (dueCheckIns.length) out.push(`Weekly Game Plan check-in due: ${dueCheckIns.map((p) => p.pillar).join(', ')} (ask for the number, then check_in_game_plan)`);
   const slipping = o.plans.items.filter((p) => p.status === 'off track' || p.status === 'at risk');
   if (slipping.length) out.push(`Game Plan ${slipping.map((p) => `${p.pillar} is ${p.status}`).join('; ')}: help them pick the one move that gets it back on pace`);
+  const unscripted = o.content.items.filter((i) => needsScript(i));
+  if (unscripted.length) out.push(`${unscripted.length} content piece${unscripted.length === 1 ? '' : 's'} go out within 5 days with no script: ${unscripted.map((i) => `"${i.title}" (${i.publishOn})`).join(', ')}. Offer to write ${unscripted.length === 1 ? 'it' : 'them'} (draft_script with content_item_id)`);
   if (o.plans.available && o.plans.items.length === 0) out.push('No Game Plan yet: offer to build the 90-day plan for the pillar holding the rest back');
   if (o.actionItems.open.length) out.push(`${o.actionItems.open.length} open action item${o.actionItems.open.length === 1 ? '' : 's'}`);
   if (o.chain.available && o.chain.answered < 8) out.push(o.chain.answered === 0 ? 'Growth Chain check not taken yet (eight questions, about four minutes)' : `Growth Chain check part-done (${o.chain.answered}/8)`);
@@ -517,6 +528,19 @@ export function renderOverview(o: Overview): string {
             .map((p) => `  - ${p.pillar}: "${p.outcome}" — ${fmtNumber(p.current ?? p.baseline)} of ${fmtNumber(p.target)}${p.metric ? ` ${p.metric}` : ''}${p.dueOn ? ` by ${p.dueOn}` : ''}, ${p.status}${checkInDue(p) ? ' [CHECK-IN DUE]' : ''}. Priorities: ${p.priorities.join('; ')}${p.lastCheckIn ? `. Last check-in ${p.lastCheckInAt?.slice(0, 10)}: ${p.lastCheckIn}` : ''}`)
             .join('\n')}`
         : 'Game Plan: none set yet (pillars: People, Operations, Sales, Marketing, Content).',
+    );
+  }
+  if (o.content.available) {
+    const today = new Date().toISOString().slice(0, 10);
+    const ahead = o.content.items.filter((i) => i.publishOn >= today && i.status !== 'skipped');
+    const mix = jobMix(ahead);
+    L.push(
+      ahead.length
+        ? `Content plan (/portal/content), ${ahead.length} ahead (mix: ${Object.entries(mix).map(([k, v]) => `${k} ${v}`).join(', ')}):\n${ahead
+            .slice(0, 20)
+            .map((i) => `  - id=${i.id} ${i.publishOn} ${i.format}/${i.job} "${i.title}" [${i.status}]${i.pillar ? ` pillar: ${i.pillar}` : ''}`)
+            .join('\n')}${ahead.length > 20 ? `\n  …and ${ahead.length - 20} more` : ''}`
+        : 'Content plan: nothing planned ahead.',
     );
   }
   const g = gameFor(o);

@@ -160,12 +160,24 @@ export default function StaffClientPage() {
 
       {flash && <p role="status" className="mt-4 border-l-2 border-[#2add1b] bg-[#2add1b]/5 px-4 py-3 text-sm text-[#eeeeee]/85">{flash}</p>}
 
-      <Section title="Brand kit" hint="Their logos, colors, fonts, guide and b-roll. Add files for them, make the editors' read-only link, or put that link on every card of their boards.">
+      <Section title="Brand, content and game plan" hint="Their brand kit (add files, make the editors' link), their content calendar (send recorded pieces to the editors), and their 90-day game plan.">
         <Link
           href={`/portal/brand?client=${d.client.id}`}
           className="portal-label inline-flex items-center gap-2 border border-[#1a1a1a] px-5 py-3 !text-[10px] text-[#eeeeee]/70 transition hover:border-[#2add1b] hover:text-[#2add1b]"
         >
           Open their brand page
+        </Link>
+        <Link
+          href={`/portal/content?client=${d.client.id}`}
+          className="portal-label ml-2 inline-flex items-center gap-2 border border-[#1a1a1a] px-5 py-3 !text-[10px] text-[#eeeeee]/70 transition hover:border-[#2add1b] hover:text-[#2add1b]"
+        >
+          Content plan
+        </Link>
+        <Link
+          href={`/portal/plan?client=${d.client.id}`}
+          className="portal-label ml-2 inline-flex items-center gap-2 border border-[#1a1a1a] px-5 py-3 !text-[10px] text-[#eeeeee]/70 transition hover:border-[#2add1b] hover:text-[#2add1b]"
+        >
+          Game plan
         </Link>
       </Section>
 

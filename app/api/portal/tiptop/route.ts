@@ -74,7 +74,7 @@ const KNOWN_TOOLS = new Set([
   'get_overview', 'go_to', 'booking_link', 'read_document', 'document_history', 'edit_document',
   'restore_document_version', 'update_profile', 'send_revision', 'complete_action_item', 'recommend_product', 'flag_for_team',
   'read_intake', 'read_client_file', 'read_script', 'save_intake_answers', 'update_brand_kit', 'create_action_items', 'draft_script',
-  'set_game_plan', 'check_in_game_plan',
+  'set_game_plan', 'check_in_game_plan', 'plan_content', 'update_content',
 ]);
 
 type Cleaned = { messages: UIMessage[]; userTurns: number; lastUserChars: number; priorRecommendations: number };

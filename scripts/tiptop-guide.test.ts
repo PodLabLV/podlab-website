@@ -80,3 +80,32 @@ test('set_game_plan input: a number-shaped outcome, 1–5 priorities, coaching',
   assert.ok(!setGamePlanInput.safeParse({ ...ok, coaching: 'short' }).success);
   assert.ok(!setGamePlanInput.safeParse({ ...ok, pillar: 'Finance' }).success);
 });
+
+test('content plan: weeks start Monday, scripts flagged 5 days out, job mix', async () => {
+  const { weekOf, groupByWeek, needsScript, jobMix } = await import('@/lib/portal/content-plan');
+  assert.equal(weekOf('2026-10-14'), '2026-10-12'); // Wednesday → Monday
+  assert.equal(weekOf('2026-10-18'), '2026-10-12'); // Sunday → same week
+  assert.equal(weekOf('2026-10-19'), '2026-10-19');
+  const base = { id: 'x', pillar: 'P', format: 'short' as const, title: 'T', hook: null, cta: null, scriptId: null, crmCardId: null, notes: null, updatedAt: '2026-10-01T00:00:00Z' };
+  const items = [
+    { ...base, id: 'a', publishOn: '2026-10-20', job: 'attract' as const, status: 'planned' as const },
+    { ...base, id: 'b', publishOn: '2026-10-13', job: 'convert' as const, status: 'planned' as const },
+    { ...base, id: 'c', publishOn: '2026-10-14', job: 'educate' as const, status: 'scripted' as const },
+    { ...base, id: 'd', publishOn: '2026-10-15', job: 'attract' as const, status: 'skipped' as const },
+  ];
+  assert.deepEqual(groupByWeek(items).map((w) => [w.week, w.items.map((i) => i.id).join('')]), [['2026-10-12', 'bcd'], ['2026-10-19', 'a']]);
+  const now = Date.parse('2026-10-10T12:00:00Z');
+  assert.ok(needsScript(items[1], now), 'planned, 3 days out');
+  assert.ok(!needsScript(items[0], now), '10 days out');
+  assert.ok(!needsScript(items[2], now), 'already scripted');
+  assert.deepEqual(jobMix(items), { attract: 1, educate: 1, convert: 1, retain: 0 });
+});
+
+test('plan_content input guards', async () => {
+  const { planContentInput, updateContentInput } = await import('@/lib/tiptop/schema');
+  const piece = { publish_on: '2026-10-20', pillar: 'The whole picture', format: 'short', title: 'Stuck vs scattered', job: 'attract' };
+  assert.ok(planContentInput.safeParse({ coaching: 'x'.repeat(70), items: [piece] }).success);
+  assert.ok(!planContentInput.safeParse({ coaching: 'x'.repeat(70), items: [{ ...piece, format: 'tiktok' }] }).success);
+  assert.ok(!planContentInput.safeParse({ coaching: 'x'.repeat(70), items: Array(25).fill(piece) }).success, 'max 24');
+  assert.ok(!updateContentInput.safeParse({ changes: [{ id: '3f1c2b9e-1111-4a2b-9c3d-123456789abc', status: 'in edit' }] }).success, 'in edit is system-set');
+});

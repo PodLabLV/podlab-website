@@ -77,6 +77,12 @@ export function missions(o: Overview): Mission[] {
     out.push({ key: 'plan-core', title: 'Plan People, Operations, Sales and Marketing', points: 60, done: ['People', 'Operations', 'Sales', 'Marketing'].every((p) => set.has(p as never)), href: '/portal/plan' });
   }
 
+  if (o.content.available) {
+    const posted = o.content.items.filter((i) => i.status === 'posted').length;
+    out.push({ key: 'content-plan', title: 'Plan your next 30 days of content', points: 60, done: o.content.items.length >= 8, href: '/portal/content' });
+    if (posted) out.push({ key: 'posted', title: 'Pieces posted from your plan', points: 10, count: posted, done: true, href: '/portal/content' });
+  }
+
   // Repeatable: earned per item, and "done" while nothing is waiting on them.
   if (o.scripts.available && o.scripts.items.length) {
     const approved = o.scripts.items.filter((s) => APPROVED_SCRIPT.has(s.status)).length;

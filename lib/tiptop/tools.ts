@@ -46,8 +46,11 @@ import {
   readClientFileInput,
   setGamePlanInput,
   checkInGamePlanInput,
+  planContentInput,
+  updateContentInput,
   type WriteTool,
 } from './schema';
+import { addContentItems, linkScript, loadContentPlan, ownedItems, updateContentItems } from '@/lib/portal/content-plan-server';
 import { loadPlans, setPlan, checkIn } from '@/lib/portal/game-plan-server';
 import { fmtNumber, paceStatus } from '@/lib/portal/game-plan';
 import { createActionItems, draftScript, nextBrandKit, ownedQuestions, readClientFile, readIntake, readScript, saveBrandKit, saveIntakeAnswers } from './guide';
@@ -204,6 +207,30 @@ export function approvalPolicy(ctx: ToolContext) {
       const status = paceStatus({ ...p, current: input.current ?? p.current });
       const num = input.current !== null ? `${fmtNumber(input.current)}${p.metric ? ` ${p.metric}` : ''} of ${fmtNumber(p.target)}` : 'no new number';
       return { type: 'user-approval', reason: `Log this week's ${input.pillar} check-in: ${num}. On pace, that reads as "${status}".` };
+    },
+
+    plan_content: async (input: z.infer<typeof planContentInput>): Promise<ToolApprovalStatus> => {
+      const { ready, items } = await loadContentPlan(ctx.db, ctx.caller.clientId);
+      if (!ready) return { type: 'denied', reason: 'The content plan is not switched on yet (migration). Give them the plan in chat and offer to flag it for the team.' };
+      const today = new Date().toISOString().slice(0, 10);
+      const past = input.items.filter((i) => i.publish_on < today);
+      if (past.length) return { type: 'denied', reason: `These dates are in the past: ${past.map((i) => i.publish_on).join(', ')}. Today is ${today}.` };
+      const planned = items.filter((i) => i.status === 'planned' && i.publishOn >= today).length;
+      if (planned + input.items.length > 60) return { type: 'denied', reason: `They already have ${planned} planned pieces ahead. Don't overplan: finish or skip some first.` };
+      const dates = input.items.map((i) => i.publish_on).sort();
+      return { type: 'user-approval', reason: `Add ${input.items.length} piece${input.items.length === 1 ? '' : 's'} to your content plan, ${dates[0]} to ${dates[dates.length - 1]}.` };
+    },
+
+    update_content: async (input: z.infer<typeof updateContentInput>): Promise<ToolApprovalStatus> => {
+      const owned = await ownedItems(ctx.db, ctx.caller.clientId, input.changes.map((c) => c.id));
+      const unknown = input.changes.filter((c) => !owned.has(c.id));
+      if (unknown.length) return { type: 'denied', reason: 'Some ids are not in this client\'s content plan. Use ids from the snapshot.' };
+      const lines = input.changes.map((c) => {
+        const it = owned.get(c.id)!;
+        const bits = [c.status ? `→ ${c.status}` : null, c.publish_on ? `moved to ${c.publish_on}` : null, c.title ? 'retitled' : null, c.hook !== undefined ? 'new hook' : null].filter(Boolean);
+        return `"${it.title}" ${bits.join(', ') || 'updated'}`;
+      });
+      return { type: 'user-approval', reason: `Update your content plan: ${lines.join('; ')}.` };
     },
   } satisfies Record<WriteTool, unknown>;
 }
@@ -423,10 +450,26 @@ export function makeTools(ctx: ToolContext) {
       execute: async ({ pillar, current, note }) => ({ saved: true, plan: await checkIn(db, caller, pillar, current, note), page: PAGES.plan.href }),
     }),
 
+    plan_content: tool({
+      description: 'Lay out their content calendar: up to 24 pieces, each with a date, one of their pillars, a format, a title, the hook (first line), its job (attract / educate / convert / retain) and a CTA, plus coaching shown on the card. Agree the pillars and a cadence they can keep first. The client confirms.',
+      inputSchema: planContentInput,
+      execute: async ({ items }) => ({ saved: true, ...(await addContentItems(db, caller, items)), page: PAGES.content.href }),
+    }),
+
+    update_content: tool({
+      description: 'Change pieces in their content plan: mark recorded (the team then sends it to the editors), posted or skipped, move a date, retitle, or rewrite the hook. Scripted and in-edit are set by the system. The client confirms.',
+      inputSchema: updateContentInput,
+      execute: async ({ changes }) => ({ saved: true, ...(await updateContentItems(db, caller, changes)), page: PAGES.content.href }),
+    }),
+
     draft_script: tool({
       description: 'Save a script you wrote with them (hook, FAQ, short, social, ad, VSL, email, founder story) as a DRAFT in Scripts. PodLab reviews it before it goes to them for approval. Build it from their file and their words; follow the voice rules. The client confirms first.',
       inputSchema: draftScriptInput,
-      execute: async (input) => ({ saved: true, ...(await draftScript(db, caller, input)), page: PAGES.scripts.href }),
+      execute: async ({ content_item_id, ...input }) => {
+        const res = await draftScript(db, caller, input);
+        if (content_item_id) await linkScript(db, caller.clientId, content_item_id, res.scriptId);
+        return { saved: true, ...res, page: PAGES.scripts.href };
+      },
     }),
 
     flag_for_team: tool({

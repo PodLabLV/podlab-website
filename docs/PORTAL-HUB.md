@@ -111,6 +111,25 @@ TipTop runs on **Opus 5.5** (fallback Sonnet 5.5, then Sonnet 5; override with `
 - **Staff:** a read-only view at `/portal/plan?client=<id>`.
 - Code: `lib/portal/game-plan.ts` (pure pace math; tests in `npm run test:guide`), `lib/portal/game-plan-server.ts`, `app/api/portal/game-plan`, `app/portal/plan`.
 
+## Content Plan (the calendar)
+
+`/portal/content` (sidebar: Your build → Content Plan). One row per piece in `portal_content_plan` (migration `20261015_portal_content_plan.sql`): date, pillar, format (short, hook, FAQ, authority, story, ad, long, carousel, email), title, hook, job (attract / educate / convert / retain), CTA and status.
+
+- **Lifecycle:** planned → scripted → recorded → in edit → posted (or skipped).
+  - **Scripted:** set when TipTop drafts a script for the piece (`draft_script` with `content_item_id`).
+  - **Recorded:** the client tells TipTop. Slack pings with a link.
+  - **In edit:** staff press **Send to editors**, which creates a card on the client's linked *general* board, in its Editing column (else the first). The card holds the hook, job, CTA and script, and its due date is the publish date. Ideas never sit on the editors' boards.
+- **TipTop:**
+  - `plan_content`: up to 24 pieces a call. The card shows the coaching: pillars, cadence, job mix, what to record first. Refused for past dates or past 60 planned ahead.
+  - `update_content`: recorded, posted, skipped, moved, retitled, new hook.
+  - She nudges when a piece goes out within 5 days with no script, and offers to write it.
+- **Hot Potato:**
+  - Client: pieces within 5 days with no script, one potato ("Write it with TipTop before it goes out").
+  - Team: recorded pieces nobody has sent to the editors.
+- **Levels:** +60 for planning 30 days (8+ pieces), +10 per piece posted.
+- **Staff:** Clients → Manage → **Content plan** (`/portal/content?client=<id>`) to send recorded pieces on.
+- Code: `lib/portal/content-plan.ts` (pure; tests in `npm run test:guide`), `lib/portal/content-plan-server.ts`, `app/api/portal/content`, `app/portal/content`.
+
 ## Video chapters and timestamped revisions
 
 Chapters use the same lines YouTube reads from a video description, so editors write them once:
@@ -196,7 +215,7 @@ You need a row in `portal_staff`. info@ already has one. Staff get **Clients · 
 
 1. **Database:** run every migration once, in order: `bash ~/podlab-portal-migrations/RUN-ALL.sh` in the macOS Terminal app.
    - Each file is safe to run twice, and the script stops at the first failure.
-   - Copies live in `supabase/migrations/` (2026-10-07 → 2026-10-14).
+   - Copies live in `supabase/migrations/` (2026-10-07 → 2026-10-15).
 2. **Site:** merge the hub PR, then deploy podlab-site to production from the main worktree.
    - Agents can't run production deploys; run them in the Terminal app.
    - The CLI often ends with `fetch failed` even when the deploy worked. Check `vercel ls --prod` before retrying.
