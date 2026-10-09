@@ -41,6 +41,31 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Could not send that.');
     onNote(card.id, json.comment as ProductionComment, json.reopened ? 'Revising' : undefined);
+    window.dispatchEvent(new Event('portal:refresh'));
+  }
+
+  // "Looks good": passes the potato back without reopening anything.
+  const approvedAt = card.comments.filter((c) => c.approval).map((c) => c.createdAt).sort().pop() ?? null;
+  const [approving, setApproving] = useState(false);
+  const [approveErr, setApproveErr] = useState<string | null>(null);
+  async function looksGood() {
+    setApproving(true);
+    setApproveErr(null);
+    try {
+      const res = await fetch('/api/portal/production', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken ?? ''}` },
+        body: JSON.stringify({ cardId: card.id, intent: 'looks-good' }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Could not send that.');
+      onNote(card.id, { id: `approval-${Date.now()}`, author: 'You', t: null, body: 'Looks good. Approved in the portal.', createdAt: new Date().toISOString(), fromClient: true, resolved: false, approval: true });
+      window.dispatchEvent(new Event('portal:refresh'));
+    } catch (e) {
+      setApproveErr(e instanceof Error ? e.message : 'Could not send that.');
+    } finally {
+      setApproving(false);
+    }
   }
 
   const notes: ReviewNote[] = card.comments.map((c) => ({
@@ -49,10 +74,10 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
     body: c.body,
     author: c.author,
     fromClient: c.fromClient,
-    meta: formatDate(c.createdAt),
+    meta: c.approval ? `Looks good · ${formatDate(c.createdAt)}` : formatDate(c.createdAt),
     resolved: c.resolved,
   }));
-  const mine = card.comments.filter((c) => c.fromClient);
+  const mine = card.comments.filter((c) => c.fromClient && !c.approval);
   const fixed = mine.filter((c) => c.resolved).length;
 
   return (
@@ -90,6 +115,21 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
             onAddNote={addNote}
             emptyText={card.videoUrl ? undefined : 'No cut posted yet. You can still leave a note for the editor.'}
           />
+          {card.videoUrl && !card.done && (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                onClick={looksGood}
+                disabled={approving}
+                className="portal-label bg-[#2add1b] px-5 py-3 !text-[10px] text-black transition hover:bg-[#eeeeee] disabled:opacity-40"
+              >
+                {approving ? 'Sending' : approvedAt ? 'Looks good (sent)' : 'Looks good'}
+              </button>
+              <span className="text-xs text-[#eeeeee]/40">
+                {approvedAt ? `You approved this cut ${formatDate(approvedAt)}. The editor moves it on.` : 'Happy with this cut? Tell the editor, and the potato is theirs.'}
+              </span>
+              {approveErr && <span className="text-xs text-red-400">{approveErr}</span>}
+            </div>
+          )}
           <p className="mt-3 text-xs text-[#eeeeee]/35">
             {card.done
               ? card.stage === 'Posted'

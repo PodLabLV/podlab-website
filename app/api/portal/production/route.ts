@@ -10,7 +10,8 @@ import {
 } from '@/lib/production';
 import { driveFileId, parseChapters, readNote } from '@/lib/chapters';
 import { driveConfigured, streamUrl } from '@/lib/portal/drive';
-import { linkedBoardIds, postClientNote } from '@/lib/production-server';
+import { approveCut, linkedBoardIds, postClientNote } from '@/lib/production-server';
+import { LOOKS_GOOD_NOTE } from '@/lib/portal/potato';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -107,7 +108,9 @@ export async function GET(req: Request) {
                   ...(({ t, text }) => ({ t, body: text }))(readNote(m.body)),
                   createdAt: m.created_at,
                   fromClient: (m.author_name ?? '').endsWith(PORTAL_COMMENT_SUFFIX),
-                  resolved: Boolean(m.resolved),
+                  // An approval, not a fixed note.
+                  resolved: Boolean(m.resolved) && m.body.trim() !== LOOKS_GOOD_NOTE,
+                  approval: m.body.trim() === LOOKS_GOOD_NOTE,
                 })),
             };
           }),
@@ -146,12 +149,21 @@ export async function POST(req: Request) {
   const caller = await resolveCaller(req, db);
   if (!caller) return NextResponse.json({ error: 'Not authorized' }, { status: 401 });
 
-  let p: { cardId?: string; body?: string; timeSeconds?: number | null };
+  let p: { cardId?: string; body?: string; timeSeconds?: number | null; intent?: 'looks-good' };
   try {
     p = await req.json();
   } catch {
     return NextResponse.json({ error: 'Bad request' }, { status: 400 });
   }
+
+  // "Looks good": passes the potato back to the team without reopening the card.
+  if (p.intent === 'looks-good') {
+    if (!p.cardId) return NextResponse.json({ error: 'cardId required' }, { status: 400 });
+    const res = await approveCut(db, caller, p.cardId);
+    if (!res.ok) return NextResponse.json({ error: res.message }, { status: res.status });
+    return NextResponse.json({ ok: true });
+  }
+
   const body = (p.body ?? '').trim();
   if (!p.cardId || !body) return NextResponse.json({ error: 'Write a note first.' }, { status: 400 });
   if (body.length > MAX_NOTE) return NextResponse.json({ error: 'That note is too long.' }, { status: 400 });

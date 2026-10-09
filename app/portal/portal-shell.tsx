@@ -8,6 +8,7 @@ import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { PortalProvider, usePortal } from '@/lib/portal-data';
 import TipTop from '@/components/portal/tiptop/TipTop';
 import SidebarNav from '@/components/portal/SidebarNav';
+import { PotatoBadge, PotatoSmoke } from '@/components/portal/HotPotato';
 
 
 interface UserInfo {
@@ -124,6 +125,8 @@ function PortalShell({ children }: { children: React.ReactNode }) {
           <Link href="/portal" aria-label="PodLab Portal home">
             <Image src="/portal/podlab-portal-green.png" alt="PodLab Portal" width={720} height={229} unoptimized className="h-auto w-[136px]" />
           </Link>
+          <div className="flex items-center gap-2">
+          {!isStaff && <PotatoBadge onOpen={() => setSidebarOpen(true)} />}
           <button
             onClick={() => setSidebarOpen(true)}
             aria-label="Open portal menu"
@@ -133,11 +136,13 @@ function PortalShell({ children }: { children: React.ReactNode }) {
               <path d="M3 6h14M3 10h14M3 14h14" />
             </svg>
           </button>
+          </div>
         </div>
 
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:px-12 lg:py-12">{children}</div>
       </main>
 
+      {!isStaff && <PotatoSmoke />}
       <TipTop />
     </div>
   );

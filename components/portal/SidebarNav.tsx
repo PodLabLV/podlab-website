@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { usePortal } from '@/lib/portal-data';
 import type { NavPayload } from '@/app/api/portal/nav/route';
 import type { Mission } from '@/lib/portal/game';
+import { PotatoTray } from '@/components/portal/HotPotato';
 
 type ShowKey = keyof NavPayload['show'];
 type BadgeKey = keyof NavPayload['badges'];
@@ -204,12 +205,15 @@ export default function SidebarNav({ isStaff, onNavigate }: { isStaff: boolean; 
   const visible = (i: Item) => !nav || !i.show || nav.show[i.show] || isActive(i.href);
   const groups = [
     ...GROUPS,
-    ...(isStaff ? [{ key: 'staff', label: 'Staff', items: [{ href: '/portal/clients', label: 'Clients' }] } as Group] : []),
+    ...(isStaff
+      ? [{ key: 'staff', label: 'Staff', items: [{ href: '/portal/clients', label: 'Clients' }, { href: '/portal/potatoes', label: 'Hot potatoes' }] } as Group]
+      : []),
   ];
 
   return (
     <>
       {nav && client && <LevelCard nav={nav} clientId={client.id} onNavigate={onNavigate} />}
+      {client && !isStaff && <PotatoTray onNavigate={onNavigate} />}
 
       <nav aria-label="Portal" className="flex-1 overflow-y-auto py-4">
         {groups.map((g) => {

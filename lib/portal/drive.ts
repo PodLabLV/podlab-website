@@ -211,6 +211,23 @@ export async function getFile(id: string): Promise<DriveFile> {
   return driveJson<DriveFile>(`/files/${encodeURIComponent(id)}?fields=id,name,size,mimeType,parents,thumbnailLink,trashed&supportsAllDrives=true`);
 }
 
+/**
+ * When each Drive file last changed (a cut's upload or re-upload), for the
+ * files the portal account can see. Unreachable ones are simply missing.
+ */
+export async function modifiedTimes(ids: string[]): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  const unique = [...new Set(ids)].slice(0, 80);
+  const results = await Promise.allSettled(
+    unique.map((id) => driveJson<{ modifiedTime?: string }>(`/files/${encodeURIComponent(id)}?fields=modifiedTime&supportsAllDrives=true`)),
+  );
+  results.forEach((r, i) => {
+    const t = r.status === 'fulfilled' ? Date.parse(r.value.modifiedTime ?? '') : NaN;
+    if (Number.isFinite(t)) out.set(unique[i], t);
+  });
+  return out;
+}
+
 /** The file's bytes, or its thumbnail, as a fetch Response to stream back. */
 export async function fetchContent(id: string, variant: 'file' | 'thumb'): Promise<Response | null> {
   if (variant === 'file') {

@@ -54,6 +54,30 @@ The portal is the one place a client goes for everything PodLab. Staff keep work
 - TipTop sees the level and next mission too.
 - Code: `lib/portal/game.ts` (pure; tests `npm run test:game`), `app/api/portal/nav` (built on the TipTop overview), `components/portal/SidebarNav.tsx`.
 
+## Hot Potato (who's turn it is)
+
+Every open item has one holder, client or team. The potato passes when the item changes hands, and heats by the day: **warm** (0–1), **getting hot** (2–3), **on fire** (4–6), **smoking** (7+). Clocks start at launch (Oct 9 2026), so items that were already open start warm.
+
+| Item | Holder | Since |
+|---|---|---|
+| Script / deliverable in review | client | current version published |
+| Script / deliverable with changes requested | team (PodLab) | notes sent |
+| Intake not submitted | client | intake assigned |
+| Top open action item (one at a time) | client | created |
+| Brand gap (no logo, missing versions, colors, fonts) | client | client created |
+| Cuts to watch (one potato per client: "6 cuts to watch") | client | the cut's Drive file last changed (else card start); cuts from 2+ weeks before launch don't count |
+| Unresolved client notes on a card | the card's editor | oldest open note |
+| Client hit **Looks good** | editor | the approval |
+| Notes fixed, no newer cut yet | editor | last client note |
+| No cut and past due | editor | due date |
+
+- **Looks good** (Production, on any cut not yet done) leaves a resolved comment `Looks good. Approved in the portal.` on the editor's card, pings #revisions, and passes the potato. It never reopens the card, isn't counted as a "fixed note", and the digest skips it.
+- **Client view:** a Hot potatoes tray in the sidebar ("On you" / "On PodLab", with who and what day), a potato badge in the mobile top bar, and at day 7 smoke over the whole portal. The smoke parts around a **Pass the potato** button; **Wave the smoke away** clears it for the session. It hides on the page where they'd act, and TipTop stays reachable above it. All motion stops for reduced-motion users.
+- **Staff:** `/portal/potatoes` (sidebar: Staff → Hot potatoes) shows every client, the team's potatoes grouped by holder, and heat counts.
+- **Slack:** a morning scoreboard at 15:05 UTC (`/api/cron/potatoes`, `vercel.json`): team first by holder, then a line per client. `?dry=1` with a staff session previews it.
+- **TipTop** sees both sides and leads with the client's hottest potato, playful and never scolding, and names who holds PodLab's.
+- Code: `lib/portal/potato.ts` (pure: heat, holder rules, scoreboard; `npm run test:potato`), `lib/portal/potato-server.ts`, `app/api/portal/potatoes`, `components/portal/HotPotato.tsx`, `app/portal/potatoes`.
+
 ## Video chapters and timestamped revisions
 
 Chapters use the same lines YouTube reads from a video description, so editors write them once:

@@ -20,6 +20,8 @@ export interface ProductionComment {
   fromClient: boolean;
   /** The editor ticked it off in the CRM (the card can't leave Revising until every note is). */
   resolved: boolean;
+  /** The client's "Looks good" on the cut. */
+  approval?: boolean;
 }
 
 export interface ProductionCard {
