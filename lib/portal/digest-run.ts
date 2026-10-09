@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { PORTAL_COMMENT_SUFFIX } from '@/lib/production';
 import { sendPortalEmail } from '@/lib/portal-email';
+import { LOOKS_GOOD_NOTE } from '@/lib/portal/potato';
 import {
   diffDigest,
   digestEligible,
@@ -113,6 +114,8 @@ export async function loadLiveState(
       ) as Array<{ id: string; card_id: string; author_name: string | null; body: string }>;
       for (const m of comments) {
         if (!(m.author_name ?? '').endsWith(PORTAL_COMMENT_SUFFIX)) continue;
+        // "Looks good" is saved resolved so it never blocks Revising; it isn't a fixed note.
+        if (m.body.trim() === LOOKS_GOOD_NOTE) continue;
         const list = resolved.get(m.card_id) ?? [];
         list.push({ id: m.id, body: m.body });
         resolved.set(m.card_id, list);

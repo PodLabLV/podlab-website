@@ -8,6 +8,8 @@ import { clientDocumentInfo, listVersions } from '@/lib/portal/documents';
 import { brandGaps } from '@/lib/portal/brand';
 import { loadBrand } from '@/lib/portal/brand-server';
 import { gameFor } from '@/lib/portal/game';
+import { potatoesFor } from '@/lib/portal/potato-server';
+import { HEAT_LABEL, type Potato } from '@/lib/portal/potato';
 
 /**
  * Everything TipTop knows about one client, read server-side with the service
@@ -66,6 +68,8 @@ export interface Overview {
     broll: { files: number; links: number };
     gaps: string[];
   };
+  /** Hot Potato: who holds each open item and how long (both sides). */
+  potatoes: Potato[];
   /** Nudges, most important first. */
   accountability: string[];
 }
@@ -84,7 +88,7 @@ async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 export async function buildOverview(db: SupabaseClient, caller: PortalCaller): Promise<Overview> {
   const id = caller.clientId;
 
-  const [profile, chain, phases, production, scripts, deliverables, actionItems, intake, invoices, document, brand] = await Promise.all([
+  const [profile, chain, phases, production, scripts, deliverables, actionItems, intake, invoices, document, brand, potatoes] = await Promise.all([
     safe(() => loadProfile(db, id), null),
     safe(() => chainBlock(db, id), emptyChain()),
     safe(() => phasesBlock(db, id), []),
@@ -96,6 +100,7 @@ export async function buildOverview(db: SupabaseClient, caller: PortalCaller): P
     safe(() => invoicesBlock(db, id), { open: [], paidCount: 0 }),
     safe(() => documentBlock(db, id), { has: false, editable: false, historyReady: false, versions: 0 }),
     safe(() => brandBlock(db, id), emptyBrand()),
+    safe(() => potatoesFor(db, id), [] as Potato[]),
   ]);
 
   const o: Overview = {
@@ -120,6 +125,7 @@ export async function buildOverview(db: SupabaseClient, caller: PortalCaller): P
     invoices,
     document,
     brand,
+    potatoes,
     accountability: [],
   };
 
@@ -133,6 +139,9 @@ export async function buildOverview(db: SupabaseClient, caller: PortalCaller): P
 
 function nudges(o: Overview): string[] {
   const out: string[] = [];
+  // The hottest potato on them leads: it's the oldest thing waiting on them.
+  const hot = o.potatoes.find((p) => p.holder === 'client' && p.days >= 2);
+  if (hot) out.push(`Hot potato, ${HEAT_LABEL[hot.heat].toLowerCase()} (day ${hot.days}): "${hot.title}". ${hot.why}.`);
   const waitingScripts = o.scripts.items.filter((s) => s.waitingOnYou);
   if (waitingScripts.length) out.push(`${waitingScripts.length} script${waitingScripts.length === 1 ? '' : 's'} waiting on your review: ${waitingScripts.map((s) => s.title).join(', ')}`);
   const unsentS = o.scripts.items.filter((s) => s.unsentNotes > 0);
@@ -480,6 +489,13 @@ export function renderOverview(o: Overview): string {
     L.push(
       `Brand page (/portal/brand: logos, colors, fonts, guide, b-roll; they upload there themselves): logos ${o.brand.logos.length ? o.brand.logos.join(', ') : 'none'}; colors ${o.brand.colors.join(', ') || 'none'}; fonts ${o.brand.fonts.join(', ') || 'none'}; brand guide ${o.brand.guide ? 'uploaded' : 'not uploaded'}; b-roll ${o.brand.broll.files} files, ${o.brand.broll.links} links.${o.brand.gaps.length ? ` Missing: ${o.brand.gaps.join('; ')}.` : ' Kit complete.'}`,
     );
+  const mine = o.potatoes.filter((p) => p.holder === 'client');
+  const ours = o.potatoes.filter((p) => p.holder === 'team');
+  L.push(
+    `Hot Potato (whoever's turn it is holds it; it heats daily: warm, getting hot day 2, on fire day 4, day 7 smokes out their portal until they act). On them: ${
+      mine.length ? mine.map((p) => `"${p.title}" (${p.why}; day ${p.days}, ${p.heat})`).join('; ') : 'nothing'
+    }. On PodLab: ${ours.length ? ours.map((p) => `"${p.title}" with ${p.who} (${p.why}; day ${p.days}, ${p.heat})`).join('; ') : 'nothing'}.`,
+  );
   const g = gameFor(o);
   L.push(`Build level (sidebar game; points come from their inputs and approvals): Level ${g.level.n} ${g.level.name}, ${g.score} pts${g.level.next !== null ? `, ${g.level.next - g.score} to level ${g.level.n + 1}` : ''}. Next mission: ${g.nextMission ? `${g.nextMission.title} (+${g.nextMission.points})` : 'none, nothing waiting on them'}.`);
   L.push(o.accountability.length ? `Open loops (bring up the top one or two when it fits):\n${o.accountability.map((a) => `  - ${a}`).join('\n')}` : 'Open loops: none. They are on top of everything.');

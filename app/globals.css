@@ -344,3 +344,42 @@ h1, h2, h3, h4, h5, h6,
   outline-offset: 3px;
   box-shadow: none;
 }
+
+/* ── Hot Potato ─────────────────────────────────────────────────────────
+   Heat: warm (steam) → hot (glow pulse) → fire (flames) → smoke (full-screen).
+   Everything stops for prefers-reduced-motion; the colours alone carry heat. */
+@keyframes potato-steam {
+  0% { transform: translateY(2px) scaleX(1); opacity: 0; }
+  30% { opacity: .55; }
+  100% { transform: translateY(-9px) scaleX(1.4); opacity: 0; }
+}
+@keyframes potato-glow {
+  0%, 100% { filter: drop-shadow(0 0 1px rgba(255, 90, 40, .35)); }
+  50% { filter: drop-shadow(0 0 6px rgba(255, 90, 40, .9)); }
+}
+@keyframes potato-flame {
+  0%, 100% { transform: scaleY(1) skewX(0deg); opacity: .95; }
+  25% { transform: scaleY(1.18) skewX(-4deg); opacity: 1; }
+  50% { transform: scaleY(.9) skewX(3deg); opacity: .85; }
+  75% { transform: scaleY(1.1) skewX(-2deg); opacity: 1; }
+}
+@keyframes potato-smoke-drift {
+  0% { transform: translate3d(-6%, 4%, 0) scale(1); opacity: .0; }
+  15% { opacity: .9; }
+  100% { transform: translate3d(8%, -10%, 0) scale(1.35); opacity: .0; }
+}
+@keyframes potato-smoke-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.potato-steam { animation: potato-steam 2.4s ease-out infinite; transform-origin: center bottom; }
+.potato-steam-2 { animation-delay: 1.2s; }
+.potato-hot { animation: potato-glow 1.6s ease-in-out infinite; }
+.potato-flame { animation: potato-flame .55s ease-in-out infinite; transform-origin: 50% 100%; transform-box: fill-box; }
+.potato-flame-2 { animation-duration: .7s; animation-delay: .15s; }
+.potato-smoke-screen { animation: potato-smoke-in 1.8s ease-out both; }
+.potato-smoke-puff { animation: potato-smoke-drift 9s ease-in-out infinite; will-change: transform, opacity; }
+@media (prefers-reduced-motion: reduce) {
+  .potato-steam, .potato-hot, .potato-flame, .potato-smoke-puff, .potato-smoke-screen { animation: none !important; }
+  .potato-smoke-puff { opacity: .7; }
+}

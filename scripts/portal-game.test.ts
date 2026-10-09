@@ -20,6 +20,7 @@ function overview(patch: Partial<Overview> = {}): Overview {
     invoices: { open: [], paidCount: 0 },
     document: { has: false, editable: false, historyReady: false, versions: 0 },
     brand: { available: true, logos: [], colors: [], fonts: [], guide: false, broll: { files: 0, links: 0 }, gaps: [] },
+    potatoes: [],
     accountability: [],
     ...patch,
   };

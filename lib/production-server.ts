@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { notifySlack, logToCrm, type PortalCaller } from '@/lib/portal-server';
 import { PORTAL_COMMENT_SUFFIX } from '@/lib/production';
 import { parseChapters, tagNote } from '@/lib/chapters';
+import { LOOKS_GOOD_NOTE } from '@/lib/portal/potato';
 
 /**
  * A client's revision note on one of their videos, from the Production page or
@@ -135,4 +136,36 @@ export async function postClientNote(
   ]);
 
   return { ok: true, comment, title: card.title, reopened, postedAlready };
+}
+
+/**
+ * The client is happy with the cut. Leaves a resolved "Looks good" comment on the
+ * editor's card (so it never blocks Revising) and pings the team to move it on.
+ * This is what passes the Hot Potato back after a cut lands.
+ */
+export async function approveCut(
+  db: SupabaseClient,
+  caller: PortalCaller,
+  cardId: string,
+): Promise<{ ok: true } | { ok: false; status: number; message: string }> {
+  const crm = db.schema('crm');
+  const { data: card } = await crm.from('content_cards').select('id, title, board_id, video_url, editor, assignee_name').eq('id', cardId).maybeSingle();
+  const boardIds = await linkedBoardIds(db, caller.clientId);
+  if (boardIds === null) return { ok: false, status: 503, message: 'Video notes are not switched on for your account yet.' };
+  if (!card || !boardIds.includes(card.board_id)) return { ok: false, status: 404, message: 'Not found' };
+  if (!card.video_url) return { ok: false, status: 400, message: 'There is no cut to approve yet.' };
+
+  const { error } = await crm
+    .from('content_comments')
+    .insert({ card_id: card.id, author_name: caller.displayName + PORTAL_COMMENT_SUFFIX, body: LOOKS_GOOD_NOTE, resolved: true });
+  if (error) {
+    console.error('[portal] looks-good failed', error.message);
+    return { ok: false, status: 500, message: 'Could not send that.' };
+  }
+  const who = card.editor || card.assignee_name;
+  await Promise.all([
+    notifySlack(`*Looks good* — ${caller.businessName} approved "${card.title}" in the portal${who ? ` · editor: *${who}*` : ''}. Move it to Approved.`, 'revisions'),
+    logToCrm(db, caller, `Approved the cut of "${card.title}" in the portal.`),
+  ]);
+  return { ok: true };
 }
