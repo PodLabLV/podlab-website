@@ -428,7 +428,9 @@ async function invoicesBlock(db: SupabaseClient, id: string): Promise<Overview['
     .select('invoice_no, issued_on, description, amount_cents, status')
     .eq('client_id', id)
     .order('sort_order');
-  const rows = (data ?? []) as Array<{ invoice_no: string | null; issued_on: string | null; description: string | null; amount_cents: number; status: string | null }>;
+  const rows = ((data ?? []) as Array<{ invoice_no: string | null; issued_on: string | null; description: string | null; amount_cents: number; status: string | null }>).filter(
+    (r) => !/^void/i.test(r.status ?? ''),
+  );
   const paid = rows.filter((r) => (r.status ?? '').toLowerCase() === 'paid');
   return {
     open: rows

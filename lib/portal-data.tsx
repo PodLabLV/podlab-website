@@ -323,7 +323,8 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         client,
         assets: (assets.data as PortalAsset[]) ?? [],
         projects: (projects.data as PortalProject[]) ?? [],
-        invoices: (invoices.data as PortalInvoice[]) ?? [],
+        // A voided invoice is bookkeeping, not something the client owes or paid: keep it off their view.
+        invoices: ((invoices.data as PortalInvoice[]) ?? []).filter((i) => !/^void/i.test(i.status ?? '')),
         activity: (activity.data as PortalActivity[]) ?? [],
         metrics: (metrics.data as PortalMetric[]) ?? [],
         comments: (comments.data as PortalComment[]) ?? [],
