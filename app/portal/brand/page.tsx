@@ -57,6 +57,68 @@ function putFile(signedUrl: string, file: File, onProgress: (pct: number) => voi
   });
 }
 
+// Google wants chunks in multiples of 256 KB; 16 MB keeps progress smooth and retries cheap.
+const DRIVE_CHUNK = 64 * 256 * 1024;
+
+function drivePut(url: string, body: Blob | null, range: string, onProgress?: (loaded: number) => void): Promise<XMLHttpRequest> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', url);
+    xhr.setRequestHeader('Content-Range', range);
+    if (onProgress) xhr.upload.onprogress = (e) => onProgress(e.loaded);
+    xhr.onload = () => resolve(xhr);
+    xhr.onerror = () => reject(new Error('network'));
+    xhr.send(body);
+  });
+}
+
+/**
+ * Resumable upload straight to the client's Drive folder. A dropped connection
+ * asks Google how much arrived and carries on from there, up to six times.
+ * Returns the new Drive file id.
+ */
+async function uploadToDrive(sessionUrl: string, file: File, onProgress: (pct: number) => void): Promise<string> {
+  let offset = 0;
+  let failures = 0;
+  const done = (xhr: XMLHttpRequest) => {
+    const id = (JSON.parse(xhr.responseText || '{}') as { id?: string }).id;
+    if (!id) throw new Error('Upload finished but Google did not return the file.');
+    return id;
+  };
+  const nextOffset = (xhr: XMLHttpRequest, fallback: number) => {
+    const range = xhr.getResponseHeader('Range');
+    return range ? Number(range.split('-')[1]) + 1 : fallback;
+  };
+  while (true) {
+    const end = Math.min(offset + DRIVE_CHUNK, file.size);
+    try {
+      const xhr = await drivePut(sessionUrl, file.slice(offset, end), `bytes ${offset}-${end - 1}/${file.size}`, (loaded) =>
+        onProgress(Math.min(99, Math.round(((offset + loaded) / file.size) * 100))),
+      );
+      if (xhr.status === 200 || xhr.status === 201) return done(xhr);
+      if (xhr.status === 308) {
+        offset = nextOffset(xhr, end);
+        failures = 0;
+        continue;
+      }
+      if (xhr.status === 404 || xhr.status === 410) throw new Error('The upload expired. Try that file again.');
+      if (xhr.status < 500) throw new Error(`Google refused the upload (${xhr.status}).`);
+    } catch (err) {
+      if (err instanceof Error && err.message !== 'network') throw err;
+    }
+    // Network drop or a 5xx: back off, ask Google where it got to, carry on.
+    if (++failures > 6) throw new Error('Connection kept dropping. Try that file again on a steadier connection.');
+    await new Promise((r) => setTimeout(r, Math.min(30_000, 1000 * 2 ** failures)));
+    try {
+      const status = await drivePut(sessionUrl, null, `bytes */${file.size}`);
+      if (status.status === 200 || status.status === 201) return done(status);
+      if (status.status === 308) offset = nextOffset(status, 0);
+    } catch {
+      // Still offline; the loop will try again.
+    }
+  }
+}
+
 function Section({ id, title, hint, children, aside }: { id: string; title: string; hint?: string; children: React.ReactNode; aside?: React.ReactNode }) {
   return (
     <section id={id} className="mt-14 scroll-mt-24">
@@ -231,9 +293,14 @@ function BrandPageInner() {
       const f = files[i];
       const key = batch[i].key;
       try {
-        const signed = await api('POST', { intent: 'sign', kind, filename: f.name, sizeBytes: f.size });
-        await putFile(signed.signedUrl, f, (pct) => set(key, { progress: pct }));
-        await api('POST', { intent: 'register', kind, variant, path: signed.path, filename: f.name, sizeBytes: f.size, mimeType: f.type });
+        const signed = await api('POST', { intent: 'sign', kind, filename: f.name, sizeBytes: f.size, mimeType: f.type });
+        if (signed.target === 'drive') {
+          const driveFileId = await uploadToDrive(signed.sessionUrl, f, (pct) => set(key, { progress: pct }));
+          await api('POST', { intent: 'register', kind, variant, driveFileId });
+        } else {
+          await putFile(signed.signedUrl, f, (pct) => set(key, { progress: pct }));
+          await api('POST', { intent: 'register', kind, variant, path: signed.path, filename: f.name, sizeBytes: f.size, mimeType: f.type });
+        }
         set(key, { status: 'done', progress: 100 });
         ok++;
         bytes += f.size;
@@ -628,7 +695,7 @@ function BrandPageInner() {
       <Section
         id="broll"
         title="B-roll"
-        hint="Your space, your team at work, your product, before-and-afters. Phone footage is fine; shoot it horizontal and hold for five seconds. Up to 5 GB per file. For whole folders, paste a link."
+        hint="Your space, your team at work, your product, before-and-afters. Phone footage is fine; shoot it horizontal and hold for five seconds. Large files are fine: they go straight to your PodLab folder and pick up where they left off if your connection drops. For whole folders, paste a link."
         aside={
           broll.length > 0 && (
             <p className="portal-label !text-[9px] text-[#eeeeee]/40">
@@ -653,7 +720,7 @@ function BrandPageInner() {
         {broll.length > 0 && (
           <div className="mt-6 grid gap-px border border-[#1a1a1a] bg-[#1a1a1a] sm:grid-cols-2 lg:grid-cols-3">
             {broll.map((a) => (
-              <BrollTile key={a.id} asset={a} onPatch={patchAsset} onRemove={remove} />
+              <BrollTile key={a.id} asset={a} onPatch={patchAsset} onRemove={remove} team={Boolean(staffClient)} />
             ))}
           </div>
         )}
@@ -712,8 +779,10 @@ function LogoTile({ asset, onPatch, onRemove }: { asset: BrandAsset; onPatch: (i
   );
 }
 
-function BrollTile({ asset, onPatch, onRemove }: { asset: BrandAsset; onPatch: (id: string, p: { label?: string }) => void; onRemove: (id: string) => void }) {
-  const href = downloadHref(asset);
+function BrollTile({ asset, onPatch, onRemove, team }: { asset: BrandAsset; onPatch: (id: string, p: { label?: string }) => void; onRemove: (id: string) => void; team: boolean }) {
+  // Big Drive files only open in Drive, which the client isn't a member of.
+  const teamOnly = Boolean(asset.driveUrl && !asset.url);
+  const href = teamOnly && !team ? null : downloadHref(asset);
   return (
     <div className="bg-black">
       <MediaThumb asset={asset} />
@@ -723,10 +792,10 @@ function BrollTile({ asset, onPatch, onRemove }: { asset: BrandAsset; onPatch: (
         <div className="flex items-center justify-between pt-1">
           {href ? (
             <a href={href} target="_blank" rel="noopener noreferrer" className="portal-label !text-[9px] text-[#2add1b] hover:text-[#eeeeee]">
-              {asset.externalUrl ? 'Open ↗' : 'Download'}
+              {asset.externalUrl ? 'Open ↗' : teamOnly ? 'Open in Drive ↗' : 'Download'}
             </a>
           ) : (
-            <span />
+            <span className="portal-label !text-[9px] text-[#eeeeee]/35">{asset.driveUrl ? 'In your PodLab folder' : ''}</span>
           )}
           <RemoveButton onConfirm={() => onRemove(asset.id)} />
         </div>

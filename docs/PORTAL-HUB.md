@@ -105,7 +105,11 @@ How it works:
 
 ## Brand page (logos, brand kit, b-roll)
 
-- **Client side:** `/portal/brand`. Files go straight from the browser to the private `client-brand` bucket via a signed upload URL (`POST /api/portal/brand` intent `sign`, then a PUT, then `register`), so a 4 GB phone clip never passes through a function. One upload at a time with a progress bar. Bigger than 5 GB, or a whole folder: paste a link.
+- **Where files land:** straight into the client's own PodLab OS Drive folder when one is linked (Manage → Drive folder): b-roll → `03- Content/02- B-Roll`, logos → `01- Company/02- Brand Kit & Logos/01- Logo`, guides and fonts → `…/02- Brand Kit`. Folders are matched by name (renumbering is fine) and created from the template if missing. The browser uploads to Google in 16 MB resumable chunks (no size cap; a dropped connection resumes). Rows store `storage_path = "drive:<file id>"`; registering checks the file really sits in that client's folder.
+  - **Auth is keyless:** Vercel OIDC → Google Workload Identity Federation (project `rational-armor-436121-b1`, pool/provider `vercel`) → impersonates `portal-uploads@rational-armor-436121-b1.iam.gserviceaccount.com`, a Content manager on PodLab OS. Env: `GCP_PROJECT_ID`, `GCP_PROJECT_NUMBER`, `GCP_SERVICE_ACCOUNT_EMAIL`, `GCP_WORKLOAD_IDENTITY_POOL_ID`, `GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID` (production). Only the production environment is granted in Google; add a principal for `environment:development` to test locally.
+  - **Previews:** `<img>` can't send a login, so Drive thumbnails and files ≤ 100 MB stream through `/api/portal/brand/file` with an HMAC link (1 hour, per asset and variant). Bigger files open in Drive (team only; clients see "In your PodLab folder").
+  - **Fallback:** no Drive folder linked, or Google errors → the private `client-brand` bucket as before.
+- **Client side:** `/portal/brand`. Bucket uploads go straight from the browser to the private `client-brand` bucket via a signed upload URL (`POST /api/portal/brand` intent `sign`, then a PUT, then `register`), so a 4 GB phone clip never passes through a function. One upload at a time with a progress bar. Bigger than 5 GB, or a whole folder: paste a link.
 - **Gaps:** no logo, a missing main / icon / white version, no colors, no fonts. The first gap shows on the dashboard's **Next up** and in TipTop's open loops. B-roll is never a gap.
 - **Slack:** one message per finished batch in #revisions ("Sharlene (The Collected View) added 6 b-roll files (3.2 GB)") with the staff link. The CRM timeline and the client's activity feed get a line too.
 - **Remove** hides the file (`removed_at`); the object stays in storage until staff purge it.
@@ -114,7 +118,7 @@ How it works:
   - **Put it on their cards:** adds `Brand kit: <link>` to every card on the client's linked boards (replacing an older link line, never stacking). The line starts with a word, so it's never read as a video chapter.
   - **New link** rotates the token; the old link stops working at once. Run "Put it on their cards" again after.
 - **Upload size:** the bucket allows 5 GB per file, but Supabase also has a project-wide limit (Dashboard → Storage → Settings → Upload file size limit). It must be at least 5 GB, or bigger files fail with "too big" and the page tells the client to paste a link.
-- Code: `lib/portal/brand.ts` (validation, gaps, loader), `app/api/portal/brand`, `app/api/portal/kit`, `app/portal/brand`, `app/portal/kit/[token]`. Tests: `npm run test:brand`.
+- Code: `lib/portal/brand.ts` (validation, gaps), `lib/portal/brand-server.ts` (loader), `lib/portal/drive.ts` (Drive auth, folders, sessions, signed previews), `app/api/portal/brand`, `app/api/portal/kit`, `app/portal/brand`, `app/portal/kit/[token]`. Tests: `npm run test:brand`.
 
 ## Staff: running it
 

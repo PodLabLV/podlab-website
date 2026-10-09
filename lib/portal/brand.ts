@@ -1,5 +1,3 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
-
 /**
  * Brand page: logos, brand kit (colors, fonts, guide, notes) and b-roll.
  * Shared by the portal route, the editors' read-only kit link and TipTop.
@@ -7,6 +5,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const BRAND_BUCKET = 'client-brand';
 export const BRAND_URL_TTL = 3600;
+/** Drive files bigger than this aren't proxied for download; the team opens them in Drive. */
+export const MAX_PROXY_BYTES = 100 * 1024 * 1024;
 export const MAX_UPLOAD_BYTES = 5 * 1024 ** 3;
 
 export type BrandKind = 'logo' | 'guide' | 'font' | 'broll';
@@ -75,8 +75,12 @@ export interface BrandAsset {
   uploadedBy: string | null;
   uploadedByKind: 'client' | 'staff';
   createdAt: string;
-  /** Signed, short-lived. Null for link-only rows. */
+  /** Signed, short-lived: the file itself (or the pasted link). Null when it's too big to proxy. */
   url: string | null;
+  /** A small preview image for tiles (Drive thumbnails). */
+  thumbUrl: string | null;
+  /** The file in the client's PodLab OS Drive folder. Opens for the team, not the client. */
+  driveUrl: string | null;
 }
 export interface BrandPayload {
   kit: BrandKit;
@@ -111,72 +115,6 @@ export function validateKit(input: { colors?: unknown; fonts?: unknown; notes?: 
   const notes = String(input.notes ?? '').trim();
   if (notes.length > 4000) return { error: 'Brand notes are capped at 4,000 characters.' };
   return { kit: { colors, fonts, notes } };
-}
-
-const EMPTY_KIT: BrandKit = { colors: [], fonts: [], notes: '', updatedAt: null, updatedBy: null };
-
-interface AssetRow {
-  id: string;
-  kind: BrandKind;
-  variant: LogoVariant | null;
-  label: string | null;
-  storage_path: string | null;
-  external_url: string | null;
-  filename: string | null;
-  size_bytes: number | null;
-  mime_type: string | null;
-  uploaded_by: string | null;
-  uploaded_by_kind: 'client' | 'staff';
-  created_at: string;
-}
-
-/**
- * The client's whole brand page with signed links. `ready: false` means the
- * migration hasn't run, so pages can say so instead of erroring.
- */
-export async function loadBrand(db: SupabaseClient, clientId: string, opts: { sign?: boolean } = {}): Promise<BrandPayload> {
-  const [kitRes, assetRes] = await Promise.all([
-    db.from('portal_brand_kits').select('colors, fonts, notes, updated_at, updated_by').eq('client_id', clientId).maybeSingle(),
-    db
-      .from('portal_brand_assets')
-      .select('id, kind, variant, label, storage_path, external_url, filename, size_bytes, mime_type, uploaded_by, uploaded_by_kind, created_at')
-      .eq('client_id', clientId)
-      .is('removed_at', null)
-      .order('created_at', { ascending: false }),
-  ]);
-  if (kitRes.error || assetRes.error) return { kit: EMPTY_KIT, assets: [], ready: false };
-
-  const k = kitRes.data;
-  const kit: BrandKit = k
-    ? { colors: (k.colors as BrandColor[]) ?? [], fonts: (k.fonts as BrandFont[]) ?? [], notes: k.notes ?? '', updatedAt: k.updated_at, updatedBy: k.updated_by }
-    : EMPTY_KIT;
-
-  const rows = (assetRes.data ?? []) as AssetRow[];
-  const paths = rows.map((r) => r.storage_path).filter((p): p is string => Boolean(p));
-  const signed = new Map<string, string>();
-  if (opts.sign !== false && paths.length) {
-    const { data } = await db.storage.from(BRAND_BUCKET).createSignedUrls(paths, BRAND_URL_TTL);
-    for (const s of data ?? []) if (s.path && s.signedUrl) signed.set(s.path, s.signedUrl);
-  }
-
-  return {
-    kit,
-    ready: true,
-    assets: rows.map((r) => ({
-      id: r.id,
-      kind: r.kind,
-      variant: r.variant,
-      label: r.label,
-      filename: r.filename,
-      sizeBytes: r.size_bytes,
-      mimeType: r.mime_type,
-      externalUrl: r.external_url,
-      uploadedBy: r.uploaded_by,
-      uploadedByKind: r.uploaded_by_kind,
-      createdAt: r.created_at,
-      url: r.storage_path ? signed.get(r.storage_path) ?? null : r.external_url,
-    })),
-  };
 }
 
 /** What's still missing, in the order an editor feels it. Empty means the kit is complete. */

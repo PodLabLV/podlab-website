@@ -15,6 +15,8 @@ const asset = (kind: BrandAsset['kind'], variant: BrandAsset['variant'] = null):
   uploadedByKind: 'client',
   createdAt: '2026-10-08T00:00:00Z',
   url: null,
+  thumbUrl: null,
+  driveUrl: null,
 });
 const payload = (assets: BrandAsset[], colors = 0, fonts = 0): BrandPayload => ({
   ready: true,
@@ -74,4 +76,21 @@ test('formatBytes', () => {
   assert.equal(formatBytes(0), '');
   assert.equal(formatBytes(1536), '1.5 KB');
   assert.equal(formatBytes(2.5 * 1024 ** 3), '2.5 GB');
+});
+
+test('Drive helpers: folder ids, row encoding, signed preview links', async () => {
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||= 'test-secret';
+  const { folderIdFromUrl, driveIdOf, previewUrl, verifyPreview } = await import('@/lib/portal/drive');
+  assert.equal(folderIdFromUrl('https://drive.google.com/drive/folders/1KIGdnIsLADohoSXuGAF196ewcd00Z2KT?usp=sharing'), '1KIGdnIsLADohoSXuGAF196ewcd00Z2KT');
+  assert.equal(folderIdFromUrl('https://drive.google.com/open?id=1KIGdnIsLADohoSXuGAF196'), '1KIGdnIsLADohoSXuGAF196');
+  assert.equal(folderIdFromUrl(null), null);
+  assert.equal(driveIdOf('drive:abc123'), 'abc123');
+  assert.equal(driveIdOf('client/logo/1-a.png'), null);
+
+  const u = new URL(previewUrl('asset-1', 'thumb', 60), 'https://podlablv.com');
+  const q = u.searchParams;
+  assert.ok(verifyPreview('asset-1', 'thumb', q.get('exp')!, q.get('sig')!));
+  assert.ok(!verifyPreview('asset-2', 'thumb', q.get('exp')!, q.get('sig')!), 'another asset');
+  assert.ok(!verifyPreview('asset-1', 'file', q.get('exp')!, q.get('sig')!), 'thumb link cannot fetch the file');
+  assert.ok(!verifyPreview('asset-1', 'thumb', String(Math.floor(Date.now() / 1000) - 1), q.get('sig')!), 'expired');
 });
