@@ -20,7 +20,17 @@ const AVATAR = '/tiptop/avatar.webp';
 
 const STORAGE = 'tiptop-portal:v1';
 const STARTERS = ["What's waiting on me?", 'Where do things stand?', 'Send a revision note', 'Change something in my Clarity Document'];
-const WRITE_TOOLS = new Set(['edit_document', 'restore_document_version', 'update_profile', 'send_revision', 'complete_action_item']);
+const WRITE_TOOLS = new Set([
+  'edit_document',
+  'restore_document_version',
+  'update_profile',
+  'send_revision',
+  'complete_action_item',
+  'save_intake_answers',
+  'update_brand_kit',
+  'create_action_items',
+  'draft_script',
+]);
 
 let sb: SupabaseClient | null = null;
 async function bearer(): Promise<Record<string, string>> {
@@ -400,6 +410,9 @@ function Part({ part, approve, busy, onNavigate }: { part: AnyPart; approve: (id
   if (part.type === 'tool-get_overview') return part.state === 'output-available' ? <Quiet>Checked your portal</Quiet> : null;
   if (part.type === 'tool-read_document') return part.state === 'output-available' ? <Quiet>Read your Clarity Document</Quiet> : null;
   if (part.type === 'tool-document_history') return part.state === 'output-available' ? <Quiet>Checked the version history</Quiet> : null;
+  if (part.type === 'tool-read_intake') return part.state === 'output-available' ? <Quiet>Read your intake</Quiet> : null;
+  if (part.type === 'tool-read_client_file') return part.state === 'output-available' ? <Quiet>Read your file</Quiet> : null;
+  if (part.type === 'tool-read_script') return part.state === 'output-available' ? <Quiet>Read the script</Quiet> : null;
   if (part.type === 'tool-flag_for_team') {
     return part.state === 'output-available' && part.output.flagged ? <Quiet>Flagged for the PodLab team</Quiet> : null;
   }
@@ -442,6 +455,26 @@ function Part({ part, approve, busy, onNavigate }: { part: AnyPart; approve: (id
       return <Quiet>{o.unchanged ? 'Profile already says that' : 'Profile updated'}</Quiet>;
     case 'complete_action_item':
       return <Quiet>{o.done ? 'Marked done' : 'Reopened'}</Quiet>;
+    case 'save_intake_answers':
+      return (
+        <div className="space-y-2">
+          <Quiet>
+            {o.submitted ? 'Intake saved and submitted to PodLab' : `Saved ${String(o.answersSaved)} answer${o.answersSaved === 1 ? '' : 's'}${Number(o.requiredLeft) > 0 ? ` · ${String(o.requiredLeft)} required left` : ' · ready to submit'}`}
+          </Quiet>
+          <ActionButton href="/portal/intake" label="Open your intake" onNavigate={onNavigate} />
+        </div>
+      );
+    case 'update_brand_kit':
+      return <Quiet>Brand kit updated · {String(o.colors)} colors, {String(o.fonts)} fonts</Quiet>;
+    case 'create_action_items':
+      return (
+        <div className="space-y-2">
+          <Quiet>Added {String(o.created)} to your game plan</Quiet>
+          <ActionButton href="/portal/actions" label="See your action items" onNavigate={onNavigate} />
+        </div>
+      );
+    case 'draft_script':
+      return <Quiet>Saved as a draft · PodLab reviews it, then it comes back to you to approve</Quiet>;
     default:
       return null;
   }
@@ -531,6 +564,60 @@ function ConfirmCard({
             </div>
           ))}
       </dl>
+    );
+  }
+
+  if (tool === 'save_intake_answers' && Array.isArray(input.answers)) {
+    detail = (
+      <ol className="space-y-2">
+        {(input.answers as Array<{ value?: string }>).map((a, i) => (
+          <li key={i} className="whitespace-pre-wrap border-l border-[#1a1a1a] pl-3 text-xs leading-relaxed text-[#eeeeee]">
+            {String(a.value ?? '').slice(0, 400)}
+            {String(a.value ?? '').length > 400 ? '…' : ''}
+          </li>
+        ))}
+      </ol>
+    );
+  } else if (tool === 'update_brand_kit') {
+    const colors = (input.colors as Array<{ hex?: string; name?: string }> | undefined) ?? [];
+    const fonts = (input.fonts as Array<{ name?: string; use?: string }> | undefined) ?? [];
+    detail = (
+      <div className="space-y-2 text-xs">
+        {colors.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {colors.map((c, i) => (
+              <span key={i} className="inline-flex items-center gap-1.5">
+                <span className="h-4 w-4 border border-[#eeeeee]/20" style={{ background: /^#?[0-9a-f]{3,6}$/i.test(c.hex ?? '') ? `#${String(c.hex).replace('#', '')}` : 'transparent' }} />
+                {c.hex}
+                {c.name ? <span className="text-[#eeeeee]/45">{c.name}</span> : null}
+              </span>
+            ))}
+          </div>
+        )}
+        {fonts.length > 0 && <p>{fonts.map((f) => `${f.name}${f.use ? ` (${f.use})` : ''}`).join(' · ')}</p>}
+        {input.notes ? <p className="whitespace-pre-wrap text-[#eeeeee]/70">{String(input.notes).slice(0, 400)}</p> : null}
+      </div>
+    );
+  } else if (tool === 'create_action_items' && Array.isArray(input.items)) {
+    detail = (
+      <>
+      {input.coaching ? <p className="mb-3 whitespace-pre-wrap text-sm leading-relaxed text-[#eeeeee]">{String(input.coaching)}</p> : null}
+      <ol className="space-y-2">
+        {(input.items as Array<{ title?: string; effort?: string; due?: string }>).map((it, i) => (
+          <li key={i} className="border-l border-[#1a1a1a] pl-3 text-xs leading-relaxed">
+            <span className="block text-[#eeeeee]">{String(it.title ?? '')}</span>
+            <span className="block text-[#eeeeee]/45">{[it.effort, it.due ? `due ${it.due}` : null].filter(Boolean).join(' · ')}</span>
+          </li>
+        ))}
+      </ol>
+      </>
+    );
+  } else if (tool === 'draft_script') {
+    detail = (
+      <div className="max-h-56 overflow-y-auto border-l border-[#1a1a1a] pl-3">
+        <p className="portal-label !text-[8.5px] text-[#eeeeee]/45">{String(input.kind ?? '')}</p>
+        <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-[#eeeeee]">{String(input.body ?? '').slice(0, 2000)}</p>
+      </div>
     );
   }
 

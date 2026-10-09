@@ -78,6 +78,24 @@ Every open item has one holder, client or team. The potato passes when the item 
 - **TipTop** sees both sides and leads with the client's hottest potato, playful and never scolding, and names who holds PodLab's.
 - Code: `lib/portal/potato.ts` (pure: heat, holder rules, scoreboard; `npm run test:potato`), `lib/portal/potato-server.ts`, `app/api/portal/potatoes`, `components/portal/HotPotato.tsx`, `app/portal/potatoes`.
 
+## TipTop as business guide
+
+TipTop runs on **Opus 5.5** (fallback Sonnet 5.5, then Sonnet 5; override with `TIPTOP_MODEL` / `TIPTOP_FALLBACK_MODELS`), with up to 12 tool steps and 4,500 output tokens a turn. A heavy "read the file and draft" turn costs about $0.30; a normal chat turn about $0.05–0.10 (prompt caching is on).
+
+| Tool | What it does | Confirm card |
+|---|---|---|
+| `read_client_file` | Application and studio intake, portal intake answers, brand kit, what they bought, scripts list | no |
+| `read_intake` / `read_script` | Every intake question (id, section, required, current answer); a script's full current text | no |
+| `save_intake_answers` | Section co-pilot: saves up to 12 drafted answers, optionally submits (refused while required answers are empty) | yes, shows each answer |
+| `update_brand_kit` | Colors, fonts, notes on the Brand page (merge or replace; never guessed hex codes) | yes, shows swatches |
+| `create_action_items` | Game plan: up to 8 dated actions under People / Operations / Sales / Marketing / Content, with required **coaching** (goal as a number, the math, the order, first move) shown on the card. Refused past 25 open items. Source reads `Game Plan · <pillar>` | yes, coaching plus the list |
+| `draft_script` | Hook / FAQ / short / social / ad / VSL / email / founder script saved as **Draft** (our turn) with author TipTop. Slack pings the team. Max 10 waiting | yes, shows the script |
+
+- **PodLab reviews every script draft.** Staff see them on the client's Manage page (**TipTop's script drafts**) and press **Send to client for review**, which sets the status to in review and tells the client. Only then can the client approve it.
+- **Brief:** the "Business guide" section of `lib/tiptop/prompt.ts` covers how she maps a business, coaches each pillar, runs the co-pilot, builds a game plan, writes in PodLab voice, and reads efficiently (the client file once, at most two document reads a turn, then act).
+- **Tested live** against a real client file (no writes): she drafted intake answers from the Clarity Document, said what only the client can answer, built a two-week sales plan with the math, and wrote a 30-second hook with a placeholder CTA instead of inventing one.
+- Code: `lib/tiptop/guide.ts`, tools in `lib/tiptop/tools.ts`, the panel in `components/portal/tiptop/TipTopPanel.tsx`. Tests: `npm run test:guide`.
+
 ## Video chapters and timestamped revisions
 
 Chapters use the same lines YouTube reads from a video description, so editors write them once:

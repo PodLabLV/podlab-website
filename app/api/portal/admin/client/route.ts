@@ -24,6 +24,8 @@ export interface StaffClientDetail {
   videoAssets: Array<{ id: string; title: string; crmCardId: string | null }>;
   /** Cards on this client's linked boards, to tie a video deliverable to. */
   cards: Array<{ id: string; title: string; board: string }>;
+  /** Scripts TipTop drafted with the client, waiting on PodLab review. */
+  drafts: Array<{ id: string; title: string; kind: string | null; createdAt: string; body: string; note: string | null; words: number | null }>;
   /** Tables whose migration hasn't run yet; the page says so instead of failing. */
   missing: string[];
 }
@@ -58,12 +60,17 @@ export async function GET(req: Request) {
   if (links.error) missing.push('portal_client_boards');
 
   const linked = new Set((links.data ?? []).map((l: { board_id: string }) => l.board_id));
-  const [assets, cards] = await Promise.all([
+  const [assets, cards, draftRows] = await Promise.all([
     db.from('portal_assets').select('*').eq('client_id', id).order('sort_order'),
     linked.size
       ? db.schema('crm').from('content_cards').select('id, title, board_id').in('board_id', [...linked]).eq('archived', false).eq('is_template', false).order('sort')
       : Promise.resolve({ data: [] as Array<{ id: string; title: string; board_id: string }> }),
+    db.from('portal_scripts').select('id, title, kind, created_at').eq('client_id', id).eq('status', 'draft').eq('source', 'tiptop').order('created_at'),
   ]);
+  const draftList = (draftRows.data ?? []) as Array<{ id: string; title: string; kind: string | null; created_at: string }>;
+  const { data: draftVersions } = draftList.length
+    ? await db.from('portal_script_versions').select('script_id, body, note, word_count').in('script_id', draftList.map((d) => d.id)).eq('version_no', 1)
+    : { data: [] as Array<{ script_id: string; body: string; note: string | null; word_count: number | null }> };
   const boardName = new Map((boards.data ?? []).map((b: { id: string; name: string }) => [b.id, b.name]));
   const detail: StaffClientDetail = {
     client: {
@@ -86,6 +93,10 @@ export async function GET(req: Request) {
       linked: linked.has(b.id),
     })),
     missing,
+    drafts: draftList.map((d) => {
+      const v = (draftVersions ?? []).find((x: { script_id: string }) => x.script_id === d.id) as { body: string; note: string | null; word_count: number | null } | undefined;
+      return { id: d.id, title: d.title, kind: d.kind, createdAt: d.created_at, body: v?.body ?? '', note: v?.note ?? null, words: v?.word_count ?? null };
+    }),
     videoAssets: (assets.data ?? [])
       .filter((a: { file_type?: string | null }) => (a.file_type || '').toUpperCase() === 'VIDEO')
       .map((a: { id: string; title: string; crm_card_id?: string | null }) => ({ id: a.id, title: a.title, crmCardId: a.crm_card_id ?? null })),

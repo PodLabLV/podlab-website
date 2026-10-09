@@ -317,6 +317,37 @@ export default function StaffClientPage() {
         </Section>
       )}
 
+      {d.drafts && d.drafts.length > 0 && (
+        <Section
+          title="TipTop's script drafts"
+          hint="Scripts TipTop wrote with the client. They sit in the client's Scripts as Draft (our turn) until you send them for the client's review and approval."
+        >
+          <ul className="divide-y divide-[#1a1a1a] border border-[#1a1a1a]">
+            {d.drafts.map((dr) => (
+              <li key={dr.id} className="bg-black p-4">
+                <details>
+                  <summary className="cursor-pointer list-none">
+                    <span className="text-sm font-semibold text-[#eeeeee]">{dr.title}</span>
+                    <span className="ml-2 text-xs text-[#eeeeee]/40">
+                      {[dr.kind, dr.words ? `${dr.words} words` : null, new Date(dr.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })].filter(Boolean).join(' · ')}
+                    </span>
+                    {dr.note && <span className="mt-1 block text-xs text-[#eeeeee]/50">{dr.note}</span>}
+                  </summary>
+                  <p className="mt-3 max-h-80 overflow-y-auto whitespace-pre-wrap border-l border-[#1a1a1a] pl-3 text-sm leading-relaxed text-[#eeeeee]/80">{dr.body}</p>
+                </details>
+                <button
+                  disabled={busy !== null}
+                  onClick={() => call(`draft-${dr.id}`, '/api/portal/scripts', 'PATCH', { scriptId: dr.id, status: 'in review' }, `"${dr.title}" sent to the client for review.`)}
+                  className="portal-label mt-3 bg-[#2add1b] px-4 py-2.5 !text-[9.5px] text-black transition hover:bg-[#eeeeee] disabled:opacity-40"
+                >
+                  Send to client for review
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
       <Section title="Access">
         <Link
           href="/portal/clients"
