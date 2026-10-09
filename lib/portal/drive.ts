@@ -14,7 +14,7 @@ import type { BrandKind } from '@/lib/portal/brand';
 
 const API = 'https://www.googleapis.com/drive/v3';
 const FOLDER = 'application/vnd.google-apps.folder';
-const ALL_DRIVES = 'supportsAllDrives=true&includeItemsFromAllDrives=true';
+const ALL_DRIVES = 'supportsAllDrives=true&includeItemsFromAllDrives=true&corpora=allDrives';
 
 const env = () => ({
   number: process.env.GCP_PROJECT_NUMBER,
@@ -109,6 +109,42 @@ const ROUTES: Record<BrandKind, Array<{ match: RegExp; create: string }>> = {
   ],
 };
 
+/** Subfolders of a folder. Shared Drive items only show up with corpora=allDrives. */
+export async function listFolders(parent: string): Promise<Array<{ id: string; name: string; createdTime?: string }>> {
+  const q = encodeURIComponent(`'${parent}' in parents and mimeType='${FOLDER}' and trashed=false`);
+  const { files } = await driveJson<{ files: Array<{ id: string; name: string; createdTime?: string }> }>(
+    `/files?q=${q}&fields=files(id,name,createdTime)&pageSize=100&${ALL_DRIVES}`,
+  );
+  return files;
+}
+
+/** Move a file or folder to the Shared Drive's trash (recoverable). */
+export async function trashFile(id: string): Promise<void> {
+  await driveJson(`/files/${encodeURIComponent(id)}?supportsAllDrives=true&fields=id`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ trashed: true }),
+  });
+}
+
+const SECTION = /^\d+\s*-\s*(company|acquisition|content|fulfil+ment|dashboard|growth|team)/i;
+
+/**
+ * The folder that actually holds a client's 01–07 sections. Usually the linked
+ * folder itself, but a person with a business gets a layer between
+ * ("Sharlene Ruiz / The Collected View / 01- Company…"): when the linked folder
+ * has no sections and exactly one subfolder does, that subfolder is the root.
+ */
+async function sectionsRoot(rootId: string): Promise<string> {
+  const top = await listFolders(rootId);
+  if (top.some((f) => SECTION.test(f.name))) return rootId;
+  const withSections: string[] = [];
+  for (const f of top.slice(0, 8)) {
+    if ((await listFolders(f.id)).some((g) => SECTION.test(g.name))) withSections.push(f.id);
+  }
+  return withSections.length === 1 ? withSections[0] : rootId;
+}
+
 const folderCache = new Map<string, { id: string; at: number }>();
 
 export async function targetFolder(rootId: string, kind: BrandKind): Promise<string> {
@@ -116,10 +152,9 @@ export async function targetFolder(rootId: string, kind: BrandKind): Promise<str
   const hit = folderCache.get(key);
   if (hit && Date.now() - hit.at < 10 * 60_000) return hit.id;
 
-  let parent = rootId;
+  let parent = await sectionsRoot(rootId);
   for (const step of ROUTES[kind]) {
-    const q = encodeURIComponent(`'${parent}' in parents and mimeType='${FOLDER}' and trashed=false`);
-    const { files } = await driveJson<{ files: Array<{ id: string; name: string }> }>(`/files?q=${q}&fields=files(id,name)&pageSize=100&${ALL_DRIVES}`);
+    const files = await listFolders(parent);
     const found = files.sort((a, b) => a.name.localeCompare(b.name)).find((f) => step.match.test(f.name));
     if (found) {
       parent = found.id;
