@@ -8,11 +8,12 @@ import { PRODUCT_KEYS } from '@/lib/growth-chain';
 export const LIMITS = {
   maxUserTurns: 40,
   maxMessageChars: 2000,
-  /** Room for an edit_document call carrying a few find/replace pairs. */
-  maxOutputTokens: 1600,
-  maxSteps: 5,
+  /** Room for a draft_script call carrying a full script, or a batch of intake answers. */
+  maxOutputTokens: 4500,
+  /** Read the file, read a section or two, then plan, draft and save: a guide turn is several steps. */
+  maxSteps: 12,
   requestsPerMinute: 20,
-  timeoutMs: 50_000,
+  timeoutMs: 240_000,
   /** Cap on the history the browser may send back. */
   maxMessages: 160,
 } as const;
@@ -111,6 +112,78 @@ export const flagInput = z.object({
   urgency: z.enum(['normal', 'high']).default('normal'),
 });
 
+// ── Business guide ─────────────────────────────────────────────────────
+
+export const readIntakeInput = z.object({
+  section: z.string().trim().max(120).optional().describe('Only this section (as shown in the result). Omit for all.'),
+});
+
+export const saveIntakeAnswersInput = z.object({
+  answers: z
+    .array(
+      z.object({
+        item_id: id.describe('The question id from read_intake.'),
+        value: z.string().trim().min(1).max(8000).describe("The answer, in the client's voice, built from what they told you. Never invent facts or numbers."),
+      }),
+    )
+    .min(1)
+    .max(12),
+  submit: z.boolean().default(false).describe('Also submit the intake. Only when every required question is answered and the client said to submit.'),
+});
+
+export const updateBrandKitInput = z.object({
+  colors: z.array(z.object({ hex: z.string().trim().max(9), name: z.string().trim().max(40).default('') })).max(16).optional(),
+  fonts: z.array(z.object({ name: z.string().trim().max(60), use: z.string().trim().max(40).default('') })).max(8).optional(),
+  notes: z.string().trim().max(4000).optional().describe("Do's and don'ts, in their words."),
+  mode: z.enum(['merge', 'replace']).default('merge').describe('merge adds to what is there (same hex or font name is updated); replace swaps the list.'),
+});
+
+export const PILLARS = ['People', 'Operations', 'Sales', 'Marketing', 'Content'] as const;
+
+export const createActionItemsInput = z.object({
+  pillar: z.enum(PILLARS).describe('Which part of the game plan these belong to.'),
+  coaching: z
+    .string()
+    .trim()
+    .min(60)
+    .max(900)
+    .describe('Shown to the client above the actions: the goal as a number, the math behind it (e.g. 4 seats ≈ 12 calls ≈ 40 conversations), why this order, and the first move today. 3 to 6 short lines, second person, energetic, no fluff.'),
+  items: z
+    .array(
+      z.object({
+        title: z.string().trim().min(3).max(160).describe('A verb-first, finishable action: "Write the 3 objections you hear most".'),
+        detail: z.string().trim().max(600).default('').describe('Why it matters and what done looks like, in one or two sentences.'),
+        effort: z.string().trim().max(40).default('').describe('Rough size, e.g. "30 min", "2 hours".'),
+        due: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional().describe('YYYY-MM-DD, agreed with the client.'),
+      }),
+    )
+    .min(1)
+    .max(8),
+});
+
+export const SCRIPT_KINDS = ['hook', 'faq', 'short', 'social', 'ad', 'vsl', 'email', 'founder'] as const;
+
+export const draftScriptInput = z.object({
+  title: z.string().trim().min(3).max(160),
+  kind: z.enum(SCRIPT_KINDS),
+  body: z.string().trim().min(40).max(12000).describe('The script, spoken-word, blocks separated by blank lines. PodLab voice rules apply.'),
+  note: z.string().trim().max(400).default('').describe('One line for the PodLab reviewer: the goal, the angle, what it is built from.'),
+});
+
+export const readScriptInput = z.object({ id: id.describe('Script id from the overview.') });
+
+export const readClientFileInput = z.object({});
+
 /** Tools that change something. Each one shows the client a confirm card first. */
-export const WRITE_TOOLS = ['edit_document', 'restore_document_version', 'update_profile', 'send_revision', 'complete_action_item'] as const;
+export const WRITE_TOOLS = [
+  'edit_document',
+  'restore_document_version',
+  'update_profile',
+  'send_revision',
+  'complete_action_item',
+  'save_intake_answers',
+  'update_brand_kit',
+  'create_action_items',
+  'draft_script',
+] as const;
 export type WriteTool = (typeof WRITE_TOOLS)[number];

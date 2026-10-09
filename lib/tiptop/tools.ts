@@ -5,7 +5,7 @@
 // the row belongs to that caller, so a model (or a doctored history) naming
 // someone else's script, card or action item gets "not found".
 //
-// Writes: the five tools in WRITE_TOOLS go through AI SDK tool approval. The
+// Writes: every tool in WRITE_TOOLS goes through AI SDK tool approval. The
 // approval function runs first, server-side: it validates the input and
 // resolves the real target, and either denies with a reason (the model sees it
 // and asks again) or asks the client with a server-written description. The
@@ -37,8 +37,16 @@ import {
   restoreVersionInput,
   sendRevisionInput,
   updateProfileInput,
+  readIntakeInput,
+  saveIntakeAnswersInput,
+  updateBrandKitInput,
+  createActionItemsInput,
+  draftScriptInput,
+  readScriptInput,
+  readClientFileInput,
   type WriteTool,
 } from './schema';
+import { createActionItems, draftScript, nextBrandKit, ownedQuestions, readClientFile, readIntake, readScript, saveBrandKit, saveIntakeAnswers } from './guide';
 import type { z } from 'zod';
 
 export interface ToolContext {
@@ -134,6 +142,44 @@ export function approvalPolicy(ctx: ToolContext) {
       const done = input.done !== false;
       if ((data.status === 'done') === done) return { type: 'denied', reason: `"${data.title}" is already ${done ? 'done' : 'open'}.` };
       return { type: 'user-approval', reason: `${done ? 'Mark done' : 'Reopen'}: "${data.title}"` };
+    },
+
+    save_intake_answers: async (input: z.infer<typeof saveIntakeAnswersInput>): Promise<ToolApprovalStatus> => {
+      const owned = await ownedQuestions(ctx.db, ctx.caller.clientId, input.answers.map((a) => a.item_id));
+      const unknown = input.answers.filter((a) => !owned.has(a.item_id));
+      if (unknown.length) return { type: 'denied', reason: `Not this client's question ids: ${unknown.map((a) => a.item_id).join(', ')}. Call read_intake for the right ids.` };
+      if (input.submit) {
+        const { questions } = await readIntake(ctx.db, ctx.caller.clientId);
+        const filled = new Set([...questions.filter((q) => q.answer.trim()).map((q) => q.id), ...input.answers.map((a) => a.item_id)]);
+        const left = questions.filter((q) => q.required && !filled.has(q.id));
+        if (left.length) return { type: 'denied', reason: `Can't submit yet: ${left.length} required question(s) still empty: ${left.map((q) => q.prompt).slice(0, 4).join(' | ')}. Save without submit, then work through those.` };
+      }
+      const n = input.answers.length;
+      return { type: 'user-approval', reason: `Save ${n} answer${n === 1 ? '' : 's'} to your intake${input.submit ? ' and submit it to PodLab' : ''}. You can edit any of them on the Intake page afterwards.` };
+    },
+
+    update_brand_kit: async (input: z.infer<typeof updateBrandKitInput>): Promise<ToolApprovalStatus> => {
+      if (!input.colors && !input.fonts && input.notes === undefined) return { type: 'denied', reason: 'Nothing to change: pass colors, fonts or notes.' };
+      const next = await nextBrandKit(ctx.db, ctx.caller.clientId, input);
+      if ('error' in next) return { type: 'denied', reason: next.error };
+      const parts = [
+        input.colors ? `colors → ${next.kit.colors.map((c) => c.hex).join(', ') || 'none'}` : null,
+        input.fonts ? `fonts → ${next.kit.fonts.map((f) => f.name).join(', ') || 'none'}` : null,
+        input.notes !== undefined ? 'brand notes' : null,
+      ].filter(Boolean);
+      return { type: 'user-approval', reason: `Update your brand kit (${input.mode === 'replace' ? 'replace' : 'add to'}): ${parts.join('; ')}. Your editors see it straight away.` };
+    },
+
+    create_action_items: async (input: z.infer<typeof createActionItemsInput>): Promise<ToolApprovalStatus> => {
+      const { count } = await ctx.db.from('portal_action_items').select('id', { count: 'exact', head: true }).eq('client_id', ctx.caller.clientId).neq('status', 'done');
+      if ((count ?? 0) + input.items.length > 25) return { type: 'denied', reason: `They already have ${count} open action items. Don't pile on: close or merge some first, or add fewer.` };
+      return { type: 'user-approval', reason: `Add ${input.items.length} ${input.pillar} action item${input.items.length === 1 ? '' : 's'} to your game plan (Action Items page).` };
+    },
+
+    draft_script: async (input: z.infer<typeof draftScriptInput>): Promise<ToolApprovalStatus> => {
+      const { count } = await ctx.db.from('portal_scripts').select('id', { count: 'exact', head: true }).eq('client_id', ctx.caller.clientId).eq('status', 'draft').eq('source', 'tiptop');
+      if ((count ?? 0) >= 10) return { type: 'denied', reason: 'There are already 10 TipTop drafts waiting on PodLab review. Tell the client they will be reviewed first.' };
+      return { type: 'user-approval', reason: `Save "${input.title}" as a draft in Scripts. PodLab reviews it before it comes back to you to approve; nothing gets shot without that.` };
     },
   } satisfies Record<WriteTool, unknown>;
 }
@@ -300,6 +346,51 @@ export function makeTools(ctx: ToolContext) {
           label: cta.label,
         };
       },
+    }),
+
+    read_intake: tool({
+      description: "The client's intake questionnaire: every question (id, section, required) with their current answer, and whether it's submitted. Read before drafting answers with save_intake_answers.",
+      inputSchema: readIntakeInput,
+      execute: async ({ section }) => readIntake(db, caller.clientId, section),
+    }),
+
+    read_client_file: tool({
+      description: "Everything they've told PodLab: application and studio intake answers, portal intake answers, brand kit, what they bought, and their scripts list. Read before coaching, planning content, drafting answers or writing scripts, so you build from their real words and numbers.",
+      inputSchema: readClientFileInput,
+      execute: async () => ({ file: await readClientFile(db, caller) }),
+    }),
+
+    read_script: tool({
+      description: 'The full current text of one of their scripts, by id. Use to answer questions about it, or as a reference for tone when drafting new ones.',
+      inputSchema: readScriptInput,
+      execute: async ({ id }) => (await readScript(db, caller.clientId, id)) ?? { error: 'No script with that id for this client.' },
+    }),
+
+    save_intake_answers: tool({
+      description: 'Save answers to their intake questions (and optionally submit it). Section co-pilot: interview them one question at a time, draft each answer from what they say plus their file, read it back, then save a batch. The client confirms on a card first.',
+      inputSchema: saveIntakeAnswersInput,
+      execute: async ({ answers, submit }) => {
+        const res = await saveIntakeAnswers(db, caller, answers, Boolean(submit));
+        return { saved: true, answersSaved: res.saved, submitted: res.submitted, requiredLeft: res.requiredLeft, page: PAGES.intake.href };
+      },
+    }),
+
+    update_brand_kit: tool({
+      description: 'Set their brand colors (hex), fonts (name + what it is used for) and brand notes on the Brand page. Merge by default. Only use colors and fonts they gave you or that are in their file; never guess hex codes. The client confirms first.',
+      inputSchema: updateBrandKitInput,
+      execute: async (input) => ({ saved: true, ...(await saveBrandKit(db, caller, input)), page: PAGES.brand.href }),
+    }),
+
+    create_action_items: tool({
+      description: 'Put the game plan into their Action Items: up to 8 finishable, verb-first actions under one pillar (People, Operations, Sales, Marketing, Content), each with effort and an agreed due date. Agree the list with them in chat first; the client confirms on a card.',
+      inputSchema: createActionItemsInput,
+      execute: async ({ pillar, items, coaching }) => ({ saved: true, ...(await createActionItems(db, caller, pillar, items, coaching)), page: PAGES.actions.href }),
+    }),
+
+    draft_script: tool({
+      description: 'Save a script you wrote with them (hook, FAQ, short, social, ad, VSL, email, founder story) as a DRAFT in Scripts. PodLab reviews it before it goes to them for approval. Build it from their file and their words; follow the voice rules. The client confirms first.',
+      inputSchema: draftScriptInput,
+      execute: async (input) => ({ saved: true, ...(await draftScript(db, caller, input)), page: PAGES.scripts.href }),
     }),
 
     flag_for_team: tool({

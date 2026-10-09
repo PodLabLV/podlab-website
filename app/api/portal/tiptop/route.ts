@@ -16,7 +16,8 @@ import { approvalPolicy, bookingUrl, makeTools } from '@/lib/tiptop/tools';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+// Drafting a script or a game plan with a few reads in between takes longer than a chat reply.
+export const maxDuration = 300;
 
 // TipTop in the portal. Signed-in clients only: every request re-resolves the
 // caller from the bearer token, and every tool is built around that caller.
@@ -24,8 +25,9 @@ export const maxDuration = 60;
 // tool steps, HTML stripped from what the client types, and a scripted reply
 // whenever the model can't be reached. This file never logs what anyone said.
 
-const MODEL = process.env.TIPTOP_MODEL || 'anthropic/claude-sonnet-5.5';
-const FALLBACK_MODELS = (process.env.TIPTOP_FALLBACK_MODELS || 'anthropic/claude-sonnet-5,anthropic/claude-haiku-4.5')
+// Opus for the business-guide work (plans, scripts, drafting answers); Sonnet if it's unavailable.
+const MODEL = process.env.TIPTOP_MODEL || 'anthropic/claude-opus-5.5';
+const FALLBACK_MODELS = (process.env.TIPTOP_FALLBACK_MODELS || 'anthropic/claude-sonnet-5.5,anthropic/claude-sonnet-5')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
@@ -71,6 +73,7 @@ function scripted(text: string, button?: { href: string; label: string }) {
 const KNOWN_TOOLS = new Set([
   'get_overview', 'go_to', 'booking_link', 'read_document', 'document_history', 'edit_document',
   'restore_document_version', 'update_profile', 'send_revision', 'complete_action_item', 'recommend_product', 'flag_for_team',
+  'read_intake', 'read_client_file', 'read_script', 'save_intake_answers', 'update_brand_kit', 'create_action_items', 'draft_script',
 ]);
 
 type Cleaned = { messages: UIMessage[]; userTurns: number; lastUserChars: number; priorRecommendations: number };
@@ -181,7 +184,7 @@ export async function POST(req: Request) {
       stopWhen: isStepCount(LIMITS.maxSteps),
       maxOutputTokens: LIMITS.maxOutputTokens,
       reasoning: mock ? undefined : 'none',
-      timeout: { totalMs: LIMITS.timeoutMs, firstChunkMs: 20_000 },
+      timeout: { totalMs: LIMITS.timeoutMs, firstChunkMs: 30_000 },
       providerOptions: mock
         ? undefined
         : {

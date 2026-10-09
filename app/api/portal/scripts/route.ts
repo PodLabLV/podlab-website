@@ -222,6 +222,7 @@ export async function PATCH(req: Request) {
   }
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
+  if (p.status === 'in review') await recordActivity(db, data.client_id, 'update', `New script ready for your review: ${data.title}`);
   if (p.status === 'shot') await recordActivity(db, data.client_id, 'update', `Filmed: ${data.title}`);
   if (p.status === 'published') await recordActivity(db, data.client_id, 'deliverable', `Live: ${data.title}`);
 
