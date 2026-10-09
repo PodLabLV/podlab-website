@@ -54,6 +54,8 @@ export interface NewItem {
   hook?: string;
   job: Job;
   cta?: string;
+  /** Already shot: the production card this piece posts from. */
+  card_id?: string;
 }
 
 export async function addContentItems(db: SupabaseClient, caller: PortalCaller, items: NewItem[]): Promise<{ created: number }> {
@@ -66,6 +68,8 @@ export async function addContentItems(db: SupabaseClient, caller: PortalCaller, 
     hook: i.hook?.slice(0, 300) || null,
     job: i.job,
     cta: i.cta?.slice(0, 200) || null,
+    // Already shot and with the editors: it posts from that cut, nothing to record.
+    ...(i.card_id ? { crm_card_id: i.card_id, status: 'in edit' } : {}),
     created_by: `${caller.displayName} (with TipTop)`,
   }));
   const { error } = await db.from('portal_content_plan').insert(rows);
@@ -77,6 +81,16 @@ export async function addContentItems(db: SupabaseClient, caller: PortalCaller, 
     logToCrm(db, caller, `Planned ${rows.length} content pieces with TipTop, ${first} to ${last}.`),
   ]);
   return { created: rows.length };
+}
+
+/** Which of these production card ids are on this client's linked boards. */
+export async function ownedCards(db: SupabaseClient, clientId: string, ids: string[]): Promise<Set<string>> {
+  if (!ids.length) return new Set();
+  const { data: links } = await db.from('portal_client_boards').select('board_id').eq('client_id', clientId);
+  const boards = (links ?? []).map((l: { board_id: string }) => l.board_id);
+  if (!boards.length) return new Set();
+  const { data } = await db.schema('crm').from('content_cards').select('id').in('id', ids).in('board_id', boards);
+  return new Set((data ?? []).map((r: { id: string }) => r.id));
 }
 
 /** The ids that belong to this client. */
