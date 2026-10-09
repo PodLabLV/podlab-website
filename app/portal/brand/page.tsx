@@ -254,10 +254,26 @@ function BrandPageInner() {
     [headers, qs, staffClient],
   );
 
+  // Unsaved edits to colors, fonts or notes. A refresh (after an upload, a
+  // TipTop change or a silent token refresh) must never overwrite them.
+  const edited = useRef(false);
   const fillKit = (b: BrandPayload) => {
+    edited.current = false;
     setColors(b.kit.colors);
     setFonts(b.kit.fonts);
     setNotes(b.kit.notes);
+  };
+  const editColors = (v: BrandColor[]) => {
+    edited.current = true;
+    setColors(v);
+  };
+  const editFonts = (v: BrandFont[]) => {
+    edited.current = true;
+    setFonts(v);
+  };
+  const editNotes = (v: string) => {
+    edited.current = true;
+    setNotes(v);
   };
 
   const load = useCallback(
@@ -267,7 +283,7 @@ function BrandPageInner() {
         const j = await api('GET');
         setData(j.brand);
         setShareUrl(j.shareUrl ?? null);
-        if (refillKit) fillKit(j.brand);
+        if (refillKit && !edited.current) fillKit(j.brand);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Could not load your brand page.');
       }
@@ -374,6 +390,17 @@ function BrandPageInner() {
       setFlash(e instanceof Error ? e.message : 'Could not do that.');
     }
   }
+
+  // Leaving with unsaved colors or fonts: let the browser ask first.
+  useEffect(() => {
+    const warn = (e: BeforeUnloadEvent) => {
+      if (!edited.current) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, []);
 
   // TipTop may have changed something.
   useEffect(() => {
@@ -576,30 +603,30 @@ function BrandPageInner() {
                     type="color"
                     aria-label="Pick color"
                     value={/^#[0-9a-f]{6}$/i.test(c.hex) ? c.hex : '#000000'}
-                    onChange={(e) => setColors(colors.map((x, j) => (j === i ? { ...x, hex: e.target.value.toUpperCase() } : x)))}
+                    onChange={(e) => editColors(colors.map((x, j) => (j === i ? { ...x, hex: e.target.value.toUpperCase() } : x)))}
                     className="h-10 w-10 shrink-0 cursor-pointer border border-[#1a1a1a] bg-black p-0.5"
                   />
                   <input
                     value={c.hex}
-                    onChange={(e) => setColors(colors.map((x, j) => (j === i ? { ...x, hex: e.target.value } : x)))}
+                    onChange={(e) => editColors(colors.map((x, j) => (j === i ? { ...x, hex: e.target.value } : x)))}
                     placeholder="#2ADD1B"
                     aria-label="Hex code"
                     className={`${inputCls} w-28 shrink-0 font-mono`}
                   />
                   <input
                     value={c.name}
-                    onChange={(e) => setColors(colors.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
+                    onChange={(e) => editColors(colors.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
                     placeholder="Name (Primary, Accent…)"
                     aria-label="Color name"
                     className={`${inputCls} min-w-0`}
                   />
-                  <button onClick={() => setColors(colors.filter((_, j) => j !== i))} aria-label="Remove color" className="px-2 text-[#eeeeee]/35 hover:text-red-400">
+                  <button onClick={() => editColors(colors.filter((_, j) => j !== i))} aria-label="Remove color" className="px-2 text-[#eeeeee]/35 hover:text-red-400">
                     ×
                   </button>
                 </li>
               ))}
             </ul>
-            <button onClick={() => setColors([...colors, { hex: '', name: '' }])} disabled={colors.length >= 16} className={`${btnGhost} mt-3`}>
+            <button onClick={() => editColors([...colors, { hex: '', name: '' }])} disabled={colors.length >= 16} className={`${btnGhost} mt-3`}>
               Add a color
             </button>
           </Card>
@@ -611,7 +638,7 @@ function BrandPageInner() {
                 <li key={i} className="flex items-center gap-2">
                   <input
                     value={f.name}
-                    onChange={(e) => setFonts(fonts.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
+                    onChange={(e) => editFonts(fonts.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))}
                     placeholder="Font name"
                     aria-label="Font name"
                     className={`${inputCls} min-w-0`}
@@ -619,12 +646,12 @@ function BrandPageInner() {
                   <input
                     value={f.use}
                     list="font-uses"
-                    onChange={(e) => setFonts(fonts.map((x, j) => (j === i ? { ...x, use: e.target.value } : x)))}
+                    onChange={(e) => editFonts(fonts.map((x, j) => (j === i ? { ...x, use: e.target.value } : x)))}
                     placeholder="Used for"
                     aria-label="Used for"
                     className={`${inputCls} w-32 shrink-0`}
                   />
-                  <button onClick={() => setFonts(fonts.filter((_, j) => j !== i))} aria-label="Remove font" className="px-2 text-[#eeeeee]/35 hover:text-red-400">
+                  <button onClick={() => editFonts(fonts.filter((_, j) => j !== i))} aria-label="Remove font" className="px-2 text-[#eeeeee]/35 hover:text-red-400">
                     ×
                   </button>
                 </li>
@@ -635,7 +662,7 @@ function BrandPageInner() {
                 <option key={u} value={u} />
               ))}
             </datalist>
-            <button onClick={() => setFonts([...fonts, { name: '', use: '' }])} disabled={fonts.length >= 8} className={`${btnGhost} mt-3`}>
+            <button onClick={() => editFonts([...fonts, { name: '', use: '' }])} disabled={fonts.length >= 8} className={`${btnGhost} mt-3`}>
               Add a font
             </button>
           </Card>
@@ -646,7 +673,7 @@ function BrandPageInner() {
             <span className="portal-label block !text-[9px] text-[#eeeeee]/45">Do&apos;s and don&apos;ts</span>
             <textarea
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => editNotes(e.target.value)}
               rows={4}
               maxLength={4000}
               placeholder="Never stretch the logo. Green only as an accent. Always say 'The Collected View', never 'TCV'…"
@@ -657,7 +684,8 @@ function BrandPageInner() {
             <button onClick={saveKit} disabled={!kitDirty || savingKit} className={btnPrimary}>
               {savingKit ? 'Saving' : 'Save colors, fonts and notes'}
             </button>
-            {kitStatus && <span className={`text-sm ${kitStatus.tone === 'ok' ? 'text-[#2add1b]' : 'text-red-400'}`}>{kitStatus.text}</span>}
+            {kitDirty && !savingKit && <span className="text-sm text-yellow-300">Unsaved changes</span>}
+            {kitStatus && (kitStatus.tone === 'err' || !kitDirty) && <span className={`text-sm ${kitStatus.tone === 'ok' ? 'text-[#2add1b]' : 'text-red-400'}`}>{kitStatus.text}</span>}
             {!kitStatus && data.kit.updatedAt && (
               <span className="text-xs text-[#eeeeee]/35">
                 Last saved {new Date(data.kit.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
