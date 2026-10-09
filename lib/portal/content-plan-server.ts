@@ -1,4 +1,4 @@
-import { cardVisible, clientCardScope } from '@/lib/production-server';
+import { cardVisible, clientCardScope, openToClient } from '@/lib/production-server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logToCrm, notifySlack, type PortalCaller } from '@/lib/portal-server';
 import { recordActivity } from '@/lib/portal/server';
@@ -89,8 +89,9 @@ export async function ownedCards(db: SupabaseClient, clientId: string, ids: stri
   if (!ids.length) return new Set();
   const scope = await clientCardScope(db, clientId);
   if (!scope) return new Set();
-  const { data } = await db.schema('crm').from('content_cards').select('id, board_id').in('id', ids);
-  return new Set(((data ?? []) as Array<{ id: string; board_id: string }>).filter((c) => cardVisible(scope, c)).map((c) => c.id));
+  const { data } = await db.schema('crm').from('content_cards').select('id, board_id, list_id').in('id', ids);
+  const inScope = ((data ?? []) as Array<{ id: string; board_id: string; list_id: string }>).filter((c) => cardVisible(scope, c));
+  return new Set((await openToClient(db, inScope)).map((c) => c.id));
 }
 
 /** The ids that belong to this client. */

@@ -11,7 +11,7 @@
 // and asks again) or asks the client with a server-written description. The
 // approval is HMAC-signed by the route, so a doctored history can't approve.
 
-import { cardVisible, clientCardScope } from '@/lib/production-server';
+import { cardOpen, clientCardScope } from '@/lib/production-server';
 import { tool, type ToolApprovalStatus } from 'ai';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { PortalCaller } from '@/lib/portal-server';
@@ -85,8 +85,8 @@ async function resolveRevisionTarget(
   if (input.timestamp && parseClock(input.timestamp) === null) return { ok: false, reason: `"${input.timestamp}" is not a time. Use a form like 0:42.` };
   if (input.target === 'video') {
     const scope = await clientCardScope(db, caller.clientId);
-    const { data: card } = await db.schema('crm').from('content_cards').select('id, title, board_id').eq('id', input.id).maybeSingle();
-    if (!card || !scope || !cardVisible(scope, card)) return { ok: false, reason: 'No video with that id on this client\'s boards. Check the overview.' };
+    const { data: card } = await db.schema('crm').from('content_cards').select('id, title, board_id, list_id').eq('id', input.id).maybeSingle();
+    if (!card || !scope || !(await cardOpen(db, scope, card))) return { ok: false, reason: 'No video with that id on this client\'s boards. Check the overview.' };
     return { ok: true, title: card.title, where: 'Your Videos' };
   }
   if (input.target === 'script') {

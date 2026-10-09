@@ -24,7 +24,9 @@ function StageTag({ card }: { card: ProductionCard }) {
     ? 'border-p-brandink bg-p-brand text-black'
     : s === 'revising'
       ? 'border-p-warn/40 text-p-warn'
-      : 'border-p-brandink/50 text-p-brandink';
+      : s === 'ready for your review'
+        ? 'border-[#ff8a1f]/60 text-[#ff8a1f]'
+        : 'border-p-brandink/50 text-p-brandink';
   return <span className={`portal-label inline-block shrink-0 border px-2 py-1 !text-[11px] ${tone}`}>{card.stage || 'Queued'}</span>;
 }
 
@@ -281,7 +283,8 @@ export default function ProductionPage() {
 
   const cards = data!.boards.flatMap((b) => b.cards);
   const counts = [
-    { label: 'In the edit', value: cards.filter((c) => !c.done && c.stage.toLowerCase() !== 'revising').length },
+    { label: 'Ready for you', value: cards.filter((c) => c.stage.toLowerCase() === 'ready for your review').length },
+    { label: 'In the edit', value: cards.filter((c) => !c.done && !['revising', 'ready for your review'].includes(c.stage.toLowerCase())).length },
     { label: 'Revising', value: cards.filter((c) => c.stage.toLowerCase() === 'revising').length },
     { label: 'Done', value: cards.filter((c) => c.done).length },
   ];
@@ -302,9 +305,9 @@ export default function ProductionPage() {
         )
       ) : (
         <>
-          <Card className="mt-10 grid grid-cols-3 divide-x divide-p-line">
+          <Card className="mt-10 grid grid-cols-2 gap-px bg-p-line sm:grid-cols-4">
             {counts.map((c) => (
-              <div key={c.label} className="p-5">
+              <div key={c.label} className="bg-p-card p-5">
                 <p className="portal-label !text-[12px] text-p-ink/70">{c.label}</p>
                 <p className="mt-3 text-3xl font-bold tracking-tight text-p-ink">{c.value}</p>
               </div>
