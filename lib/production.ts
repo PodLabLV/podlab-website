@@ -33,6 +33,8 @@ export interface ProductionCard {
   steps: number;
   dueOn: string | null;
   videoUrl: string | null;
+  /** Signed proxy URL that plays a Drive-hosted cut inline; null for other hosts. */
+  streamUrl?: string | null;
   /** From the card description, YouTube-chapter style ("0:00 Hook" per line). */
   chapters: Chapter[];
   done: boolean;

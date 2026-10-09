@@ -232,8 +232,31 @@ export const driveFolderUrl = (id: string) => `https://drive.google.com/drive/fo
 // /api/portal/brand/file with a short-lived HMAC instead.
 const secret = () => process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 
-function sign(assetId: string, variant: string, exp: number): string {
-  return createHmac('sha256', secret()).update(`brand-file:${assetId}:${variant}:${exp}`).digest('base64url');
+function sign(assetId: string, variant: string, exp: number, scope = 'brand-file'): string {
+  return createHmac('sha256', secret()).update(`${scope}:${assetId}:${variant}:${exp}`).digest('base64url');
+}
+
+/**
+ * Signed link to stream a Drive cut inline: a production card's video_url or a
+ * deliverable version's external_url. Minted only after the route has checked
+ * the viewer may see that card or version.
+ */
+export function streamUrl(kind: 'card' | 'version', id: string, ttlSeconds = 6 * 3600): string {
+  const exp = Math.floor(Date.now() / 1000) + ttlSeconds;
+  return `/api/portal/stream?k=${kind}&id=${id}&exp=${exp}&sig=${sign(id, kind, exp, 'stream')}`;
+}
+
+export function verifyStream(kind: string, id: string, exp: string, sig: string): boolean {
+  const e = Number(exp);
+  if (!secret() || !Number.isFinite(e) || e < Date.now() / 1000 || (kind !== 'card' && kind !== 'version')) return false;
+  const want = Buffer.from(sign(id, kind, e, 'stream'));
+  const got = Buffer.from(sig);
+  return want.length === got.length && timingSafeEqual(want, got);
+}
+
+/** A byte range of a Drive file (video seeking). Passes Google's status through: 200, 206, 416… */
+export async function fetchRange(id: string, range: string | null): Promise<Response> {
+  return drive(`/files/${encodeURIComponent(id)}?alt=media&supportsAllDrives=true`, { headers: range ? { Range: range } : {} });
 }
 
 export function previewUrl(assetId: string, variant: 'file' | 'thumb', ttlSeconds = 3600, download = false): string {

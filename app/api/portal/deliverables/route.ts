@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { parseChapters } from '@/lib/chapters';
+import { driveFileId, parseChapters } from '@/lib/chapters';
+import { driveConfigured, streamUrl } from '@/lib/portal/drive';
 import { mirrorNotesToCard } from '@/lib/production-server';
 import { admin, resolveCaller, notifySlack, logToCrm } from '@/lib/portal-server';
 import {
@@ -52,7 +53,13 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
   }
 
-  if (!version.storage_path) return NextResponse.json({ url: version.external_url, external: true });
+  if (!version.storage_path) {
+    // A Drive cut plays inline through the stream proxy; the Drive link is the fallback.
+    if (driveConfigured() && driveFileId(version.external_url)) {
+      return NextResponse.json({ url: streamUrl('version', version.id), external: false, fallback: version.external_url });
+    }
+    return NextResponse.json({ url: version.external_url, external: true });
+  }
 
   const { data, error } = await db.storage.from(BUCKET).createSignedUrl(version.storage_path, SIGNED_URL_TTL);
   if (error || !data) {

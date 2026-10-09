@@ -70,7 +70,7 @@ Chapters use the same lines YouTube reads from a video description, so editors w
 - **What the client does:**
   - They jump by chapter, pause where something should change, and type the note. The time and chapter fill in automatically.
   - On the card, the editor sees: **`[0:42 · The problem] cut the pause`**, signed `<name> (client, via portal)`. Slack and the CRM timeline are pinged too.
-- **Inline playback:** uploaded files and YouTube links play inline with a live clock. Drive, Frame.io and Vimeo links open in a new tab, and the client picks the chapter or types the time.
+- **Inline playback:** uploaded files, YouTube links and **Google Drive cuts** play inline with a live clock, so pausing stamps the note. Drive cuts (99% of card `video_url`s) stream through `/api/portal/stream`: an HMAC link per card or deliverable version (6 hours, minted after the ownership check), the Drive file id looked up server-side, and Range requests passed through to Google so seeking works. If the portal's Google account can't see the file (a cut in a drive `portal-uploads@…` isn't a member of), the player falls back to "Open on Google Drive" and the client picks the time by chapter or types it. Frame.io and Vimeo still open in a new tab.
 
 ## The revision loop (client ↔ editor)
 

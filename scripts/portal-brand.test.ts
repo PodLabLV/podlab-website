@@ -94,3 +94,27 @@ test('Drive helpers: folder ids, row encoding, signed preview links', async () =
   assert.ok(!verifyPreview('asset-1', 'file', q.get('exp')!, q.get('sig')!), 'thumb link cannot fetch the file');
   assert.ok(!verifyPreview('asset-1', 'thumb', String(Math.floor(Date.now() / 1000) - 1), q.get('sig')!), 'expired');
 });
+
+test('driveFileId: file links only, never folders or other hosts', async () => {
+  const { driveFileId } = await import('@/lib/chapters');
+  assert.equal(driveFileId('https://drive.google.com/file/d/1ACAk5liw8f4MifH8SyavFbU_VkwTCG62/view?usp=drive_link'), '1ACAk5liw8f4MifH8SyavFbU_VkwTCG62');
+  assert.equal(driveFileId('https://drive.google.com/open?id=1ACAk5liw8f4MifH8SyavFbU_VkwTCG62'), '1ACAk5liw8f4MifH8SyavFbU_VkwTCG62');
+  assert.equal(driveFileId('https://drive.google.com/uc?id=1ACAk5liw8f4MifH8SyavFbU_VkwTCG62&export=download'), '1ACAk5liw8f4MifH8SyavFbU_VkwTCG62');
+  assert.equal(driveFileId('https://drive.google.com/drive/folders/1KIGdnIsLADohoSXuGAF196ewcd00Z2KT'), null);
+  assert.equal(driveFileId('https://evil.example.com/file/d/1ACAk5liw8f4MifH8SyavFbU_VkwTCG62/view'), null);
+  assert.equal(driveFileId('https://youtu.be/dQw4w9WgXcQ'), null);
+});
+
+test('stream links are scoped to one card or version and expire', async () => {
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||= 'test-secret';
+  const { streamUrl, verifyStream, previewUrl, verifyPreview } = await import('@/lib/portal/drive');
+  const q = new URL(streamUrl('card', 'card-1', 60), 'https://podlablv.com').searchParams;
+  assert.ok(verifyStream('card', 'card-1', q.get('exp')!, q.get('sig')!));
+  assert.ok(!verifyStream('version', 'card-1', q.get('exp')!, q.get('sig')!), 'card link cannot open a version');
+  assert.ok(!verifyStream('card', 'card-2', q.get('exp')!, q.get('sig')!), 'another card');
+  assert.ok(!verifyStream('asset', 'card-1', q.get('exp')!, q.get('sig')!), 'unknown kind');
+  // A brand preview signature is not a stream signature (different scope).
+  const p = new URL(previewUrl('card-1', 'file', 60), 'https://podlablv.com').searchParams;
+  assert.ok(!verifyStream('card', 'card-1', p.get('exp')!, p.get('sig')!));
+  assert.ok(verifyPreview('card-1', 'file', p.get('exp')!, p.get('sig')!));
+});

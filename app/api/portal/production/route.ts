@@ -8,7 +8,8 @@ import {
   type ProductionPayload,
   type VslTrack,
 } from '@/lib/production';
-import { parseChapters, readNote } from '@/lib/chapters';
+import { driveFileId, parseChapters, readNote } from '@/lib/chapters';
+import { driveConfigured, streamUrl } from '@/lib/portal/drive';
 import { linkedBoardIds, postClientNote } from '@/lib/production-server';
 
 export const runtime = 'nodejs';
@@ -95,6 +96,7 @@ export async function GET(req: Request) {
               steps: cols.length,
               dueOn: c.due_on,
               videoUrl: c.video_url,
+              streamUrl: driveConfigured() && driveFileId(c.video_url) ? streamUrl('card', c.id) : null,
               chapters: parseChapters(c.description ?? ''),
               done: isDoneColumn(column),
               comments: commentRows
