@@ -9,7 +9,7 @@ export default function ActionItemsPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  if (loading) return <p className="text-p-ink/40 text-sm">Loading...</p>;
+  if (loading) return <p className="text-p-ink/70 text-base">Loading...</p>;
 
   if (!client || actionItems.length === 0) {
     return (
@@ -60,10 +60,10 @@ export default function ActionItemsPage() {
 
       <Card className="p-5 mb-6">
         <div className="flex items-center justify-between gap-4">
-          <p className="font-display text-[10px] uppercase tracking-widest text-p-ink/40">
+          <p className="font-display text-[13px] uppercase tracking-widest text-p-ink/70">
             Progress
           </p>
-          <p className="text-p-ink text-sm font-semibold">
+          <p className="text-p-ink text-base font-semibold">
             {done} of {actionItems.length} complete
           </p>
         </div>
@@ -75,7 +75,7 @@ export default function ActionItemsPage() {
         </div>
       </Card>
 
-      {error && <p className="text-p-bad text-xs mb-4">{error}</p>}
+      {error && <p className="text-p-bad text-sm mb-4">{error}</p>}
 
       <div className="space-y-4">
         {actionItems.map((item, i) => {
@@ -104,28 +104,28 @@ export default function ActionItemsPage() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="font-display text-[10px] uppercase tracking-widest text-p-brandink">
+                    <span className="font-display text-[13px] uppercase tracking-widest text-p-brandink">
                       Action {String(i + 1).padStart(2, '0')}
                     </span>
                     {item.effort && (
-                      <span className="font-display text-[10px] uppercase tracking-widest text-p-ink/30">
+                      <span className="font-display text-[13px] uppercase tracking-widest text-p-ink/65">
                         {item.effort}
                       </span>
                     )}
                   </div>
                   <p
-                    className={`text-p-ink text-sm font-semibold mt-1.5 ${
+                    className={`text-p-ink text-base font-semibold mt-1.5 ${
                       complete ? 'line-through decoration-white/30' : ''
                     }`}
                   >
                     {item.title}
                   </p>
                   {item.detail && (
-                    <p className="text-p-ink/50 text-sm mt-2.5 leading-relaxed whitespace-pre-wrap">
+                    <p className="text-p-ink/75 text-base mt-2.5 leading-relaxed whitespace-pre-wrap">
                       {item.detail}
                     </p>
                   )}
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[11px] text-p-ink/25">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[14px] text-p-ink/65">
                     {item.source && <span>{item.source}</span>}
                     {complete && item.completed_at && (
                       <span className="text-p-brandink/70">

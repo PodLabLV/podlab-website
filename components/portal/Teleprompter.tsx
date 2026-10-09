@@ -86,7 +86,7 @@ export default function Teleprompter({ title, body, onClose }: TeleprompterProps
   }, [close]);
 
   const ctrl =
-    'portal-label flex h-12 min-w-12 items-center justify-center border border-p-line px-4 !text-[10px] text-p-ink/70 transition hover:border-p-brandink hover:text-p-brandink disabled:opacity-30';
+    'portal-label flex h-12 min-w-12 items-center justify-center border border-p-line px-4 !text-[13px] text-p-ink/85 transition hover:border-p-brandink hover:text-p-brandink disabled:opacity-30';
 
   // Portaled to <body>: an ancestor in the portal layout is transformed, which
   // would otherwise trap position:fixed inside the content column.
@@ -95,7 +95,7 @@ export default function Teleprompter({ title, body, onClose }: TeleprompterProps
       {/* .portal sets position:relative, so it goes on the inner box, not the fixed one. */}
       <div className="portal flex h-full flex-col">
       <div className="flex items-center justify-between gap-4 border-b border-p-line px-4 py-3 sm:px-6">
-        <p className="portal-label truncate !text-[9px] text-p-ink/40">{title}</p>
+        <p className="portal-label break-words !text-[12px] text-p-ink/70">{title}</p>
         <button onClick={close} className={ctrl}>
           Close
         </button>
@@ -119,14 +119,14 @@ export default function Teleprompter({ title, body, onClose }: TeleprompterProps
       <div className="flex flex-wrap items-center justify-center gap-2 border-t border-p-line px-4 py-3 sm:gap-3">
         <button
           onClick={() => setPlaying((p) => !p)}
-          className="portal-label flex h-12 min-w-28 items-center justify-center bg-p-brand px-6 !text-[11px] text-black transition hover:bg-p-pop"
+          className="portal-label flex h-12 min-w-28 items-center justify-center bg-p-brand px-6 !text-[13px] text-black transition hover:bg-p-pop"
         >
           {playing ? 'Pause' : 'Play'}
         </button>
         <button onClick={() => setSpeedIdx((i) => Math.max(0, i - 1))} disabled={speedIdx === 0} className={ctrl} aria-label="Slower">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M2 7h10" /></svg>
         </button>
-        <span className="portal-label w-14 text-center !text-[10px] text-p-ink/50" aria-live="polite">
+        <span className="portal-label w-14 text-center !text-[13px] text-p-ink/75" aria-live="polite">
           {speedIdx + 1}/{SPEEDS.length}
         </span>
         <button onClick={() => setSpeedIdx((i) => Math.min(SPEEDS.length - 1, i + 1))} disabled={speedIdx === SPEEDS.length - 1} className={ctrl} aria-label="Faster">

@@ -60,7 +60,7 @@ export default function TipTop() {
           style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
         >
           <Image src={AVATAR} alt="" width={40} height={40} className="h-10 w-10 object-cover" />
-          <span className="portal-label hidden !text-[10px] text-p-brandink sm:inline">Ask TipTop</span>
+          <span className="portal-label hidden !text-[13px] text-p-brandink sm:inline">Ask TipTop</span>
         </button>
       )}
       {open && <TipTopPanel onClose={close} initialPrompt={prompt} onPromptUsed={() => setPrompt(null)} />}

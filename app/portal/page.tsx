@@ -92,7 +92,7 @@ export default function PortalDashboard() {
   const waiting = useWaitingOnClient(client?.id, accessToken);
 
   if (loading) {
-    return <p className="portal-label !text-[9px] text-p-ink/40">Loading your portal</p>;
+    return <p className="portal-label !text-[12px] text-p-ink/70">Loading your portal</p>;
   }
 
   if (error) {
@@ -119,7 +119,7 @@ export default function PortalDashboard() {
           {isStaff && (
             <a
               href="/portal/clients"
-              className="portal-label mt-6 inline-flex items-center gap-3 border border-p-line px-5 py-3 !text-[10px] text-p-ink/70 transition hover:border-p-brandink hover:text-p-brandink"
+              className="portal-label mt-6 inline-flex items-center gap-3 border border-p-line px-5 py-3 !text-[13px] text-p-ink/85 transition hover:border-p-brandink hover:text-p-brandink"
             >
               Invite clients to the portal →
             </a>
@@ -218,7 +218,7 @@ export default function PortalDashboard() {
       />
 
       {client.welcome_note && (
-        <p className="-mt-4 mb-10 max-w-3xl border-l-2 border-p-brandink pl-5 text-base leading-relaxed text-p-ink/80">
+        <p className="-mt-4 mb-10 max-w-3xl border-l-2 border-p-brandink pl-5 text-lg leading-relaxed text-p-ink/90">
           {client.welcome_note}
         </p>
       )}
@@ -227,7 +227,7 @@ export default function PortalDashboard() {
       <div className="grid grid-cols-2 gap-px border border-p-line bg-p-line lg:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label} className="bg-p-paper p-5 md:p-6">
-            <p className="portal-label !text-[9px] text-p-ink/40">{s.label}</p>
+            <p className="portal-label !text-[12px] text-p-ink/70">{s.label}</p>
             <p className="mt-3 text-3xl font-bold tracking-tight text-p-ink md:text-4xl">{s.value}</p>
           </div>
         ))}
@@ -235,25 +235,25 @@ export default function PortalDashboard() {
 
       {/* The chain at a glance: one square per element, in order. */}
       <Link href="/portal/growth" className="group mt-px flex flex-wrap items-center gap-x-6 gap-y-3 border border-t-0 border-p-line bg-p-card px-5 py-4 transition hover:bg-p-ink/[0.03]">
-        <span className="portal-label !text-[9px] text-p-ink/40">Growth Chain</span>
+        <span className="portal-label !text-[12px] text-p-ink/70">Growth Chain</span>
         <span className="flex gap-1.5" aria-label={`${chain.unlocked} of 8 elements unlocked`}>
           {chain.elements.map((e) => (
             <span
               key={e.key}
               title={`${e.element.name}: ${e.state}`}
-              className={`flex h-7 w-7 items-center justify-center border text-[10px] font-bold ${
+              className={`flex h-7 w-7 items-center justify-center border text-[13px] font-bold ${
                 e.state === 'unlocked'
                   ? 'border-p-brandink bg-p-brand text-black'
                   : e.state === 'building'
                     ? 'border-p-brandink/60 text-p-brandink'
-                    : 'border-p-ink/15 text-p-ink/30'
+                    : 'border-p-ink/15 text-p-ink/65'
               }`}
             >
               {e.element.symbol}
             </span>
           ))}
         </span>
-        <span className="text-sm text-p-ink/60 transition group-hover:text-p-brandink">
+        <span className="text-base text-p-ink/80 transition group-hover:text-p-brandink">
           {chain.unlocked} of 8 unlocked{constraint ? ` · constraint: ${constraint.element.name}` : ''}
         </span>
       </Link>
@@ -265,13 +265,13 @@ export default function PortalDashboard() {
             {steps.map((s, i) => (
               <li key={s.href + s.title}>
                 <Link href={s.href} className="group flex items-center gap-5 py-5 transition hover:bg-p-ink/[0.02]">
-                  <span className="portal-label w-6 shrink-0 !text-[10px] text-p-ink/25">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="portal-label w-6 shrink-0 !text-[13px] text-p-ink/65">{String(i + 1).padStart(2, '0')}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="portal-label block !text-[9px] text-p-ink/40">{s.kicker}</span>
-                    <span className="mt-1.5 block text-lg font-semibold text-p-ink transition group-hover:text-p-brandink">{s.title}</span>
-                    {s.detail && <span className="mt-1 block text-sm text-p-ink/50">{s.detail}</span>}
+                    <span className="portal-label block !text-[12px] text-p-ink/70">{s.kicker}</span>
+                    <span className="mt-1.5 block text-xl font-semibold text-p-ink transition group-hover:text-p-brandink">{s.title}</span>
+                    {s.detail && <span className="mt-1 block text-base text-p-ink/75">{s.detail}</span>}
                   </span>
-                  <span className="shrink-0 text-p-ink/30 transition group-hover:translate-x-1 group-hover:text-p-brandink">
+                  <span className="shrink-0 text-p-ink/65 transition group-hover:translate-x-1 group-hover:text-p-brandink">
                     <Arrow />
                   </span>
                 </Link>
@@ -286,7 +286,7 @@ export default function PortalDashboard() {
           <div className="flex items-end justify-between gap-4">
             <span className="portal-label block text-p-brandink">Your build</span>
             {phases.length > 0 && (
-              <Link href="/portal/delivery" className="portal-label !text-[9px] text-p-ink/40 transition hover:text-p-brandink">
+              <Link href="/portal/delivery" className="portal-label !text-[12px] text-p-ink/70 transition hover:text-p-brandink">
                 All phases
               </Link>
             )}
@@ -302,8 +302,8 @@ export default function PortalDashboard() {
             <Card className="mt-4">
               <div className="border-b border-p-line p-5">
                 <div className="flex items-baseline justify-between gap-4">
-                  <p className="text-sm text-p-ink">{client.plan_label ?? 'Your build'}</p>
-                  <p className="portal-label !text-[9px] text-p-ink/40">
+                  <p className="text-base text-p-ink">{client.plan_label ?? 'Your build'}</p>
+                  <p className="portal-label !text-[12px] text-p-ink/70">
                     {Math.round((phasesDone / phases.length) * 100)}% complete
                   </p>
                 </div>
@@ -327,9 +327,9 @@ export default function PortalDashboard() {
                       aria-hidden="true"
                     />
                     <span className="min-w-0 flex-1">
-                      <span className={`block truncate text-sm ${p.status === 'done' ? 'text-p-ink/50' : 'text-p-ink'}`}>{p.title}</span>
+                      <span className={`block break-words text-base ${p.status === 'done' ? 'text-p-ink/75' : 'text-p-ink'}`}>{p.title}</span>
                       {(p.owner || p.due_label) && (
-                        <span className="mt-0.5 block truncate text-xs text-p-ink/35">
+                        <span className="mt-0.5 block break-words text-sm text-p-ink/65">
                           {[p.owner, p.due_label].filter(Boolean).join(' · ')}
                         </span>
                       )}
@@ -360,8 +360,8 @@ export default function PortalDashboard() {
               {activity.slice(0, 6).map((a) => (
                 <li key={a.id} className="relative pb-6 pl-6 last:pb-0">
                   <span className="absolute -left-[3px] top-1.5 h-[5px] w-[5px] bg-p-brand" aria-hidden="true" />
-                  <p className="text-sm text-p-ink">{a.title}</p>
-                  <p className="portal-label mt-1.5 !text-[8.5px] text-p-ink/35">
+                  <p className="text-base text-p-ink">{a.title}</p>
+                  <p className="portal-label mt-1.5 !text-[11px] text-p-ink/65">
                     {[a.kind, a.happened_at ? formatDate(a.happened_at) : ''].filter(Boolean).join(' · ')}
                   </p>
                 </li>

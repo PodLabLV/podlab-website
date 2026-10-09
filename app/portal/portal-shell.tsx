@@ -70,7 +70,7 @@ function PortalShell({ children }: { children: React.ReactNode }) {
           <div className="h-px overflow-hidden bg-p-line">
             <div className="h-full w-1/3 animate-pulse bg-p-brand" />
           </div>
-          <p className="portal-label mt-4 text-center !text-[9px] text-p-ink/40">Opening portal</p>
+          <p className="portal-label mt-4 text-center !text-[12px] text-p-ink/70">Opening portal</p>
         </div>
       </div>
     );
@@ -85,7 +85,7 @@ function PortalShell({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-svh w-64 flex-col border-r border-p-line bg-p-paper transition-transform duration-300 lg:sticky ${
+        className={`fixed left-0 top-0 z-50 flex h-svh w-72 flex-col border-r border-p-line bg-p-paper transition-transform duration-300 lg:sticky ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -100,21 +100,21 @@ function PortalShell({ children }: { children: React.ReactNode }) {
         <div className="border-t border-p-line px-6 py-5">
           {user && (
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center border border-p-brandink/40 text-xs font-bold text-p-brandink">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center border border-p-brandink/40 text-sm font-bold text-p-brandink">
                 {user.initials}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-p-ink">
+                <p className="break-words text-base font-medium text-p-ink">
                   {user.firstName} {user.lastName}
                 </p>
-                <p className="truncate text-xs text-p-ink/40">{businessName || user.email}</p>
+                <p className="break-words text-sm text-p-ink/70">{businessName || user.email}</p>
               </div>
             </div>
           )}
           <div className="mt-4 flex items-center justify-between">
             <button
               onClick={handleLogout}
-              className="portal-label !text-[9px] text-p-ink/40 transition hover:text-p-brandink"
+              className="portal-label !text-[12px] text-p-ink/70 transition hover:text-p-brandink"
             >
               Sign out
             </button>
@@ -122,7 +122,7 @@ function PortalShell({ children }: { children: React.ReactNode }) {
               onClick={toggleTheme}
               aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
               title={theme === 'light' ? 'Dark mode' : 'Light mode'}
-              className="portal-label flex items-center gap-1.5 border border-p-line px-2.5 py-1.5 !text-[8.5px] text-p-ink/55 transition hover:border-p-brandink hover:text-p-brandink"
+              className="portal-label flex items-center gap-1.5 border border-p-line px-2.5 py-1.5 !text-[11px] text-p-ink/75 transition hover:border-p-brandink hover:text-p-brandink"
             >
               {theme === 'light' ? (
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">

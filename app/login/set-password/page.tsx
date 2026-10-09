@@ -10,7 +10,7 @@ import { getSupabaseBrowser } from '@/lib/supabase-browser';
 // token in a cookie). One step: choose a password, and you are in.
 
 const inputClass =
-  'w-full border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3.5 text-[15px] text-[#eeeeee] placeholder:text-[#eeeeee]/25 transition focus:border-[#2add1b] focus:outline-none';
+  'w-full border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3.5 text-[17px] text-[#eeeeee] placeholder:text-[#eeeeee]/65 transition focus:border-[#2add1b] focus:outline-none';
 
 function SetPassword() {
   const params = useSearchParams();
@@ -93,17 +93,17 @@ function SetPassword() {
 
       {expired ? (
         resent ? (
-          <p role="status" className="mt-8 border-l-2 border-[#2add1b] bg-[#2add1b]/5 px-4 py-3 text-sm text-[#eeeeee]/80">
+          <p role="status" className="mt-8 border-l-2 border-[#2add1b] bg-[#2add1b]/5 px-4 py-3 text-base text-[#eeeeee]/80">
             If that email has a PodLab Portal account, a new link is on its way. Check your inbox and spam.
           </p>
         ) : (
           <>
-            <p className="mt-5 text-base leading-relaxed text-[#eeeeee]/60">
+            <p className="mt-5 text-lg leading-relaxed text-[#eeeeee]/80">
               That link has expired or was already used. Enter your email and we&apos;ll send a new one.
             </p>
             <form onSubmit={resend} className="mt-8 space-y-5">
               <div>
-                <label htmlFor="email" className="portal-label mb-2 block text-[#eeeeee]/50">
+                <label htmlFor="email" className="portal-label mb-2 block text-[#eeeeee]/75">
                   Email
                 </label>
                 <input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" className={inputClass} />
@@ -120,19 +120,19 @@ function SetPassword() {
         )
       ) : (
         <>
-          <p className="mt-5 text-base leading-relaxed text-[#eeeeee]/60">
+          <p className="mt-5 text-lg leading-relaxed text-[#eeeeee]/80">
             {invite
               ? 'Your strategy, your videos in production, your deliverables and your next steps, all in one place. Pick a password to open it.'
               : 'Pick a new password and you’ll go straight to your portal.'}
           </p>
           {error && (
-            <p role="alert" className="mt-8 border-l-2 border-red-500 bg-red-500/5 px-4 py-3 text-sm text-red-300">
+            <p role="alert" className="mt-8 border-l-2 border-red-500 bg-red-500/5 px-4 py-3 text-base text-red-300">
               {error}
             </p>
           )}
           <form onSubmit={submit} className="mt-8 space-y-5">
             <div>
-              <label htmlFor="password" className="portal-label mb-2 block text-[#eeeeee]/50">
+              <label htmlFor="password" className="portal-label mb-2 block text-[#eeeeee]/75">
                 Password
               </label>
               <div className="relative">
@@ -151,15 +151,15 @@ function SetPassword() {
                   type="button"
                   onClick={() => setShow((v) => !v)}
                   aria-label={show ? 'Hide password' : 'Show password'}
-                  className="portal-label absolute inset-y-0 right-0 px-4 !text-[9px] text-[#eeeeee]/40 transition hover:text-[#2add1b]"
+                  className="portal-label absolute inset-y-0 right-0 px-4 !text-[12px] text-[#eeeeee]/70 transition hover:text-[#2add1b]"
                 >
                   {show ? 'Hide' : 'Show'}
                 </button>
               </div>
-              <p className="mt-2 text-xs text-[#eeeeee]/35">At least 8 characters.</p>
+              <p className="mt-2 text-sm text-[#eeeeee]/65">At least 8 characters.</p>
             </div>
             <div>
-              <label htmlFor="confirm" className="portal-label mb-2 block text-[#eeeeee]/50">
+              <label htmlFor="confirm" className="portal-label mb-2 block text-[#eeeeee]/75">
                 Confirm password
               </label>
               <input
@@ -193,16 +193,16 @@ export default function SetPasswordPage() {
         <Link href="/" aria-label="PodLab home">
           <Image src="/portal/podlab-portal-green.png" alt="PodLab Portal" width={720} height={229} priority unoptimized className="h-auto w-[132px] md:w-[156px]" />
         </Link>
-        <Link href="/login" className="portal-label text-[#eeeeee]/50 transition hover:text-[#2add1b]">
+        <Link href="/login" className="portal-label text-[#eeeeee]/75 transition hover:text-[#2add1b]">
           Sign in
         </Link>
       </div>
       <Suspense fallback={null}>
         <SetPassword />
       </Suspense>
-      <p className="mx-auto w-full max-w-md text-xs text-[#eeeeee]/40">
+      <p className="mx-auto w-full max-w-md text-sm text-[#eeeeee]/70">
         Trouble?{' '}
-        <a href="mailto:info@podlablv.com" className="text-[#eeeeee]/70 hover:text-[#2add1b]">
+        <a href="mailto:info@podlablv.com" className="text-[#eeeeee]/85 hover:text-[#2add1b]">
           info@podlablv.com
         </a>
       </p>

@@ -160,12 +160,12 @@ function LevelCard({ nav, clientId, onNavigate, folded, onFold }: { nav: NavPayl
   return (
     <div className={`mx-4 mt-4 border p-4 transition-colors ${levelUp ? 'border-p-brandink bg-p-brand/10' : 'border-p-line bg-p-card'}`}>
       <button onClick={onFold} aria-expanded={!folded} className="flex w-full items-center justify-between gap-2 text-left">
-        <span className="portal-label !text-[9px] text-p-brandink">
+        <span className="portal-label !text-[12px] text-p-brandink">
           {levelUp ? 'Level up · ' : ''}Level {game.level.n} · {game.level.name}
         </span>
         <span className="flex items-center gap-2">
-          <span className="portal-label !text-[8.5px] text-p-ink/35">{game.score} pts</span>
-          <span className="text-p-ink/40">
+          <span className="portal-label !text-[11px] text-p-ink/65">{game.score} pts</span>
+          <span className="text-p-ink/70">
             <Chevron open={!folded} />
           </span>
         </span>
@@ -182,35 +182,35 @@ function LevelCard({ nav, clientId, onNavigate, folded, onFold }: { nav: NavPayl
       </div>
       {!folded && (
       <>
-      <p className="mt-2 text-[11px] text-p-ink/40">{game.level.next === null ? 'Top level. Record once, sell forever.' : `${left} pts to level ${game.level.n + 1}`}</p>
+      <p className="mt-2 text-[14px] text-p-ink/70">{game.level.next === null ? 'Top level. Record once, sell forever.' : `${left} pts to level ${game.level.n + 1}`}</p>
 
       {next ? (
         <Link href={next.href} onClick={onNavigate} className="group mt-3 flex items-center justify-between gap-2 border-t border-p-line pt-3">
           <span className="min-w-0">
-            <span className="portal-label block !text-[8.5px] text-p-ink/35">Next mission</span>
-            <span className="mt-1 block truncate text-[13px] text-p-ink group-hover:text-p-brandink">{next.title}</span>
+            <span className="portal-label block !text-[11px] text-p-ink/65">Next mission</span>
+            <span className="mt-1 block break-words text-[16px] text-p-ink group-hover:text-p-brandink">{next.title}</span>
           </span>
-          <span className="portal-label shrink-0 bg-p-brand px-2 py-1 !text-[8.5px] text-black">+{next.points}</span>
+          <span className="portal-label shrink-0 bg-p-brand px-2 py-1 !text-[11px] text-black">+{next.points}</span>
         </Link>
       ) : (
-        <p className="mt-3 border-t border-p-line pt-3 text-[12px] text-p-ink/55">Nothing waiting on you. We&apos;re building.</p>
+        <p className="mt-3 border-t border-p-line pt-3 text-[15px] text-p-ink/75">Nothing waiting on you. We&apos;re building.</p>
       )}
 
-      <button onClick={() => setOpen(!open)} aria-expanded={open} className="portal-label mt-3 flex items-center gap-1.5 !text-[8.5px] text-p-ink/35 hover:text-p-brandink">
+      <button onClick={() => setOpen(!open)} aria-expanded={open} className="portal-label mt-3 flex items-center gap-1.5 !text-[11px] text-p-ink/65 hover:text-p-brandink">
         All missions <Chevron open={open} />
       </button>
       {open && (
         <ul className="mt-2 space-y-1.5">
           {game.missions.map((m) => (
             <li key={m.key}>
-              <Link href={m.href} onClick={onNavigate} className="flex items-center gap-2 text-[12px] hover:text-p-brandink">
+              <Link href={m.href} onClick={onNavigate} className="flex items-center gap-2 text-[15px] hover:text-p-brandink">
                 <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center border ${earned(m) ? 'border-p-brandink bg-p-brand text-black' : 'border-p-ink/20'}`}>
                   {earned(m) && <Check size={8} />}
                 </span>
-                <span className={`min-w-0 flex-1 truncate ${earned(m) ? 'text-p-ink/40' : 'text-p-ink/75'}`}>
+                <span className={`min-w-0 flex-1 break-words ${earned(m) ? 'text-p-ink/70' : 'text-p-ink/85'}`}>
                   {m.title}
                 </span>
-                <span className="portal-label shrink-0 !text-[8px] text-p-ink/30">
+                <span className="portal-label shrink-0 !text-[11px] text-p-ink/65">
                   {m.count !== undefined ? `${m.count}×${m.points}` : `+${m.points}`}
                 </span>
               </Link>
@@ -229,8 +229,8 @@ export default function SidebarNav({ isStaff, onNavigate }: { isStaff: boolean; 
   const { client } = usePortal();
   const { nav } = useNav();
   const isActive = (href: string) => (href === '/portal' ? pathname === '/portal' : pathname.startsWith(href));
-  // true = folded. Account starts folded; everything else starts open.
-  const [folds, toggleFold] = useFolds({ level: false, account: true });
+  // true = folded. Everything starts open; a reader folds what they don't need.
+  const [folds, toggleFold] = useFolds({ level: false, account: false });
 
   // Without a payload (staff, or the call failed) everything shows: hiding is a nicety, never a lockout.
   const visible = (i: Item) => !nav || !i.show || nav.show[i.show] || isActive(i.href);
@@ -260,7 +260,7 @@ export default function SidebarNav({ isStaff, onNavigate }: { isStaff: boolean; 
                 <button
                   onClick={() => toggleFold(g.key)}
                   aria-expanded={!collapsed}
-                  className="portal-label flex w-full items-center justify-between gap-2 px-6 pb-1.5 !text-[8.5px] text-p-ink/30 hover:text-p-ink/60"
+                  className="portal-label flex w-full items-center justify-between gap-2 px-6 pb-1.5 !text-[11px] text-p-ink/65 hover:text-p-ink/80"
                 >
                   <span>{g.label}</span>
                   <span className="flex items-center gap-2">
@@ -280,13 +280,13 @@ export default function SidebarNav({ isStaff, onNavigate }: { isStaff: boolean; 
                       href={item.href}
                       onClick={onNavigate}
                       aria-current={active ? 'page' : undefined}
-                      className={`flex items-center justify-between gap-3 border-l-2 px-6 py-2 text-sm transition ${
-                        active ? 'border-p-brandink bg-p-brand/[0.06] text-p-ink' : 'border-transparent text-p-ink/55 hover:bg-p-ink/[0.03] hover:text-p-ink'
+                      className={`flex items-center justify-between gap-3 border-l-2 px-6 py-2 text-base transition ${
+                        active ? 'border-p-brandink bg-p-brand/[0.06] text-p-ink' : 'border-transparent text-p-ink/75 hover:bg-p-ink/[0.03] hover:text-p-ink'
                       }`}
                     >
                       <span className="font-medium">{item.label}</span>
                       {badge > 0 ? (
-                        <span className="portal-label flex h-5 min-w-5 items-center justify-center bg-p-brand px-1.5 !text-[9px] text-black" aria-label={`${badge} waiting on you`}>
+                        <span className="portal-label flex h-5 min-w-5 items-center justify-center bg-p-brand px-1.5 !text-[12px] text-black" aria-label={`${badge} waiting on you`}>
                           {badge}
                         </span>
                       ) : done ? (
@@ -294,7 +294,7 @@ export default function SidebarNav({ isStaff, onNavigate }: { isStaff: boolean; 
                           <Check />
                         </span>
                       ) : item.href === '/portal/growth' && nav?.chain.available ? (
-                        <span className="portal-label !text-[8.5px] text-p-ink/35">{nav.chain.unlocked}/8</span>
+                        <span className="portal-label !text-[11px] text-p-ink/65">{nav.chain.unlocked}/8</span>
                       ) : null}
                     </Link>
                   );

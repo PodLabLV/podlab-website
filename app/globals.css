@@ -334,8 +334,9 @@ h1, h2, h3, h4, h5, h6,
 }
 .portal-label {
   font-family: var(--font-michroma), system-ui, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.22em;
+  font-size: 13px;
+  /* Wide tracking reads as style at 9px and as noise at 13px. */
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .portal-drama {

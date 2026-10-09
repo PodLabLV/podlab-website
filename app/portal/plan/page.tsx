@@ -27,7 +27,7 @@ function ProgressBar({ plan }: { plan: GamePlan }) {
         {/* Where the clock is: the number should be at or past this line. */}
         {time !== null && <span className="absolute -top-1 h-4 w-px bg-p-ink/60" style={{ left: `${Math.round(time * 100)}%` }} title="Where the clock is" />}
       </div>
-      <div className="mt-2 flex justify-between text-[11px] text-p-ink/45">
+      <div className="mt-2 flex justify-between text-[14px] text-p-ink/70">
         <span>
           {fmtNumber(plan.current ?? plan.baseline)} of {fmtNumber(plan.target)}
           {plan.metric ? ` ${plan.metric}` : ''}
@@ -45,10 +45,10 @@ function PillarCard({ pillar, plan, actions, readOnly }: { pillar: Pillar; plan:
   if (!plan) {
     return (
       <div className="flex flex-col border border-dashed border-p-ink/15 bg-p-paper p-6">
-        <p className="portal-label !text-[9px] text-p-ink/45">{pillar}</p>
-        <p className="mt-3 text-sm text-p-ink/55">{PILLAR_BLURB[pillar]}</p>
+        <p className="portal-label !text-[12px] text-p-ink/70">{pillar}</p>
+        <p className="mt-3 text-base text-p-ink/75">{PILLAR_BLURB[pillar]}</p>
         {!readOnly && (
-          <button onClick={() => askTipTop(PILLAR_STARTER[pillar])} className="portal-label mt-5 self-start border border-p-brandink/50 px-4 py-2.5 !text-[9.5px] text-p-brandink transition hover:bg-p-brand hover:text-black">
+          <button onClick={() => askTipTop(PILLAR_STARTER[pillar])} className="portal-label mt-5 self-start border border-p-brandink/50 px-4 py-2.5 !text-[12px] text-p-brandink transition hover:bg-p-brand hover:text-black">
             Build it with TipTop
           </button>
         )}
@@ -60,11 +60,11 @@ function PillarCard({ pillar, plan, actions, readOnly }: { pillar: Pillar; plan:
   return (
     <div className="flex flex-col border border-p-line bg-p-card p-6">
       <div className="flex items-start justify-between gap-3">
-        <p className="portal-label !text-[9px] text-p-brandink">{pillar}</p>
-        <span className={`portal-label shrink-0 border px-2 py-1 !text-[8.5px] ${STATUS_TONE[plan.status]}`}>{plan.status}</span>
+        <p className="portal-label !text-[12px] text-p-brandink">{pillar}</p>
+        <span className={`portal-label shrink-0 border px-2 py-1 !text-[11px] ${STATUS_TONE[plan.status]}`}>{plan.status}</span>
       </div>
-      <h2 className="mt-3 text-xl font-bold leading-snug text-p-ink">{plan.outcome}</h2>
-      <p className="mt-1 text-xs text-p-ink/40">{plan.dueOn ? `By ${formatDate(plan.dueOn)}` : 'No finish line yet'}</p>
+      <h2 className="mt-3 text-2xl font-bold leading-snug text-p-ink">{plan.outcome}</h2>
+      <p className="mt-1 text-sm text-p-ink/70">{plan.dueOn ? `By ${formatDate(plan.dueOn)}` : 'No finish line yet'}</p>
 
       <div className="mt-5">
         <ProgressBar plan={plan} />
@@ -72,11 +72,11 @@ function PillarCard({ pillar, plan, actions, readOnly }: { pillar: Pillar; plan:
 
       {plan.priorities.length > 0 && (
         <div className="mt-6">
-          <p className="portal-label !text-[8.5px] text-p-ink/40">Priorities</p>
+          <p className="portal-label !text-[11px] text-p-ink/70">Priorities</p>
           <ol className="mt-2 space-y-1.5">
             {plan.priorities.map((p, i) => (
-              <li key={i} className="flex gap-2.5 text-sm text-p-ink/85">
-                <span className="portal-label mt-0.5 !text-[9px] text-p-brandink">{String(i + 1).padStart(2, '0')}</span>
+              <li key={i} className="flex gap-2.5 text-base text-p-ink/90">
+                <span className="portal-label mt-0.5 !text-[12px] text-p-brandink">{String(i + 1).padStart(2, '0')}</span>
                 {p}
               </li>
             ))}
@@ -85,28 +85,28 @@ function PillarCard({ pillar, plan, actions, readOnly }: { pillar: Pillar; plan:
       )}
 
       <div className="mt-6">
-        <p className="portal-label !text-[8.5px] text-p-ink/40">
+        <p className="portal-label !text-[11px] text-p-ink/70">
           This week · {open.length} open{done ? `, ${done} done` : ''}
         </p>
         {open.length ? (
           <ul className="mt-2 space-y-1.5">
             {open.slice(0, 4).map((a) => (
-              <li key={a.id} className="text-sm text-p-ink/75">
+              <li key={a.id} className="text-base text-p-ink/85">
                 <span className="mr-2 inline-block h-2.5 w-2.5 border border-p-ink/30 align-middle" />
                 {a.title}
-                {a.effort ? <span className="ml-2 text-xs text-p-ink/35">{a.effort}</span> : null}
+                {a.effort ? <span className="ml-2 text-sm text-p-ink/65">{a.effort}</span> : null}
               </li>
             ))}
-            {open.length > 4 && <li className="text-xs text-p-ink/40">and {open.length - 4} more</li>}
+            {open.length > 4 && <li className="text-sm text-p-ink/70">and {open.length - 4} more</li>}
           </ul>
         ) : (
-          <p className="mt-2 text-sm text-p-ink/45">{done ? 'All clear. Ask TipTop for next week’s moves.' : 'No actions yet.'}</p>
+          <p className="mt-2 text-base text-p-ink/70">{done ? 'All clear. Ask TipTop for next week’s moves.' : 'No actions yet.'}</p>
         )}
       </div>
 
       <div className="mt-auto pt-6">
         {plan.lastCheckIn && (
-          <p className="mb-3 border-l-2 border-p-line pl-3 text-xs text-p-ink/50">
+          <p className="mb-3 border-l-2 border-p-line pl-3 text-sm text-p-ink/75">
             {formatDate(plan.lastCheckInAt)}: {plan.lastCheckIn}
           </p>
         )}
@@ -114,11 +114,11 @@ function PillarCard({ pillar, plan, actions, readOnly }: { pillar: Pillar; plan:
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => askTipTop(`Weekly check-in for my ${pillar} plan.`)}
-              className={`portal-label px-4 py-2.5 !text-[9.5px] transition ${due ? 'bg-p-brand text-black hover:bg-p-pop' : 'border border-p-line text-p-ink/70 hover:border-p-brandink hover:text-p-brandink'}`}
+              className={`portal-label px-4 py-2.5 !text-[12px] transition ${due ? 'bg-p-brand text-black hover:bg-p-pop' : 'border border-p-line text-p-ink/85 hover:border-p-brandink hover:text-p-brandink'}`}
             >
               {due ? 'Check-in due' : 'Check in'}
             </button>
-            <Link href="/portal/actions" className="portal-label border border-p-line px-4 py-2.5 !text-[9.5px] text-p-ink/70 transition hover:border-p-brandink hover:text-p-brandink">
+            <Link href="/portal/actions" className="portal-label border border-p-line px-4 py-2.5 !text-[12px] text-p-ink/85 transition hover:border-p-brandink hover:text-p-brandink">
               Action items
             </Link>
           </div>
@@ -157,11 +157,11 @@ function PlanPageInner() {
     return () => window.removeEventListener('portal:refresh', load);
   }, [load]);
 
-  if (loading) return <p className="text-sm text-p-ink/40">Loading...</p>;
+  if (loading) return <p className="text-base text-p-ink/70">Loading...</p>;
   if (isStaff && !staffClient) return <EmptyState title="Pick a client" body="Open a client from Clients · staff to see their game plan." />;
   if (!client && !staffClient) return <EmptyState title="Account not set up yet" body="Once PodLab sets up your portal, your game plan lives here." />;
   if (error) return <EmptyState title="Could not load your game plan" body={error} />;
-  if (!data) return <p className="portal-label !text-[9px] text-p-ink/40">Loading your game plan</p>;
+  if (!data) return <p className="portal-label !text-[12px] text-p-ink/70">Loading your game plan</p>;
   if (!data.ready) return <EmptyState title="Almost ready" body="The Game Plan is being switched on for your account. Check back shortly." />;
 
   const byPillar = new Map(data.plans.map((p) => [p.pillar, p]));
@@ -176,8 +176,8 @@ function PlanPageInner() {
       />
       {set === 0 && !staffClient && (
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-l-2 border-p-brandink bg-p-brand/5 px-5 py-4">
-          <p className="text-sm text-p-ink/80">Start with the part of the business that&apos;s holding the rest back. TipTop will ask a few questions, do the math, and put the first moves on your list.</p>
-          <button onClick={() => askTipTop("Help me build my 90-day game plan. Where should I start?")} className="portal-label bg-p-brand px-5 py-3 !text-[10px] text-black transition hover:bg-p-pop">
+          <p className="text-base text-p-ink/90">Start with the part of the business that&apos;s holding the rest back. TipTop will ask a few questions, do the math, and put the first moves on your list.</p>
+          <button onClick={() => askTipTop("Help me build my 90-day game plan. Where should I start?")} className="portal-label bg-p-brand px-5 py-3 !text-[13px] text-black transition hover:bg-p-pop">
             Build my game plan
           </button>
         </div>
@@ -193,7 +193,7 @@ function PlanPageInner() {
 
 export default function GamePlanPage() {
   return (
-    <Suspense fallback={<p className="portal-label !text-[9px] text-p-ink/40">Loading your game plan</p>}>
+    <Suspense fallback={<p className="portal-label !text-[12px] text-p-ink/70">Loading your game plan</p>}>
       <PlanPageInner />
     </Suspense>
   );

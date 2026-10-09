@@ -26,7 +26,7 @@ export default function DeliveredList({ limit }: { limit?: number }) {
       .catch(() => setItems([]));
   }, [accessToken, client]);
 
-  if (items === null) return <p className="portal-label !text-[9px] text-p-ink/35">Loading</p>;
+  if (items === null) return <p className="portal-label !text-[12px] text-p-ink/65">Loading</p>;
   if (items.length === 0) {
     return <EmptyState title="Nothing delivered yet" body="Every finished video, approved file and completed phase lands here with its date." />;
   }
@@ -43,17 +43,17 @@ export default function DeliveredList({ limit }: { limit?: number }) {
               </svg>
             </span>
             <Link href={it.href} className="group min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-p-ink transition group-hover:text-p-brandink">{it.title}</span>
-              <span className="portal-label mt-1 block !text-[8.5px] text-p-ink/35">
+              <span className="block break-words text-base font-medium text-p-ink transition group-hover:text-p-brandink">{it.title}</span>
+              <span className="portal-label mt-1 block !text-[11px] text-p-ink/65">
                 {KIND[it.kind]} · {it.detail}
               </span>
             </Link>
-            <span className="portal-label shrink-0 !text-[8.5px] text-p-ink/35">{it.at ? formatDate(it.at) : ''}</span>
+            <span className="portal-label shrink-0 !text-[11px] text-p-ink/65">{it.at ? formatDate(it.at) : ''}</span>
           </li>
         ))}
       </ol>
       {limit && items.length > limit && (
-        <Link href="/portal/progress" className="portal-label mt-3 inline-block !text-[9px] text-p-ink/40 transition hover:text-p-brandink">
+        <Link href="/portal/progress" className="portal-label mt-3 inline-block !text-[12px] text-p-ink/70 transition hover:text-p-brandink">
           All {items.length} deliveries
         </Link>
       )}
