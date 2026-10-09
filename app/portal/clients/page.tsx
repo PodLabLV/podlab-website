@@ -15,10 +15,10 @@ const ACCESS_LABEL: Record<StaffClientRow['access'], string> = {
 function AccessTag({ access }: { access: StaffClientRow['access'] }) {
   const tone =
     access === 'active'
-      ? 'border-[#2add1b] bg-[#2add1b] text-black'
+      ? 'border-p-brandink bg-p-brand text-black'
       : access === 'invited'
-        ? 'border-[#2add1b]/50 text-[#2add1b]'
-        : 'border-[#eeeeee]/15 text-[#eeeeee]/45';
+        ? 'border-p-brandink/50 text-p-brandink'
+        : 'border-p-ink/15 text-p-ink/45';
   return <span className={`portal-label inline-block shrink-0 border px-2 py-1 !text-[8.5px] ${tone}`}>{ACCESS_LABEL[access]}</span>;
 }
 
@@ -78,24 +78,24 @@ function ClientRow({ c, token, onDone }: { c: StaffClientRow; token: string; onD
           : 'Never invited';
 
   return (
-    <li className="grid gap-4 bg-black p-5 lg:grid-cols-[1.2fr_1.4fr_auto] lg:items-center">
+    <li className="grid gap-4 bg-p-paper p-5 lg:grid-cols-[1.2fr_1.4fr_auto] lg:items-center">
       <div className="min-w-0">
         <div className="flex items-center gap-3">
-          <p className="truncate text-[15px] font-semibold text-[#eeeeee]">{c.businessName}</p>
+          <p className="truncate text-[15px] font-semibold text-p-ink">{c.businessName}</p>
           <AccessTag access={c.access} />
         </div>
-        <p className="mt-1 truncate text-xs text-[#eeeeee]/45">
+        <p className="mt-1 truncate text-xs text-p-ink/45">
           {[c.name, c.planLabel].filter(Boolean).join(' · ') || ' '}
         </p>
-        <p className="portal-label mt-2 !text-[8.5px] text-[#eeeeee]/30">
+        <p className="portal-label mt-2 !text-[8.5px] text-p-ink/30">
           {when} ·{' '}
-          <Link href={`/portal/clients/${c.id}`} className="text-[#2add1b] hover:text-[#eeeeee]">
+          <Link href={`/portal/clients/${c.id}`} className="text-p-brandink hover:text-p-ink">
             Manage
           </Link>
           {c.driveFolderUrl && (
             <>
               {' · '}
-              <a href={c.driveFolderUrl} target="_blank" rel="noopener noreferrer" className="text-[#2add1b] hover:text-[#eeeeee]">
+              <a href={c.driveFolderUrl} target="_blank" rel="noopener noreferrer" className="text-p-brandink hover:text-p-ink">
                 Drive ↗
               </a>
             </>
@@ -113,7 +113,7 @@ function ClientRow({ c, token, onDone }: { c: StaffClientRow; token: string; onD
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="client@company.com"
-          className="w-full border border-[#1a1a1a] bg-[#0a0a0a] px-3 py-2.5 text-sm text-[#eeeeee] placeholder:text-[#eeeeee]/25 focus:border-[#2add1b] focus:outline-none"
+          className="w-full border border-p-line bg-p-card px-3 py-2.5 text-sm text-p-ink placeholder:text-p-ink/25 focus:border-p-brandink focus:outline-none"
         />
       </div>
 
@@ -121,17 +121,17 @@ function ClientRow({ c, token, onDone }: { c: StaffClientRow; token: string; onD
         onClick={invite}
         disabled={busy || !email.trim()}
         className={`portal-label px-5 py-3 !text-[9.5px] transition disabled:cursor-not-allowed disabled:opacity-40 ${
-          c.access === 'none' ? 'bg-[#2add1b] text-black hover:bg-[#eeeeee]' : 'border border-[#1a1a1a] text-[#eeeeee]/70 hover:border-[#2add1b] hover:text-[#2add1b]'
+          c.access === 'none' ? 'bg-p-brand text-black hover:bg-p-pop' : 'border border-p-line text-p-ink/70 hover:border-p-brandink hover:text-p-brandink'
         }`}
       >
         {busy ? 'Sending' : c.access === 'none' ? 'Send invite' : 'Send new link'}
       </button>
 
       {result && (
-        <div className={`lg:col-span-3 border-l-2 px-4 py-3 text-sm ${result.ok ? 'border-[#2add1b] bg-[#2add1b]/5 text-[#eeeeee]/80' : 'border-yellow-300 bg-yellow-300/5 text-[#eeeeee]/80'}`}>
+        <div className={`lg:col-span-3 border-l-2 px-4 py-3 text-sm ${result.ok ? 'border-p-brandink bg-p-brand/5 text-p-ink/80' : 'border-p-warn bg-p-warn/5 text-p-ink/80'}`}>
           <p>{result.text}</p>
           {result.link && (
-            <button onClick={() => copy(result.link!)} className="portal-label mt-2 !text-[9px] text-[#2add1b] hover:text-[#eeeeee]">
+            <button onClick={() => copy(result.link!)} className="portal-label mt-2 !text-[9px] text-p-brandink hover:text-p-ink">
               {copied ? 'Link copied' : 'Copy the link'}
             </button>
           )}
@@ -159,7 +159,7 @@ export default function StaffClientsPage() {
 
   useEffect(load, [load]);
 
-  if (loading || (!clients && !error)) return <p className="portal-label !text-[9px] text-[#eeeeee]/40">Loading clients</p>;
+  if (loading || (!clients && !error)) return <p className="portal-label !text-[9px] text-p-ink/40">Loading clients</p>;
 
   if (error) {
     return (
@@ -184,16 +184,16 @@ export default function StaffClientsPage() {
         subtitle="Send a client their portal invite, or a fresh link if they're locked out. The email goes from info@; if it doesn't land, copy the link and text it."
       />
 
-      <div className="grid grid-cols-3 gap-px border border-[#1a1a1a] bg-[#1a1a1a]">
+      <div className="grid grid-cols-3 gap-px border border-p-line bg-p-line">
         {(['active', 'invited', 'none'] as const).map((a) => (
-          <div key={a} className="bg-black p-5">
-            <p className="portal-label !text-[9px] text-[#eeeeee]/40">{ACCESS_LABEL[a]}</p>
-            <p className={`mt-3 text-3xl font-bold tracking-tight ${a === 'active' ? 'text-[#2add1b]' : 'text-[#eeeeee]'}`}>{count(a)}</p>
+          <div key={a} className="bg-p-paper p-5">
+            <p className="portal-label !text-[9px] text-p-ink/40">{ACCESS_LABEL[a]}</p>
+            <p className={`mt-3 text-3xl font-bold tracking-tight ${a === 'active' ? 'text-p-brandink' : 'text-p-ink'}`}>{count(a)}</p>
           </div>
         ))}
       </div>
 
-      <ul className="mt-8 divide-y divide-[#1a1a1a] border border-[#1a1a1a]">
+      <ul className="mt-8 divide-y divide-p-line border border-p-line">
         {clients!.map((c) => (
           <ClientRow key={c.id} c={c} token={accessToken!} onDone={load} />
         ))}

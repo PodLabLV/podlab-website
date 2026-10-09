@@ -92,7 +92,7 @@ export default function PortalDashboard() {
   const waiting = useWaitingOnClient(client?.id, accessToken);
 
   if (loading) {
-    return <p className="portal-label !text-[9px] text-[#eeeeee]/40">Loading your portal</p>;
+    return <p className="portal-label !text-[9px] text-p-ink/40">Loading your portal</p>;
   }
 
   if (error) {
@@ -119,7 +119,7 @@ export default function PortalDashboard() {
           {isStaff && (
             <a
               href="/portal/clients"
-              className="portal-label mt-6 inline-flex items-center gap-3 border border-[#1a1a1a] px-5 py-3 !text-[10px] text-[#eeeeee]/70 transition hover:border-[#2add1b] hover:text-[#2add1b]"
+              className="portal-label mt-6 inline-flex items-center gap-3 border border-p-line px-5 py-3 !text-[10px] text-p-ink/70 transition hover:border-p-brandink hover:text-p-brandink"
             >
               Invite clients to the portal →
             </a>
@@ -218,24 +218,24 @@ export default function PortalDashboard() {
       />
 
       {client.welcome_note && (
-        <p className="-mt-4 mb-10 max-w-3xl border-l-2 border-[#2add1b] pl-5 text-base leading-relaxed text-[#eeeeee]/80">
+        <p className="-mt-4 mb-10 max-w-3xl border-l-2 border-p-brandink pl-5 text-base leading-relaxed text-p-ink/80">
           {client.welcome_note}
         </p>
       )}
 
       {/* Stat strip: hairline-ruled cells, the site's grid language. */}
-      <div className="grid grid-cols-2 gap-px border border-[#1a1a1a] bg-[#1a1a1a] lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-px border border-p-line bg-p-line lg:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label} className="bg-black p-5 md:p-6">
-            <p className="portal-label !text-[9px] text-[#eeeeee]/40">{s.label}</p>
-            <p className="mt-3 text-3xl font-bold tracking-tight text-[#eeeeee] md:text-4xl">{s.value}</p>
+          <div key={s.label} className="bg-p-paper p-5 md:p-6">
+            <p className="portal-label !text-[9px] text-p-ink/40">{s.label}</p>
+            <p className="mt-3 text-3xl font-bold tracking-tight text-p-ink md:text-4xl">{s.value}</p>
           </div>
         ))}
       </div>
 
       {/* The chain at a glance: one square per element, in order. */}
-      <Link href="/portal/growth" className="group mt-px flex flex-wrap items-center gap-x-6 gap-y-3 border border-t-0 border-[#1a1a1a] bg-[#0a0a0a] px-5 py-4 transition hover:bg-[#0f0f0f]">
-        <span className="portal-label !text-[9px] text-[#eeeeee]/40">Growth Chain</span>
+      <Link href="/portal/growth" className="group mt-px flex flex-wrap items-center gap-x-6 gap-y-3 border border-t-0 border-p-line bg-p-card px-5 py-4 transition hover:bg-p-ink/[0.03]">
+        <span className="portal-label !text-[9px] text-p-ink/40">Growth Chain</span>
         <span className="flex gap-1.5" aria-label={`${chain.unlocked} of 8 elements unlocked`}>
           {chain.elements.map((e) => (
             <span
@@ -243,35 +243,35 @@ export default function PortalDashboard() {
               title={`${e.element.name}: ${e.state}`}
               className={`flex h-7 w-7 items-center justify-center border text-[10px] font-bold ${
                 e.state === 'unlocked'
-                  ? 'border-[#2add1b] bg-[#2add1b] text-black'
+                  ? 'border-p-brandink bg-p-brand text-black'
                   : e.state === 'building'
-                    ? 'border-[#2add1b]/60 text-[#2add1b]'
-                    : 'border-[#eeeeee]/15 text-[#eeeeee]/30'
+                    ? 'border-p-brandink/60 text-p-brandink'
+                    : 'border-p-ink/15 text-p-ink/30'
               }`}
             >
               {e.element.symbol}
             </span>
           ))}
         </span>
-        <span className="text-sm text-[#eeeeee]/60 transition group-hover:text-[#2add1b]">
+        <span className="text-sm text-p-ink/60 transition group-hover:text-p-brandink">
           {chain.unlocked} of 8 unlocked{constraint ? ` · constraint: ${constraint.element.name}` : ''}
         </span>
       </Link>
 
       {steps.length > 0 && (
         <section className="mt-12">
-          <span className="portal-label block text-[#2add1b]">Next up</span>
-          <ul className="mt-4 divide-y divide-[#1a1a1a] border-y border-[#1a1a1a]">
+          <span className="portal-label block text-p-brandink">Next up</span>
+          <ul className="mt-4 divide-y divide-p-line border-y border-p-line">
             {steps.map((s, i) => (
               <li key={s.href + s.title}>
-                <Link href={s.href} className="group flex items-center gap-5 py-5 transition hover:bg-white/[0.02]">
-                  <span className="portal-label w-6 shrink-0 !text-[10px] text-[#eeeeee]/25">{String(i + 1).padStart(2, '0')}</span>
+                <Link href={s.href} className="group flex items-center gap-5 py-5 transition hover:bg-p-ink/[0.02]">
+                  <span className="portal-label w-6 shrink-0 !text-[10px] text-p-ink/25">{String(i + 1).padStart(2, '0')}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="portal-label block !text-[9px] text-[#eeeeee]/40">{s.kicker}</span>
-                    <span className="mt-1.5 block text-lg font-semibold text-[#eeeeee] transition group-hover:text-[#2add1b]">{s.title}</span>
-                    {s.detail && <span className="mt-1 block text-sm text-[#eeeeee]/50">{s.detail}</span>}
+                    <span className="portal-label block !text-[9px] text-p-ink/40">{s.kicker}</span>
+                    <span className="mt-1.5 block text-lg font-semibold text-p-ink transition group-hover:text-p-brandink">{s.title}</span>
+                    {s.detail && <span className="mt-1 block text-sm text-p-ink/50">{s.detail}</span>}
                   </span>
-                  <span className="shrink-0 text-[#eeeeee]/30 transition group-hover:translate-x-1 group-hover:text-[#2add1b]">
+                  <span className="shrink-0 text-p-ink/30 transition group-hover:translate-x-1 group-hover:text-p-brandink">
                     <Arrow />
                   </span>
                 </Link>
@@ -284,9 +284,9 @@ export default function PortalDashboard() {
       <div className="mt-12 grid gap-10 lg:grid-cols-5">
         <section className="lg:col-span-3">
           <div className="flex items-end justify-between gap-4">
-            <span className="portal-label block text-[#2add1b]">Your build</span>
+            <span className="portal-label block text-p-brandink">Your build</span>
             {phases.length > 0 && (
-              <Link href="/portal/delivery" className="portal-label !text-[9px] text-[#eeeeee]/40 transition hover:text-[#2add1b]">
+              <Link href="/portal/delivery" className="portal-label !text-[9px] text-p-ink/40 transition hover:text-p-brandink">
                 All phases
               </Link>
             )}
@@ -300,36 +300,36 @@ export default function PortalDashboard() {
             </div>
           ) : (
             <Card className="mt-4">
-              <div className="border-b border-[#1a1a1a] p-5">
+              <div className="border-b border-p-line p-5">
                 <div className="flex items-baseline justify-between gap-4">
-                  <p className="text-sm text-[#eeeeee]">{client.plan_label ?? 'Your build'}</p>
-                  <p className="portal-label !text-[9px] text-[#eeeeee]/40">
+                  <p className="text-sm text-p-ink">{client.plan_label ?? 'Your build'}</p>
+                  <p className="portal-label !text-[9px] text-p-ink/40">
                     {Math.round((phasesDone / phases.length) * 100)}% complete
                   </p>
                 </div>
-                <div className="mt-3 h-px bg-[#1a1a1a]">
-                  <div className="h-px bg-[#2add1b] transition-[width] duration-500" style={{ width: `${(phasesDone / phases.length) * 100}%` }} />
+                <div className="mt-3 h-px bg-p-line">
+                  <div className="h-px bg-p-brand transition-[width] duration-500" style={{ width: `${(phasesDone / phases.length) * 100}%` }} />
                 </div>
               </div>
-              <ol className="divide-y divide-[#1a1a1a]">
+              <ol className="divide-y divide-p-line">
                 {phases.slice(0, 6).map((p) => (
                   <li key={p.id} className="flex items-center gap-4 px-5 py-4">
                     <span
                       className={`h-2 w-2 shrink-0 ${
                         p.status === 'done'
-                          ? 'bg-[#2add1b]'
+                          ? 'bg-p-brand'
                           : p.status === 'in progress'
-                            ? 'border border-[#2add1b] bg-[#2add1b]/30'
+                            ? 'border border-p-brandink bg-p-brand/30'
                             : p.status === 'blocked'
-                              ? 'bg-red-400'
-                              : 'border border-[#eeeeee]/25'
+                              ? 'bg-p-bad'
+                              : 'border border-p-ink/25'
                       }`}
                       aria-hidden="true"
                     />
                     <span className="min-w-0 flex-1">
-                      <span className={`block truncate text-sm ${p.status === 'done' ? 'text-[#eeeeee]/50' : 'text-[#eeeeee]'}`}>{p.title}</span>
+                      <span className={`block truncate text-sm ${p.status === 'done' ? 'text-p-ink/50' : 'text-p-ink'}`}>{p.title}</span>
                       {(p.owner || p.due_label) && (
-                        <span className="mt-0.5 block truncate text-xs text-[#eeeeee]/35">
+                        <span className="mt-0.5 block truncate text-xs text-p-ink/35">
                           {[p.owner, p.due_label].filter(Boolean).join(' · ')}
                         </span>
                       )}
@@ -343,11 +343,11 @@ export default function PortalDashboard() {
         </section>
 
         <section className="lg:col-span-2">
-          <span className="portal-label block text-[#2add1b]">Delivered</span>
+          <span className="portal-label block text-p-brandink">Delivered</span>
           <div className="mt-4">
             <DeliveredList limit={5} />
           </div>
-          <span className="portal-label mt-10 block text-[#2add1b]">Recent activity</span>
+          <span className="portal-label mt-10 block text-p-brandink">Recent activity</span>
           {activity.length === 0 ? (
             <div className="mt-4">
               <EmptyState
@@ -356,12 +356,12 @@ export default function PortalDashboard() {
               />
             </div>
           ) : (
-            <ol className="mt-4 border-l border-[#1a1a1a]">
+            <ol className="mt-4 border-l border-p-line">
               {activity.slice(0, 6).map((a) => (
                 <li key={a.id} className="relative pb-6 pl-6 last:pb-0">
-                  <span className="absolute -left-[3px] top-1.5 h-[5px] w-[5px] bg-[#2add1b]" aria-hidden="true" />
-                  <p className="text-sm text-[#eeeeee]">{a.title}</p>
-                  <p className="portal-label mt-1.5 !text-[8.5px] text-[#eeeeee]/35">
+                  <span className="absolute -left-[3px] top-1.5 h-[5px] w-[5px] bg-p-brand" aria-hidden="true" />
+                  <p className="text-sm text-p-ink">{a.title}</p>
+                  <p className="portal-label mt-1.5 !text-[8.5px] text-p-ink/35">
                     {[a.kind, a.happened_at ? formatDate(a.happened_at) : ''].filter(Boolean).join(' · ')}
                   </p>
                 </li>

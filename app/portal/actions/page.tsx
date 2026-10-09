@@ -9,7 +9,7 @@ export default function ActionItemsPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  if (loading) return <p className="text-white/40 text-sm">Loading...</p>;
+  if (loading) return <p className="text-p-ink/40 text-sm">Loading...</p>;
 
   if (!client || actionItems.length === 0) {
     return (
@@ -60,22 +60,22 @@ export default function ActionItemsPage() {
 
       <Card className="p-5 mb-6">
         <div className="flex items-center justify-between gap-4">
-          <p className="font-display text-[10px] uppercase tracking-widest text-white/40">
+          <p className="font-display text-[10px] uppercase tracking-widest text-p-ink/40">
             Progress
           </p>
-          <p className="text-white text-sm font-semibold">
+          <p className="text-p-ink text-sm font-semibold">
             {done} of {actionItems.length} complete
           </p>
         </div>
-        <div className="mt-3 h-1.5 rounded-full bg-white/10 overflow-hidden">
+        <div className="mt-3 h-1.5 rounded-full bg-p-ink/10 overflow-hidden">
           <div
-            className="h-full bg-[#2ADD1B] transition-all duration-500"
+            className="h-full bg-p-brand transition-all duration-500"
             style={{ width: `${(done / actionItems.length) * 100}%` }}
           />
         </div>
       </Card>
 
-      {error && <p className="text-red-400 text-xs mb-4">{error}</p>}
+      {error && <p className="text-p-bad text-xs mb-4">{error}</p>}
 
       <div className="space-y-4">
         {actionItems.map((item, i) => {
@@ -93,8 +93,8 @@ export default function ActionItemsPage() {
                   aria-label={complete ? `Reopen: ${item.title}` : `Complete: ${item.title}`}
                   className={`mt-0.5 shrink-0 w-6 h-6 rounded-lg border flex items-center justify-center transition disabled:opacity-50 ${
                     complete
-                      ? 'bg-[#2ADD1B] border-[#2ADD1B] text-black'
-                      : 'border-white/25 hover:border-[#2ADD1B] text-transparent'
+                      ? 'bg-p-brand border-p-brandink text-black'
+                      : 'border-p-ink/25 hover:border-p-brandink text-transparent'
                   }`}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -104,31 +104,31 @@ export default function ActionItemsPage() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="font-display text-[10px] uppercase tracking-widest text-[#2ADD1B]">
+                    <span className="font-display text-[10px] uppercase tracking-widest text-p-brandink">
                       Action {String(i + 1).padStart(2, '0')}
                     </span>
                     {item.effort && (
-                      <span className="font-display text-[10px] uppercase tracking-widest text-white/30">
+                      <span className="font-display text-[10px] uppercase tracking-widest text-p-ink/30">
                         {item.effort}
                       </span>
                     )}
                   </div>
                   <p
-                    className={`text-white text-sm font-semibold mt-1.5 ${
+                    className={`text-p-ink text-sm font-semibold mt-1.5 ${
                       complete ? 'line-through decoration-white/30' : ''
                     }`}
                   >
                     {item.title}
                   </p>
                   {item.detail && (
-                    <p className="text-white/50 text-sm mt-2.5 leading-relaxed whitespace-pre-wrap">
+                    <p className="text-p-ink/50 text-sm mt-2.5 leading-relaxed whitespace-pre-wrap">
                       {item.detail}
                     </p>
                   )}
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[11px] text-white/25">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[11px] text-p-ink/25">
                     {item.source && <span>{item.source}</span>}
                     {complete && item.completed_at && (
-                      <span className="text-[#2ADD1B]/70">
+                      <span className="text-p-brandink/70">
                         Completed {formatDate(item.completed_at)}
                       </span>
                     )}

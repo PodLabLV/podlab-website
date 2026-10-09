@@ -86,29 +86,29 @@ export default function Teleprompter({ title, body, onClose }: TeleprompterProps
   }, [close]);
 
   const ctrl =
-    'portal-label flex h-12 min-w-12 items-center justify-center border border-[#1a1a1a] px-4 !text-[10px] text-[#eeeeee]/70 transition hover:border-[#2add1b] hover:text-[#2add1b] disabled:opacity-30';
+    'portal-label flex h-12 min-w-12 items-center justify-center border border-p-line px-4 !text-[10px] text-p-ink/70 transition hover:border-p-brandink hover:text-p-brandink disabled:opacity-30';
 
   // Portaled to <body>: an ancestor in the portal layout is transformed, which
   // would otherwise trap position:fixed inside the content column.
   return createPortal(
-    <div role="dialog" aria-modal="true" aria-label={`Teleprompter: ${title}`} className="fixed inset-0 bg-black" style={{ zIndex: 2147483000 }}>
+    <div role="dialog" aria-modal="true" aria-label={`Teleprompter: ${title}`} className="fixed inset-0 bg-p-paper" style={{ zIndex: 2147483000 }}>
       {/* .portal sets position:relative, so it goes on the inner box, not the fixed one. */}
       <div className="portal flex h-full flex-col">
-      <div className="flex items-center justify-between gap-4 border-b border-[#1a1a1a] px-4 py-3 sm:px-6">
-        <p className="portal-label truncate !text-[9px] text-[#eeeeee]/40">{title}</p>
+      <div className="flex items-center justify-between gap-4 border-b border-p-line px-4 py-3 sm:px-6">
+        <p className="portal-label truncate !text-[9px] text-p-ink/40">{title}</p>
         <button onClick={close} className={ctrl}>
           Close
         </button>
       </div>
 
       {/* Center reading line */}
-      <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-px bg-[#2add1b]/25" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-px bg-p-brand/25" aria-hidden="true" />
 
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-5 sm:px-12">
         {/* Padding lives inside the scroller; on the scroller itself it can't shrink and pushes the controls off screen. */}
         <div className="py-[45vh]">
         <p
-          className="mx-auto max-w-4xl whitespace-pre-wrap text-center text-[34px] font-semibold leading-[1.5] text-[#eeeeee] sm:text-6xl sm:leading-[1.45]"
+          className="mx-auto max-w-4xl whitespace-pre-wrap text-center text-[34px] font-semibold leading-[1.5] text-p-ink sm:text-6xl sm:leading-[1.45]"
           style={mirror ? { transform: 'scaleX(-1)' } : undefined}
         >
           {body}
@@ -116,17 +116,17 @@ export default function Teleprompter({ title, body, onClose }: TeleprompterProps
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-2 border-t border-[#1a1a1a] px-4 py-3 sm:gap-3">
+      <div className="flex flex-wrap items-center justify-center gap-2 border-t border-p-line px-4 py-3 sm:gap-3">
         <button
           onClick={() => setPlaying((p) => !p)}
-          className="portal-label flex h-12 min-w-28 items-center justify-center bg-[#2add1b] px-6 !text-[11px] text-black transition hover:bg-[#eeeeee]"
+          className="portal-label flex h-12 min-w-28 items-center justify-center bg-p-brand px-6 !text-[11px] text-black transition hover:bg-p-pop"
         >
           {playing ? 'Pause' : 'Play'}
         </button>
         <button onClick={() => setSpeedIdx((i) => Math.max(0, i - 1))} disabled={speedIdx === 0} className={ctrl} aria-label="Slower">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M2 7h10" /></svg>
         </button>
-        <span className="portal-label w-14 text-center !text-[10px] text-[#eeeeee]/50" aria-live="polite">
+        <span className="portal-label w-14 text-center !text-[10px] text-p-ink/50" aria-live="polite">
           {speedIdx + 1}/{SPEEDS.length}
         </span>
         <button onClick={() => setSpeedIdx((i) => Math.min(SPEEDS.length - 1, i + 1))} disabled={speedIdx === SPEEDS.length - 1} className={ctrl} aria-label="Faster">
@@ -141,7 +141,7 @@ export default function Teleprompter({ title, body, onClose }: TeleprompterProps
         >
           Top
         </button>
-        <button onClick={() => setMirror((m) => !m)} aria-pressed={mirror} className={`${ctrl} ${mirror ? '!border-[#2add1b] !text-[#2add1b]' : ''}`}>
+        <button onClick={() => setMirror((m) => !m)} aria-pressed={mirror} className={`${ctrl} ${mirror ? '!border-p-brandink !text-p-brandink' : ''}`}>
           Mirror
         </button>
       </div>

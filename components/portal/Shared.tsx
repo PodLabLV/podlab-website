@@ -16,11 +16,11 @@ export function PageHeader({
 }) {
   return (
     <div className="mb-10">
-      {eyebrow && <span className="portal-label block text-[#2add1b]">{eyebrow}</span>}
-      <h1 className={`${eyebrow ? 'mt-4' : ''} text-3xl font-bold leading-[1.05] tracking-tight text-[#eeeeee] md:text-4xl`}>
-        {title} {accent && <em className="portal-drama text-[#2add1b]">{accent}</em>}
+      {eyebrow && <span className="portal-label block text-p-brandink">{eyebrow}</span>}
+      <h1 className={`${eyebrow ? 'mt-4' : ''} text-3xl font-bold leading-[1.05] tracking-tight text-p-ink md:text-4xl`}>
+        {title} {accent && <em className="portal-drama text-p-brandink">{accent}</em>}
       </h1>
-      {subtitle && <p className="mt-4 max-w-2xl text-base leading-relaxed text-[#eeeeee]/60">{subtitle}</p>}
+      {subtitle && <p className="mt-4 max-w-2xl text-base leading-relaxed text-p-ink/60">{subtitle}</p>}
     </div>
   );
 }
@@ -32,7 +32,7 @@ export function Card({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={`border border-[#1a1a1a] bg-[#0a0a0a] ${className}`}>{children}</div>;
+  return <div className={`border border-p-line bg-p-card ${className}`}>{children}</div>;
 }
 
 export function StatCard({
@@ -46,9 +46,9 @@ export function StatCard({
 }) {
   return (
     <Card className="p-5">
-      <p className="portal-label !text-[9px] text-[#eeeeee]/40">{label}</p>
-      <p className="mt-3 text-3xl font-bold tracking-tight text-[#eeeeee]">{value}</p>
-      {sub && <p className="mt-1 text-xs text-[#eeeeee]/40">{sub}</p>}
+      <p className="portal-label !text-[9px] text-p-ink/40">{label}</p>
+      <p className="mt-3 text-3xl font-bold tracking-tight text-p-ink">{value}</p>
+      {sub && <p className="mt-1 text-xs text-p-ink/40">{sub}</p>}
     </Card>
   );
 }
@@ -68,14 +68,14 @@ export function EmptyState({
 }) {
   return (
     <Card className="p-8 md:p-10">
-      <p className="portal-label text-[#eeeeee]">{title}</p>
-      <p className="mt-3 max-w-lg text-sm leading-relaxed text-[#eeeeee]/50">{body}</p>
+      <p className="portal-label text-p-ink">{title}</p>
+      <p className="mt-3 max-w-lg text-sm leading-relaxed text-p-ink/50">{body}</p>
       {cta && (
         <a
           href={cta.href}
           target={cta.href.startsWith('http') ? '_blank' : undefined}
           rel={cta.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-          className="portal-label mt-6 inline-flex items-center gap-3 bg-[#2add1b] px-5 py-3 !text-[10px] text-black transition hover:bg-[#eeeeee]"
+          className="portal-label mt-6 inline-flex items-center gap-3 bg-p-brand px-5 py-3 !text-[10px] text-black transition hover:bg-p-pop"
         >
           {cta.label}
         </a>
@@ -88,12 +88,12 @@ export function StatusBadge({ status }: { status: string | null }) {
   const s = (status || '').toLowerCase();
   const tone =
     s === 'ready' || s === 'paid' || s === 'done'
-      ? 'text-[#2add1b] border-[#2add1b]/40'
+      ? 'text-p-brandink border-p-brandink/40'
       : s === 'in progress' || s === 'pending'
-        ? 'text-yellow-300 border-yellow-300/30'
+        ? 'text-p-warn border-p-warn/30'
         : s === 'overdue' || s === 'blocked'
-          ? 'text-red-400 border-red-400/40'
-          : 'text-[#eeeeee]/40 border-[#eeeeee]/15';
+          ? 'text-p-bad border-p-bad/40'
+          : 'text-p-ink/40 border-p-ink/15';
   return (
     <span className={`portal-label inline-block border px-2 py-1 !text-[9px] ${tone}`}>
       {status || 'Pending'}
@@ -106,8 +106,8 @@ export function FileMark({ type }: { type: string | null }) {
   const t = (type || 'LINK').toUpperCase();
   const label = t === 'VIDEO' ? 'MP4' : t === 'FOLDER' ? 'DIR' : t === 'PDF' ? 'PDF' : 'WEB';
   return (
-    <span className="flex h-11 w-11 shrink-0 items-center justify-center border border-[#2add1b]/30">
-      <span className="portal-label !text-[9px] !tracking-[0.12em] text-[#2add1b]">
+    <span className="flex h-11 w-11 shrink-0 items-center justify-center border border-p-brandink/30">
+      <span className="portal-label !text-[9px] !tracking-[0.12em] text-p-brandink">
         {label}
       </span>
     </span>

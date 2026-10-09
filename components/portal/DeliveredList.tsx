@@ -26,7 +26,7 @@ export default function DeliveredList({ limit }: { limit?: number }) {
       .catch(() => setItems([]));
   }, [accessToken, client]);
 
-  if (items === null) return <p className="portal-label !text-[9px] text-[#eeeeee]/35">Loading</p>;
+  if (items === null) return <p className="portal-label !text-[9px] text-p-ink/35">Loading</p>;
   if (items.length === 0) {
     return <EmptyState title="Nothing delivered yet" body="Every finished video, approved file and completed phase lands here with its date." />;
   }
@@ -34,26 +34,26 @@ export default function DeliveredList({ limit }: { limit?: number }) {
   const shown = limit ? items.slice(0, limit) : items;
   return (
     <div>
-      <ol className="divide-y divide-[#1a1a1a] border-y border-[#1a1a1a]">
+      <ol className="divide-y divide-p-line border-y border-p-line">
         {shown.map((it, i) => (
           <li key={`${it.kind}-${it.title}-${i}`} className="flex items-center gap-4 py-4">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-[#2add1b] bg-[#2add1b] text-black" aria-hidden="true">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center border border-p-brandink bg-p-brand text-black" aria-hidden="true">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                 <path d="M5 12l5 5 9-10" />
               </svg>
             </span>
             <Link href={it.href} className="group min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium text-[#eeeeee] transition group-hover:text-[#2add1b]">{it.title}</span>
-              <span className="portal-label mt-1 block !text-[8.5px] text-[#eeeeee]/35">
+              <span className="block truncate text-sm font-medium text-p-ink transition group-hover:text-p-brandink">{it.title}</span>
+              <span className="portal-label mt-1 block !text-[8.5px] text-p-ink/35">
                 {KIND[it.kind]} · {it.detail}
               </span>
             </Link>
-            <span className="portal-label shrink-0 !text-[8.5px] text-[#eeeeee]/35">{it.at ? formatDate(it.at) : ''}</span>
+            <span className="portal-label shrink-0 !text-[8.5px] text-p-ink/35">{it.at ? formatDate(it.at) : ''}</span>
           </li>
         ))}
       </ol>
       {limit && items.length > limit && (
-        <Link href="/portal/progress" className="portal-label mt-3 inline-block !text-[9px] text-[#eeeeee]/40 transition hover:text-[#2add1b]">
+        <Link href="/portal/progress" className="portal-label mt-3 inline-block !text-[9px] text-p-ink/40 transition hover:text-p-brandink">
           All {items.length} deliveries
         </Link>
       )}

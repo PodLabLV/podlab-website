@@ -11,7 +11,7 @@ export default function DeliveryPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  if (loading) return <p className="text-white/40 text-sm">Loading...</p>;
+  if (loading) return <p className="text-p-ink/40 text-sm">Loading...</p>;
 
   if (!client || phases.length === 0) {
     return (
@@ -61,18 +61,18 @@ export default function DeliveryPage() {
 
       <Card className="mb-6 p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="text-sm text-white">
+          <p className="text-sm text-p-ink">
             {done} of {phases.length} phases complete
           </p>
           {isStaff && (
-            <span className="rounded-full border border-[#2ADD1B]/40 px-3 py-1 font-display text-[9.5px] uppercase tracking-[0.2em] text-[#2ADD1B]">
+            <span className="rounded-full border border-p-brandink/40 px-3 py-1 font-display text-[9.5px] uppercase tracking-[0.2em] text-p-brandink">
               Staff view
             </span>
           )}
         </div>
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-p-ink/10">
           <div
-            className="h-full bg-[#2ADD1B] transition-[width] duration-500"
+            className="h-full bg-p-brand transition-[width] duration-500"
             style={{ width: `${(done / phases.length) * 100}%` }}
           />
         </div>
@@ -80,16 +80,16 @@ export default function DeliveryPage() {
 
       {blocked.length > 0 && (
         <Card className="mb-6 border-red-500/25 bg-red-500/[0.06] p-5">
-          <p className="text-sm text-white">
+          <p className="text-sm text-p-ink">
             {blocked.length === 1 ? 'One phase is blocked' : `${blocked.length} phases are blocked`}
           </p>
-          <p className="mt-1.5 text-[13px] text-white/55">
+          <p className="mt-1.5 text-[13px] text-p-ink/55">
             {blocked.map((b) => b.title).join(', ')}. We will be in touch about what we need.
           </p>
         </Card>
       )}
 
-      {error && <p className="mb-4 text-xs text-red-400">{error}</p>}
+      {error && <p className="mb-4 text-xs text-p-bad">{error}</p>}
 
       <div className="space-y-4">
         {phases.map((phase, i) => (
@@ -100,23 +100,23 @@ export default function DeliveryPage() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="font-display text-[10px] uppercase tracking-widest text-[#2ADD1B]">
+                  <span className="font-display text-[10px] uppercase tracking-widest text-p-brandink">
                     Phase {String(i + 1).padStart(2, '0')}
                   </span>
                   {phase.owner && (
-                    <span className="font-display text-[10px] uppercase tracking-widest text-white/30">
+                    <span className="font-display text-[10px] uppercase tracking-widest text-p-ink/30">
                       {phase.owner}
                     </span>
                   )}
                   {phase.due_label && (
-                    <span className="font-display text-[10px] uppercase tracking-widest text-white/30">
+                    <span className="font-display text-[10px] uppercase tracking-widest text-p-ink/30">
                       {phase.due_label}
                     </span>
                   )}
                 </div>
-                <p className="mt-1.5 text-[15px] font-semibold text-white">{phase.title}</p>
+                <p className="mt-1.5 text-[15px] font-semibold text-p-ink">{phase.title}</p>
                 {phase.detail && (
-                  <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-white/55">
+                  <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-p-ink/55">
                     {phase.detail}
                   </p>
                 )}
@@ -125,7 +125,7 @@ export default function DeliveryPage() {
             </div>
 
             {isStaff && (
-              <div className="mt-4 flex flex-wrap gap-2 border-t border-white/10 pt-4">
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-p-ink/10 pt-4">
                 {STATUSES.map((s) => (
                   <button
                     key={s}
@@ -133,15 +133,15 @@ export default function DeliveryPage() {
                     disabled={busy === phase.id || phase.status === s}
                     className={`rounded-lg border px-3 py-1.5 text-[11px] capitalize transition disabled:opacity-40 ${
                       phase.status === s
-                        ? 'border-[#2ADD1B]/40 bg-[#2ADD1B]/10 text-[#2ADD1B]'
-                        : 'border-white/15 text-white/50 hover:border-white/35 hover:text-white'
+                        ? 'border-p-brandink/40 bg-p-brand/10 text-p-brandink'
+                        : 'border-p-ink/15 text-p-ink/50 hover:border-p-ink/35 hover:text-p-ink'
                     }`}
                   >
                     {s}
                   </button>
                 ))}
                 {phase.updated_at && (
-                  <span className="ml-auto self-center text-[11px] text-white/25">
+                  <span className="ml-auto self-center text-[11px] text-p-ink/25">
                     updated {formatDate(phase.updated_at)}
                   </span>
                 )}
@@ -151,7 +151,7 @@ export default function DeliveryPage() {
         ))}
       </div>
 
-      <h2 className="font-display mb-4 mt-10 text-sm uppercase tracking-wider text-white">
+      <h2 className="font-display mb-4 mt-10 text-sm uppercase tracking-wider text-p-ink">
         Delivered assets
       </h2>
       {assets.length === 0 ? (
@@ -160,13 +160,13 @@ export default function DeliveryPage() {
           body="Files land here as each phase closes."
         />
       ) : (
-        <Card className="divide-y divide-white/5">
+        <Card className="divide-y divide-p-ink/5">
           {assets.map((a) => (
             <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
               <div className="min-w-0">
-                <p className="text-[14px] text-white">{a.title}</p>
+                <p className="text-[14px] text-p-ink">{a.title}</p>
                 {a.lab && (
-                  <p className="font-display mt-1 text-[10px] uppercase tracking-widest text-white/30">
+                  <p className="font-display mt-1 text-[10px] uppercase tracking-widest text-p-ink/30">
                     {a.lab}
                   </p>
                 )}
@@ -178,7 +178,7 @@ export default function DeliveryPage() {
                     href={a.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[13px] text-[#2ADD1B] hover:underline"
+                    className="text-[13px] text-p-brandink hover:underline"
                   >
                     Open
                   </a>

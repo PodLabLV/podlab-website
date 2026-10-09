@@ -95,7 +95,7 @@ export default function TipTopPanel(props: PanelProps) {
         <Chat {...props} seed={seed} />
       ) : (
         <div className="flex flex-1 items-center justify-center">
-          <p className="portal-label !text-[9px] text-[#eeeeee]/40">Opening</p>
+          <p className="portal-label !text-[9px] text-p-ink/40">Opening</p>
         </div>
       )}
     </Shell>
@@ -135,7 +135,7 @@ function Shell({ children, onClose }: { children: ReactNode; onClose: () => void
       aria-modal="true"
       aria-label="TipTop, your PodLab guide"
       onKeyDown={onKeyDown}
-      className="fixed inset-0 z-[70] flex flex-col bg-black text-[#eeeeee] md:inset-auto md:bottom-6 md:right-6 md:h-[min(720px,calc(100dvh-3rem))] md:w-[420px] md:border md:border-[#1a1a1a] md:shadow-[0_0_0_1px_rgba(42,221,27,.12),0_30px_80px_rgba(0,0,0,.8)]"
+      className="fixed inset-0 z-[70] flex flex-col bg-p-paper text-p-ink md:inset-auto md:bottom-6 md:right-6 md:h-[min(720px,calc(100dvh-3rem))] md:w-[420px] md:border md:border-p-line md:shadow-[0_0_0_1px_rgba(42,221,27,.12),0_30px_80px_rgba(0,0,0,.8)]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {children}
@@ -248,20 +248,20 @@ function Chat({ onClose, initialPrompt, onPromptUsed, seed }: PanelProps & { see
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-[#1a1a1a] px-4 py-3" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
+      <header className="flex items-center gap-3 border-b border-p-line px-4 py-3" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
         <Image src={AVATAR} alt="" width={36} height={36} className="h-9 w-9 shrink-0 object-cover" />
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="portal-label !text-[10px] text-[#2add1b]">TipTop</p>
-          <p className="mt-1 truncate text-xs text-[#eeeeee]/50">
-            Your guide <span className="portal-drama text-[#eeeeee]/70">· AI, and says so</span>
+          <p className="portal-label !text-[10px] text-p-brandink">TipTop</p>
+          <p className="mt-1 truncate text-xs text-p-ink/50">
+            Your guide <span className="portal-drama text-p-ink/70">· AI, and says so</span>
           </p>
         </div>
         {messages.length > 0 && (
-          <button type="button" onClick={reset} className="portal-label px-2 py-2 !text-[9px] text-[#eeeeee]/45 transition hover:text-[#eeeeee]">
+          <button type="button" onClick={reset} className="portal-label px-2 py-2 !text-[9px] text-p-ink/45 transition hover:text-p-ink">
             New chat
           </button>
         )}
-        <button type="button" onClick={onClose} aria-label="Close TipTop" className="flex h-9 w-9 items-center justify-center border border-transparent text-[#eeeeee]/70 transition hover:border-[#1a1a1a] hover:text-[#2add1b]">
+        <button type="button" onClick={onClose} aria-label="Close TipTop" className="flex h-9 w-9 items-center justify-center border border-transparent text-p-ink/70 transition hover:border-p-line hover:text-p-brandink">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
             <path d="M1 1l12 12M13 1L1 13" />
           </svg>
@@ -278,7 +278,7 @@ function Chat({ onClose, initialPrompt, onPromptUsed, seed }: PanelProps & { see
             {messages.length === 0 && (
               <div className="flex flex-wrap gap-2">
                 {STARTERS.map((s) => (
-                  <button key={s} type="button" onClick={() => send(s)} className="border border-[#1a1a1a] px-3 py-2 text-left text-sm text-[#eeeeee]/85 transition hover:border-[#2add1b] hover:text-[#2add1b]">
+                  <button key={s} type="button" onClick={() => send(s)} className="border border-p-line px-3 py-2 text-left text-sm text-p-ink/85 transition hover:border-p-brandink hover:text-p-brandink">
                     {s}
                   </button>
                 ))}
@@ -288,7 +288,7 @@ function Chat({ onClose, initialPrompt, onPromptUsed, seed }: PanelProps & { see
 
           {messages.map((m) =>
             m.role === 'user' ? (
-              <div key={m.id} className="ml-auto max-w-[85%] whitespace-pre-wrap border border-[#1a1a1a] bg-[#eeeeee]/[0.06] px-4 py-2.5 text-[15px] leading-relaxed">
+              <div key={m.id} className="ml-auto max-w-[85%] whitespace-pre-wrap border border-p-line bg-p-ink/[0.06] px-4 py-2.5 text-[15px] leading-relaxed">
                 {m.parts.map((p, i) => (p.type === 'text' ? <span key={i}>{p.text}</span> : null))}
               </div>
             ) : (
@@ -304,23 +304,23 @@ function Chat({ onClose, initialPrompt, onPromptUsed, seed }: PanelProps & { see
             <Assistant>
               <span className="inline-flex items-center gap-1.5 py-1" aria-label="TipTop is typing">
                 {[0, 1, 2].map((i) => (
-                  <span key={i} className="block h-1.5 w-1.5 animate-pulse bg-[#2add1b]" style={{ animationDelay: `${i * 160}ms` }} />
+                  <span key={i} className="block h-1.5 w-1.5 animate-pulse bg-p-brand" style={{ animationDelay: `${i * 160}ms` }} />
                 ))}
               </span>
             </Assistant>
           )}
 
           {error && (
-            <div role="alert" className="border border-[#2add1b]/40 bg-[#2add1b]/5 px-4 py-3 text-sm">
+            <div role="alert" className="border border-p-brandink/40 bg-p-brand/5 px-4 py-3 text-sm">
               <p>TipTop lost the thread for a second. Try again, or email info@podlablv.com if it&apos;s urgent.</p>
-              <button type="button" onClick={() => regenerate()} className="portal-label mt-3 bg-[#2add1b] px-4 py-3 !text-[10px] text-black transition hover:bg-[#eeeeee]">
+              <button type="button" onClick={() => regenerate()} className="portal-label mt-3 bg-p-brand px-4 py-3 !text-[10px] text-black transition hover:bg-p-pop">
                 Try again
               </button>
             </div>
           )}
 
           {capped && !error && (
-            <div className="border border-[#1a1a1a] px-4 py-3 text-sm text-[#eeeeee]/70">
+            <div className="border border-p-line px-4 py-3 text-sm text-p-ink/70">
               This thread is long enough to lose things in. Start a new chat and I&apos;ll pick up from your portal as it stands.
             </div>
           )}
@@ -332,7 +332,7 @@ function Chat({ onClose, initialPrompt, onPromptUsed, seed }: PanelProps & { see
           e.preventDefault();
           send(input);
         }}
-        className="border-t border-[#1a1a1a] px-3 py-3"
+        className="border-t border-p-line px-3 py-3"
       >
         <div className="flex items-end gap-2">
           <textarea
@@ -355,17 +355,17 @@ function Chat({ onClose, initialPrompt, onPromptUsed, seed }: PanelProps & { see
             disabled={capped}
             placeholder={capped ? 'Start a new chat' : 'Ask TipTop anything'}
             aria-label="Message TipTop"
-            className="max-h-[140px] min-h-[44px] flex-1 resize-none bg-transparent px-2 py-2.5 text-[15px] leading-snug text-[#eeeeee] placeholder:text-[#eeeeee]/35 focus:outline-none"
+            className="max-h-[140px] min-h-[44px] flex-1 resize-none bg-transparent px-2 py-2.5 text-[15px] leading-snug text-p-ink placeholder:text-p-ink/35 focus:outline-none"
           />
           <button
             type="submit"
             disabled={busy || capped || !input.trim()}
-            className="portal-label h-11 shrink-0 bg-[#2add1b] px-4 !text-[10px] text-black transition hover:bg-[#eeeeee] disabled:cursor-not-allowed disabled:opacity-40"
+            className="portal-label h-11 shrink-0 bg-p-brand px-4 !text-[10px] text-black transition hover:bg-p-pop disabled:cursor-not-allowed disabled:opacity-40"
           >
             Send
           </button>
         </div>
-        <div className="mt-1 flex items-center justify-between px-2 text-[11px] text-[#eeeeee]/30">
+        <div className="mt-1 flex items-center justify-between px-2 text-[11px] text-p-ink/30">
           <span>Enter to send · Shift+Enter for a new line</span>
           {input.length > LIMITS.maxMessageChars - 300 && <span>{LIMITS.maxMessageChars - input.length} left</span>}
         </div>
@@ -375,11 +375,11 @@ function Chat({ onClose, initialPrompt, onPromptUsed, seed }: PanelProps & { see
 }
 
 function Assistant({ children }: { children: ReactNode }) {
-  return <div className="max-w-[94%] space-y-3 border-l border-[#2add1b]/50 pl-4 text-[15px] leading-relaxed text-[#eeeeee]">{children}</div>;
+  return <div className="max-w-[94%] space-y-3 border-l border-p-brandink/50 pl-4 text-[15px] leading-relaxed text-p-ink">{children}</div>;
 }
 
 function Quiet({ children }: { children: ReactNode }) {
-  return <p className="portal-label !text-[9px] text-[#eeeeee]/35">{children}</p>;
+  return <p className="portal-label !text-[9px] text-p-ink/35">{children}</p>;
 }
 
 type AnyPart = TipTopUIMessage['parts'][number];
@@ -396,13 +396,13 @@ function Part({ part, approve, busy, onNavigate }: { part: AnyPart; approve: (id
     if (part.state !== 'output-available' || !part.output.shown || !part.output.href || !part.output.label) return null;
     const o = { ...part.output, href: part.output.href, label: part.output.label };
     return (
-      <div className="border border-[#1a1a1a] bg-[#0a0a0a] p-4">
-        <p className="portal-label !text-[9px] text-[#2add1b]">Recommended</p>
+      <div className="border border-p-line bg-p-card p-4">
+        <p className="portal-label !text-[9px] text-p-brandink">Recommended</p>
         <p className="mt-2 text-sm font-semibold">
           {o.product}
-          {o.price ? <span className="ml-2 font-normal text-[#eeeeee]/50">{o.price}</span> : null}
+          {o.price ? <span className="ml-2 font-normal text-p-ink/50">{o.price}</span> : null}
         </p>
-        <p className="mt-1 text-sm text-[#eeeeee]/65">{o.why}</p>
+        <p className="mt-1 text-sm text-p-ink/65">{o.why}</p>
         <div className="mt-3">
           <ActionButton href={o.href} label={o.label} onNavigate={onNavigate} />
         </div>
@@ -505,7 +505,7 @@ function Part({ part, approve, busy, onNavigate }: { part: AnyPart; approve: (id
 }
 
 function ActionButton({ href, label, onNavigate }: { href: string; label: string; onNavigate: () => void }) {
-  const cls = 'portal-label inline-flex items-center gap-3 bg-[#2add1b] px-5 py-3 !text-[10px] text-black transition hover:bg-[#eeeeee]';
+  const cls = 'portal-label inline-flex items-center gap-3 bg-p-brand px-5 py-3 !text-[10px] text-black transition hover:bg-p-pop';
   if (href.startsWith('/')) {
     return (
       <Link
@@ -561,9 +561,9 @@ function ConfirmCard({
     detail = (
       <ol className="space-y-2">
         {(input.edits as Array<{ find?: string; replace?: string }>).map((e, i) => (
-          <li key={i} className="border-l border-[#1a1a1a] pl-3 text-xs leading-relaxed">
-            <span className="block text-[#eeeeee]/45 line-through decoration-[#eeeeee]/30">{plainText(String(e.find ?? ''), 240) || '(markup)'}</span>
-            <span className="mt-1 block text-[#eeeeee]">{plainText(String(e.replace ?? ''), 240) || '(removed)'}</span>
+          <li key={i} className="border-l border-p-line pl-3 text-xs leading-relaxed">
+            <span className="block text-p-ink/45 line-through decoration-p-ink/30">{plainText(String(e.find ?? ''), 240) || '(markup)'}</span>
+            <span className="mt-1 block text-p-ink">{plainText(String(e.replace ?? ''), 240) || '(removed)'}</span>
           </li>
         ))}
       </ol>
@@ -571,9 +571,9 @@ function ConfirmCard({
   } else if (tool === 'send_revision') {
     detail = (
       <div className="space-y-1 text-sm">
-        {input.timestamp ? <p className="portal-label !text-[9px] text-[#eeeeee]/45">At {String(input.timestamp)}</p> : null}
-        {input.quote ? <p className="text-xs italic text-[#eeeeee]/50">On: &ldquo;{String(input.quote)}&rdquo;</p> : null}
-        <p className="whitespace-pre-wrap text-[#eeeeee]">&ldquo;{String(input.note ?? '')}&rdquo;</p>
+        {input.timestamp ? <p className="portal-label !text-[9px] text-p-ink/45">At {String(input.timestamp)}</p> : null}
+        {input.quote ? <p className="text-xs italic text-p-ink/50">On: &ldquo;{String(input.quote)}&rdquo;</p> : null}
+        <p className="whitespace-pre-wrap text-p-ink">&ldquo;{String(input.note ?? '')}&rdquo;</p>
       </div>
     );
   } else if (tool === 'update_profile') {
@@ -583,7 +583,7 @@ function ConfirmCard({
           .filter(([k, v]) => k in PROFILE_LABELS && v !== undefined)
           .map(([k, v]) => (
             <div key={k} className="contents">
-              <dt className="text-[#eeeeee]/45">{PROFILE_LABELS[k]}</dt>
+              <dt className="text-p-ink/45">{PROFILE_LABELS[k]}</dt>
               <dd className="break-words">{String(v) || '(cleared)'}</dd>
             </div>
           ))}
@@ -595,7 +595,7 @@ function ConfirmCard({
     detail = (
       <ol className="space-y-2">
         {(input.answers as Array<{ value?: string }>).map((a, i) => (
-          <li key={i} className="whitespace-pre-wrap border-l border-[#1a1a1a] pl-3 text-xs leading-relaxed text-[#eeeeee]">
+          <li key={i} className="whitespace-pre-wrap border-l border-p-line pl-3 text-xs leading-relaxed text-p-ink">
             {String(a.value ?? '').slice(0, 400)}
             {String(a.value ?? '').length > 400 ? '…' : ''}
           </li>
@@ -611,26 +611,26 @@ function ConfirmCard({
           <div className="flex flex-wrap gap-2">
             {colors.map((c, i) => (
               <span key={i} className="inline-flex items-center gap-1.5">
-                <span className="h-4 w-4 border border-[#eeeeee]/20" style={{ background: /^#?[0-9a-f]{3,6}$/i.test(c.hex ?? '') ? `#${String(c.hex).replace('#', '')}` : 'transparent' }} />
+                <span className="h-4 w-4 border border-p-ink/20" style={{ background: /^#?[0-9a-f]{3,6}$/i.test(c.hex ?? '') ? `#${String(c.hex).replace('#', '')}` : 'transparent' }} />
                 {c.hex}
-                {c.name ? <span className="text-[#eeeeee]/45">{c.name}</span> : null}
+                {c.name ? <span className="text-p-ink/45">{c.name}</span> : null}
               </span>
             ))}
           </div>
         )}
         {fonts.length > 0 && <p>{fonts.map((f) => `${f.name}${f.use ? ` (${f.use})` : ''}`).join(' · ')}</p>}
-        {input.notes ? <p className="whitespace-pre-wrap text-[#eeeeee]/70">{String(input.notes).slice(0, 400)}</p> : null}
+        {input.notes ? <p className="whitespace-pre-wrap text-p-ink/70">{String(input.notes).slice(0, 400)}</p> : null}
       </div>
     );
   } else if (tool === 'create_action_items' && Array.isArray(input.items)) {
     detail = (
       <>
-      {input.coaching ? <p className="mb-3 whitespace-pre-wrap text-sm leading-relaxed text-[#eeeeee]">{String(input.coaching)}</p> : null}
+      {input.coaching ? <p className="mb-3 whitespace-pre-wrap text-sm leading-relaxed text-p-ink">{String(input.coaching)}</p> : null}
       <ol className="space-y-2">
         {(input.items as Array<{ title?: string; effort?: string; due?: string }>).map((it, i) => (
-          <li key={i} className="border-l border-[#1a1a1a] pl-3 text-xs leading-relaxed">
-            <span className="block text-[#eeeeee]">{String(it.title ?? '')}</span>
-            <span className="block text-[#eeeeee]/45">{[it.effort, it.due ? `due ${it.due}` : null].filter(Boolean).join(' · ')}</span>
+          <li key={i} className="border-l border-p-line pl-3 text-xs leading-relaxed">
+            <span className="block text-p-ink">{String(it.title ?? '')}</span>
+            <span className="block text-p-ink/45">{[it.effort, it.due ? `due ${it.due}` : null].filter(Boolean).join(' · ')}</span>
           </li>
         ))}
       </ol>
@@ -640,10 +640,10 @@ function ConfirmCard({
     const pr = (input.priorities as string[] | undefined) ?? [];
     detail = (
       <div className="space-y-3 text-sm">
-        {input.coaching ? <p className="whitespace-pre-wrap leading-relaxed text-[#eeeeee]">{String(input.coaching)}</p> : null}
-        <div className="border-l border-[#1a1a1a] pl-3 text-xs">
-          <p className="font-semibold text-[#eeeeee]">{String(input.outcome ?? '')}</p>
-          <p className="mt-1 text-[#eeeeee]/50">
+        {input.coaching ? <p className="whitespace-pre-wrap leading-relaxed text-p-ink">{String(input.coaching)}</p> : null}
+        <div className="border-l border-p-line pl-3 text-xs">
+          <p className="font-semibold text-p-ink">{String(input.outcome ?? '')}</p>
+          <p className="mt-1 text-p-ink/50">
             {[
               input.baseline !== undefined ? `from ${String(input.baseline)}` : null,
               input.target !== undefined ? `to ${String(input.target)}` : null,
@@ -654,7 +654,7 @@ function ConfirmCard({
               .join(' ')}
           </p>
           {pr.length > 0 && (
-            <ol className="mt-2 list-decimal space-y-0.5 pl-4 text-[#eeeeee]/80">
+            <ol className="mt-2 list-decimal space-y-0.5 pl-4 text-p-ink/80">
               {pr.map((x, i) => (
                 <li key={i}>{x}</li>
               ))}
@@ -666,35 +666,35 @@ function ConfirmCard({
   } else if (tool === 'plan_content' && Array.isArray(input.items)) {
     detail = (
       <>
-        {input.coaching ? <p className="mb-3 whitespace-pre-wrap text-sm leading-relaxed text-[#eeeeee]">{String(input.coaching)}</p> : null}
+        {input.coaching ? <p className="mb-3 whitespace-pre-wrap text-sm leading-relaxed text-p-ink">{String(input.coaching)}</p> : null}
         <ol className="max-h-64 space-y-2 overflow-y-auto">
           {(input.items as Array<{ publish_on?: string; format?: string; job?: string; title?: string; hook?: string }>).map((it, i) => (
-            <li key={i} className="border-l border-[#1a1a1a] pl-3 text-xs leading-relaxed">
-              <span className="block text-[#eeeeee]/45">
+            <li key={i} className="border-l border-p-line pl-3 text-xs leading-relaxed">
+              <span className="block text-p-ink/45">
                 {it.publish_on} · {it.format} · {it.job}
                 {(it as { card_id?: string }).card_id ? ' · already shot' : ''}
               </span>
-              <span className="block text-[#eeeeee]">{it.title}</span>
-              {it.hook ? <span className="block italic text-[#eeeeee]/55">&ldquo;{it.hook}&rdquo;</span> : null}
+              <span className="block text-p-ink">{it.title}</span>
+              {it.hook ? <span className="block italic text-p-ink/55">&ldquo;{it.hook}&rdquo;</span> : null}
             </li>
           ))}
         </ol>
       </>
     );
   } else if (tool === 'check_in_game_plan') {
-    detail = <p className="whitespace-pre-wrap border-l border-[#1a1a1a] pl-3 text-xs leading-relaxed text-[#eeeeee]">{String(input.note ?? '')}</p>;
+    detail = <p className="whitespace-pre-wrap border-l border-p-line pl-3 text-xs leading-relaxed text-p-ink">{String(input.note ?? '')}</p>;
   } else if (tool === 'draft_script') {
     detail = (
-      <div className="max-h-56 overflow-y-auto border-l border-[#1a1a1a] pl-3">
-        <p className="portal-label !text-[8.5px] text-[#eeeeee]/45">{String(input.kind ?? '')}</p>
-        <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-[#eeeeee]">{String(input.body ?? '').slice(0, 2000)}</p>
+      <div className="max-h-56 overflow-y-auto border-l border-p-line pl-3">
+        <p className="portal-label !text-[8.5px] text-p-ink/45">{String(input.kind ?? '')}</p>
+        <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-p-ink">{String(input.body ?? '').slice(0, 2000)}</p>
       </div>
     );
   }
 
   return (
-    <div className="border border-[#2add1b]/40 bg-[#2add1b]/[0.04] p-4">
-      <p className="portal-label !text-[9px] text-[#2add1b]">Confirm</p>
+    <div className="border border-p-brandink/40 bg-p-brand/[0.04] p-4">
+      <p className="portal-label !text-[9px] text-p-brandink">Confirm</p>
       {reason && <p className="mt-2 text-sm leading-relaxed">{reason}</p>}
       {detail && <div className="mt-3">{detail}</div>}
       <div className="mt-4 flex flex-wrap gap-2">
@@ -702,7 +702,7 @@ function ConfirmCard({
           type="button"
           disabled={disabled || answered}
           onClick={() => answer(true)}
-          className="portal-label bg-[#2add1b] px-4 py-3 !text-[10px] text-black transition hover:bg-[#eeeeee] disabled:opacity-40"
+          className="portal-label bg-p-brand px-4 py-3 !text-[10px] text-black transition hover:bg-p-pop disabled:opacity-40"
         >
           {tool === 'send_revision' ? 'Send it' : 'Confirm'}
         </button>
@@ -710,7 +710,7 @@ function ConfirmCard({
           type="button"
           disabled={disabled || answered}
           onClick={() => answer(false)}
-          className="portal-label border border-[#1a1a1a] px-4 py-3 !text-[10px] text-[#eeeeee]/75 transition hover:border-[#eeeeee]/40 disabled:opacity-40"
+          className="portal-label border border-p-line px-4 py-3 !text-[10px] text-p-ink/75 transition hover:border-p-ink/40 disabled:opacity-40"
         >
           Cancel
         </button>

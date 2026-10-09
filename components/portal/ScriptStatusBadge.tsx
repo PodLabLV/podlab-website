@@ -3,10 +3,10 @@
 import { vocab, type Tone } from '@/lib/portal/scripts';
 
 const TONE_CLASS: Record<Tone, string> = {
-  you: 'border-yellow-300/50 text-yellow-300',
-  us: 'border-[#2add1b]/50 text-[#2add1b]',
-  done: 'border-[#2add1b] bg-[#2add1b] text-black',
-  idle: 'border-[#eeeeee]/15 text-[#eeeeee]/45',
+  you: 'border-p-warn/50 text-p-warn',
+  us: 'border-p-brandink/50 text-p-brandink',
+  done: 'border-p-brandink bg-p-brand text-black',
+  idle: 'border-p-ink/15 text-p-ink/45',
 };
 
 interface ScriptStatusBadgeProps {
@@ -24,7 +24,7 @@ export default function ScriptStatusBadge({ status, showPlain = false, align = '
       <span className={`portal-label inline-block whitespace-nowrap border px-2 py-1 !text-[8.5px] ${TONE_CLASS[v.tone]}`}>
         {v.label}
       </span>
-      {showPlain && v.plain && <span className="text-[11px] text-[#eeeeee]/45">{v.plain}</span>}
+      {showPlain && v.plain && <span className="text-[11px] text-p-ink/45">{v.plain}</span>}
     </span>
   );
 }

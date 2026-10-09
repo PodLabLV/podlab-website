@@ -89,7 +89,7 @@ export default function ProfilePage() {
     return () => window.removeEventListener('portal:refresh', reload);
   }, [accessToken]);
 
-  if (loading) return <p className="text-sm text-[#eeeeee]/40">Loading...</p>;
+  if (loading) return <p className="text-sm text-p-ink/40">Loading...</p>;
   if (!client) {
     return (
       <>
@@ -174,7 +174,7 @@ export default function ProfilePage() {
             <div className="grid gap-6 sm:grid-cols-2">
               {FIELDS.map((f) => (
                 <label key={f.key} className={f.key === 'business_name' || f.key === 'website' ? 'sm:col-span-2' : ''}>
-                  <span className="portal-label block !text-[9px] text-[#eeeeee]/45">{f.label}</span>
+                  <span className="portal-label block !text-[9px] text-p-ink/45">{f.label}</span>
                   <input
                     type={f.type ?? 'text'}
                     value={form[f.key]}
@@ -187,11 +187,11 @@ export default function ProfilePage() {
                     placeholder={f.placeholder}
                     disabled={!profile}
                     aria-invalid={Boolean(errors[f.key])}
-                    className={`mt-2 w-full border bg-black px-4 py-3 text-[15px] text-[#eeeeee] placeholder:text-[#eeeeee]/25 focus:outline-none ${
-                      errors[f.key] ? 'border-red-500/60' : 'border-[#1a1a1a] focus:border-[#2add1b]/60'
+                    className={`mt-2 w-full border bg-p-paper px-4 py-3 text-[15px] text-p-ink placeholder:text-p-ink/25 focus:outline-none ${
+                      errors[f.key] ? 'border-red-500/60' : 'border-p-line focus:border-p-brandink/60'
                     }`}
                   />
-                  {errors[f.key] && <span className="mt-1.5 block text-xs text-red-400">{errors[f.key]}</span>}
+                  {errors[f.key] && <span className="mt-1.5 block text-xs text-p-bad">{errors[f.key]}</span>}
                 </label>
               ))}
               <datalist id="tz-list">
@@ -202,7 +202,7 @@ export default function ProfilePage() {
             </div>
 
             {profile && !profile.extendedReady && (
-              <p className="mt-6 text-xs leading-relaxed text-[#eeeeee]/45">
+              <p className="mt-6 text-xs leading-relaxed text-p-ink/45">
                 Phone, website and timezone are being switched on. Anything you enter now goes straight to the team, and shows here once it&apos;s live.
               </p>
             )}
@@ -211,50 +211,50 @@ export default function ProfilePage() {
               <button
                 type="submit"
                 disabled={!dirty || status === 'saving'}
-                className="portal-label bg-[#2add1b] px-6 py-3.5 !text-[10px] text-black transition hover:bg-[#eeeeee] disabled:cursor-not-allowed disabled:opacity-40"
+                className="portal-label bg-p-brand px-6 py-3.5 !text-[10px] text-black transition hover:bg-p-pop disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {status === 'saving' ? 'Saving' : 'Save changes'}
               </button>
-              {message && <p className={`text-sm ${status === 'error' ? 'text-red-400' : 'text-[#2add1b]'}`}>{message}</p>}
+              {message && <p className={`text-sm ${status === 'error' ? 'text-p-bad' : 'text-p-brandink'}`}>{message}</p>}
             </div>
           </form>
         </Card>
 
         <div className="space-y-6">
           <Card className="p-6">
-            <p className="portal-label !text-[9px] text-[#eeeeee]/45">Login email</p>
-            <p className="mt-3 break-all text-[15px] text-[#eeeeee]">{profile?.email ?? client.email}</p>
-            <p className="mt-3 text-xs leading-relaxed text-[#eeeeee]/45">
+            <p className="portal-label !text-[9px] text-p-ink/45">Login email</p>
+            <p className="mt-3 break-all text-[15px] text-p-ink">{profile?.email ?? client.email}</p>
+            <p className="mt-3 text-xs leading-relaxed text-p-ink/45">
               This is how you sign in, so it moves with care. To change it, email{' '}
-              <a href="mailto:info@podlablv.com" className="text-[#2add1b] hover:underline">
+              <a href="mailto:info@podlablv.com" className="text-p-brandink hover:underline">
                 info@podlablv.com
               </a>
               .
             </p>
           </Card>
           <Card className="p-6">
-            <p className="portal-label !text-[9px] text-[#eeeeee]/45">Email updates</p>
+            <p className="portal-label !text-[9px] text-p-ink/45">Email updates</p>
             <label className={`mt-3 flex items-start gap-3 ${profile?.digestReady ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
               <input
                 type="checkbox"
                 checked={profile ? !profile.digestOptOut : true}
                 disabled={!profile?.digestReady || digestStatus === 'saving'}
                 onChange={(e) => setDigest(e.target.checked)}
-                className="mt-1 h-4 w-4 shrink-0 accent-[#2add1b]"
+                className="mt-1 h-4 w-4 shrink-0 accent-p-brand"
               />
-              <span className="text-sm leading-relaxed text-[#eeeeee]">Email me a daily update when something changes</span>
+              <span className="text-sm leading-relaxed text-p-ink">Email me a daily update when something changes</span>
             </label>
-            <p className="mt-3 text-xs leading-relaxed text-[#eeeeee]/45">
+            <p className="mt-3 text-xs leading-relaxed text-p-ink/45">
               {profile && !profile.digestReady
                 ? 'Daily updates are being switched on.'
                 : 'At most one a day, and only when there is news: a new cut, a note fixed, a version to review.'}
             </p>
-            {digestMessage && <p className={`mt-2 text-xs ${digestStatus === 'error' ? 'text-red-400' : 'text-[#2add1b]'}`}>{digestMessage}</p>}
+            {digestMessage && <p className={`mt-2 text-xs ${digestStatus === 'error' ? 'text-p-bad' : 'text-p-brandink'}`}>{digestMessage}</p>}
           </Card>
           <Card className="p-6">
-            <p className="portal-label !text-[9px] text-[#2add1b]">Faster</p>
-            <p className="mt-3 text-sm leading-relaxed text-[#eeeeee]/65">
-              Tell TipTop, bottom right: <span className="portal-drama text-[#eeeeee]">&ldquo;my new number is…&rdquo;</span> and she updates it for you.
+            <p className="portal-label !text-[9px] text-p-brandink">Faster</p>
+            <p className="mt-3 text-sm leading-relaxed text-p-ink/65">
+              Tell TipTop, bottom right: <span className="portal-drama text-p-ink">&ldquo;my new number is…&rdquo;</span> and she updates it for you.
             </p>
           </Card>
         </div>
