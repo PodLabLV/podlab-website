@@ -143,3 +143,25 @@ export function formatBytes(n: number | null): string {
   }
   return `${v >= 10 || i === 0 ? Math.round(v) : v.toFixed(1)} ${units[i]}`;
 }
+
+/** How long the Brand page waits for more uploads before one Slack post covers them all. */
+export const BRAND_QUIET_MS = 120_000;
+
+/**
+ * Batching Brand pings without a queue. Each finished upload waits out the
+ * quiet window, then looks at the client's files: if anything was added after
+ * its own announce, a later upload will post (this one stays quiet). Otherwise
+ * it posts every file in the run, walking back from the newest while the gaps
+ * stay under the window plus slack (a long upload registers late).
+ */
+export function brandBurst<T extends { created_at: string }>(rows: T[], announcedAt: number, quietMs = BRAND_QUIET_MS): { post: boolean; rows: T[] } {
+  const sorted = [...rows].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+  if (!sorted.length) return { post: false, rows: [] };
+  if (Date.parse(sorted[0].created_at) > announcedAt) return { post: false, rows: [] };
+  const run = [sorted[0]];
+  for (let i = 1; i < sorted.length; i++) {
+    if (Date.parse(run[run.length - 1].created_at) - Date.parse(sorted[i].created_at) > quietMs + 60_000) break;
+    run.push(sorted[i]);
+  }
+  return { post: true, rows: run };
+}
