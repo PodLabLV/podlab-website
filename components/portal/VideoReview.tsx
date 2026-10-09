@@ -80,7 +80,7 @@ function loadYouTube(): Promise<YTNamespace> {
 }
 
 const inputClass =
-  'border border-[#1a1a1a] bg-black px-3 py-2.5 text-[15px] text-[#eeeeee] placeholder:text-[#eeeeee]/25 focus:border-[#2add1b] focus:outline-none';
+  'border border-p-line bg-p-paper px-3 py-2.5 text-[15px] text-p-ink placeholder:text-p-ink/25 focus:border-p-brandink focus:outline-none';
 
 export default function VideoReview({ source, chapters, notes, onAddNote, onSourceError, emptyText }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -199,7 +199,7 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
           controls
           playsInline
           preload="metadata"
-          className="aspect-video w-full bg-black"
+          className="aspect-video w-full bg-p-paper"
           onLoadedMetadata={(e) => setDuration(e.currentTarget.duration || null)}
           onTimeUpdate={(e) => setNow(e.currentTarget.currentTime)}
           onPause={(e) => setStamp(clock(e.currentTarget.currentTime))}
@@ -210,7 +210,7 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
               href={fallback.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="portal-label mt-2 inline-block !text-[8.5px] text-[#eeeeee]/35 transition hover:text-[#2add1b]"
+              className="portal-label mt-2 inline-block !text-[8.5px] text-p-ink/35 transition hover:text-p-brandink"
             >
               Won&apos;t play here? Open on {fallback.host} ↗
             </a>
@@ -219,28 +219,28 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
       )}
       {source?.kind === 'youtube' && (
         <>
-          <div ref={ytHost} className="aspect-video w-full bg-black [&>iframe]:h-full [&>iframe]:w-full" />
+          <div ref={ytHost} className="aspect-video w-full bg-p-paper [&>iframe]:h-full [&>iframe]:w-full" />
           {/* Some videos refuse to embed (owner settings, private links); never leave the client stuck. */}
           <a
             href={source.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="portal-label mt-2 inline-block !text-[8.5px] text-[#eeeeee]/35 transition hover:text-[#2add1b]"
+            className="portal-label mt-2 inline-block !text-[8.5px] text-p-ink/35 transition hover:text-p-brandink"
           >
             Won&apos;t play here? Open on YouTube ↗
           </a>
         </>
       )}
       {showLink && link && (
-        <div className="flex flex-col gap-3 border border-[#1a1a1a] bg-[#0a0a0a] p-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-[#eeeeee]/60">
+        <div className="flex flex-col gap-3 border border-p-line bg-p-card p-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-p-ink/60">
             This cut plays on {link.host}. Watch it there, then pick the chapter or type the time for each note.
           </p>
           <a
             href={link.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="portal-label inline-flex shrink-0 items-center gap-2 border border-[#2add1b]/50 px-4 py-2.5 !text-[9.5px] text-[#2add1b] transition hover:bg-[#2add1b] hover:text-black"
+            className="portal-label inline-flex shrink-0 items-center gap-2 border border-p-brandink/50 px-4 py-2.5 !text-[9.5px] text-p-brandink transition hover:bg-p-brand hover:text-black"
           >
             Open the cut ↗
           </a>
@@ -256,7 +256,7 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
               return (
                 <span
                   key={c.t}
-                  className={`h-full ${i === activeChapter ? 'bg-[#2add1b]' : 'bg-[#1a1a1a]'}`}
+                  className={`h-full ${i === activeChapter ? 'bg-p-brand' : 'bg-p-line'}`}
                   style={{ flexGrow: Math.max(end - c.t, 1), flexBasis: 0 }}
                 />
               );
@@ -267,7 +267,7 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
             .map((n) => (
               <span
                 key={n.id}
-                className={`absolute top-[-3px] h-[14px] w-[2px] ${n.fromClient ? 'bg-[#eeeeee]' : 'bg-[#2add1b]'}`}
+                className={`absolute top-[-3px] h-[14px] w-[2px] ${n.fromClient ? 'bg-p-ink' : 'bg-p-brand'}`}
                 style={{ left: `${Math.min(99.5, ((n.t as number) / span) * 100)}%` }}
               />
             ))}
@@ -276,7 +276,7 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
 
       {/* Chapters */}
       {chapters.length > 0 && (
-        <ol className="mt-4 grid gap-px border border-[#1a1a1a] bg-[#1a1a1a] sm:grid-cols-2">
+        <ol className="mt-4 grid gap-px border border-p-line bg-p-line sm:grid-cols-2">
           {chapters.map((c, i) => {
             const end = chapters[i + 1]?.t ?? Infinity;
             const count = notes.filter((n) => n.t !== null && n.t >= c.t && n.t < end).length;
@@ -286,12 +286,12 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
                   type="button"
                   onClick={() => (inline ? seek(c.t) : setStamp(clock(c.t)))}
                   className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${
-                    i === activeChapter ? 'bg-[#2add1b]/[0.08]' : 'bg-black hover:bg-white/[0.03]'
+                    i === activeChapter ? 'bg-p-brand/[0.08]' : 'bg-p-paper hover:bg-p-ink/[0.03]'
                   }`}
                 >
-                  <span className="portal-label w-12 shrink-0 !text-[9px] !tracking-[0.1em] text-[#2add1b]">{clock(c.t)}</span>
-                  <span className="min-w-0 flex-1 truncate text-sm text-[#eeeeee]">{c.title}</span>
-                  {count > 0 && <span className="portal-label shrink-0 !text-[8.5px] text-[#eeeeee]/40">{count} note{count === 1 ? '' : 's'}</span>}
+                  <span className="portal-label w-12 shrink-0 !text-[9px] !tracking-[0.1em] text-p-brandink">{clock(c.t)}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-p-ink">{c.title}</span>
+                  {count > 0 && <span className="portal-label shrink-0 !text-[8.5px] text-p-ink/40">{count} note{count === 1 ? '' : 's'}</span>}
                 </button>
               </li>
             );
@@ -300,41 +300,41 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
       )}
 
       {/* Notes */}
-      <span className="portal-label mt-6 block !text-[9px] text-[#eeeeee]/45">
+      <span className="portal-label mt-6 block !text-[9px] text-p-ink/45">
         Notes{notes.length ? ` · ${notes.length}` : ''}
       </span>
       {sorted.length > 0 ? (
-        <ul className="mt-3 divide-y divide-[#1a1a1a] border-y border-[#1a1a1a]">
+        <ul className="mt-3 divide-y divide-p-line border-y border-p-line">
           {sorted.map((n) => (
             <li key={n.id} className="flex gap-3 py-3">
               {n.t !== null ? (
                 <button
                   type="button"
                   onClick={() => (inline ? seek(n.t as number) : setStamp(clock(n.t as number)))}
-                  className="portal-label h-fit shrink-0 border border-[#2add1b]/40 px-1.5 py-1 !text-[9px] !tracking-[0.1em] text-[#2add1b] transition hover:bg-[#2add1b] hover:text-black"
+                  className="portal-label h-fit shrink-0 border border-p-brandink/40 px-1.5 py-1 !text-[9px] !tracking-[0.1em] text-p-brandink transition hover:bg-p-brand hover:text-black"
                   aria-label={`Jump to ${momentLabel(chapters, n.t)}`}
                 >
                   {clock(n.t)}
                 </button>
               ) : (
-                <span className="portal-label h-fit shrink-0 border border-[#eeeeee]/15 px-1.5 py-1 !text-[9px] text-[#eeeeee]/35">All</span>
+                <span className="portal-label h-fit shrink-0 border border-p-ink/15 px-1.5 py-1 !text-[9px] text-p-ink/35">All</span>
               )}
               <div className="min-w-0 flex-1">
                 {n.t !== null && chapterAt(chapters, n.t) && (
-                  <p className="portal-label !text-[8.5px] text-[#eeeeee]/35">{chapterAt(chapters, n.t)!.chapter.title}</p>
+                  <p className="portal-label !text-[8.5px] text-p-ink/35">{chapterAt(chapters, n.t)!.chapter.title}</p>
                 )}
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#eeeeee]/85">{n.body}</p>
-                <p className="portal-label mt-1.5 !text-[8px] text-[#eeeeee]/30">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-p-ink/85">{n.body}</p>
+                <p className="portal-label mt-1.5 !text-[8px] text-p-ink/30">
                   {n.fromClient ? 'You' : `${n.author} · PodLab`}
                   {n.meta ? `  ·  ${n.meta}` : ''}
-                  {n.resolved && <span className="ml-2 border border-[#2add1b]/50 px-1.5 py-0.5 text-[#2add1b]">Fixed</span>}
+                  {n.resolved && <span className="ml-2 border border-p-brandink/50 px-1.5 py-0.5 text-p-brandink">Fixed</span>}
                 </p>
               </div>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="mt-2 text-sm text-[#eeeeee]/40">
+        <p className="mt-2 text-sm text-p-ink/40">
           {emptyText ?? (inline ? 'Pause where something should change and leave a note. The time and chapter fill in for you.' : 'Pick a chapter or type the time, then say what should change.')}
         </p>
       )}
@@ -357,7 +357,7 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
                   type="button"
                   onClick={() => now !== null && setStamp(clock(now))}
                   disabled={now === null}
-                  className="portal-label shrink-0 border border-[#1a1a1a] px-3 !text-[9px] text-[#eeeeee]/60 transition hover:border-[#2add1b] hover:text-[#2add1b] disabled:opacity-30"
+                  className="portal-label shrink-0 border border-p-line px-3 !text-[9px] text-p-ink/60 transition hover:border-p-brandink hover:text-p-brandink disabled:opacity-30"
                 >
                   Now
                 </button>
@@ -378,12 +378,12 @@ export default function VideoReview({ source, chapters, notes, onAddNote, onSour
               type="button"
               onClick={save}
               disabled={busy || !draft.trim()}
-              className="portal-label inline-flex items-center justify-center bg-[#2add1b] px-5 py-3 !text-[10px] text-black transition hover:bg-[#eeeeee] disabled:cursor-not-allowed disabled:opacity-40"
+              className="portal-label inline-flex items-center justify-center bg-p-brand px-5 py-3 !text-[10px] text-black transition hover:bg-p-pop disabled:cursor-not-allowed disabled:opacity-40"
             >
               {busy ? 'Saving' : 'Add note'}
             </button>
           </div>
-          <p className="mt-2 text-xs text-[#eeeeee]/35">
+          <p className="mt-2 text-xs text-p-ink/35">
             {stamp.trim() ? (stampSeconds === null ? 'Write the time as 1:23.' : `Pinned to ${momentLabel(chapters, stampSeconds)}`) : 'No time: the note covers the whole video.'}
           </p>
           {err && <p role="alert" className="mt-2 text-sm text-red-300">{err}</p>}

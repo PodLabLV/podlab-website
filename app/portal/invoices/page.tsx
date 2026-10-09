@@ -12,7 +12,7 @@ import {
 export default function InvoicesPage() {
   const { loading, client, invoices } = usePortal();
 
-  if (loading) return <p className="text-white/40 text-sm">Loading...</p>;
+  if (loading) return <p className="text-p-ink/40 text-sm">Loading...</p>;
 
   if (!client || invoices.length === 0) {
     return (
@@ -47,24 +47,24 @@ export default function InvoicesPage() {
       <Card className="hidden md:block overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/10">
+            <tr className="border-b border-p-ink/10">
               {['Invoice', 'Date', 'Description', 'Amount', 'Status'].map((h) => (
                 <th
                   key={h}
-                  className="text-left px-5 py-3 font-display text-[10px] uppercase tracking-widest text-white/40"
+                  className="text-left px-5 py-3 font-display text-[10px] uppercase tracking-widest text-p-ink/40"
                 >
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-p-ink/5">
             {invoices.map((i) => (
               <tr key={i.id}>
-                <td className="px-5 py-4 text-white/60">{i.invoice_no || '—'}</td>
-                <td className="px-5 py-4 text-white/60">{formatDate(i.issued_on)}</td>
-                <td className="px-5 py-4 text-white">{i.description}</td>
-                <td className="px-5 py-4 text-white font-semibold">
+                <td className="px-5 py-4 text-p-ink/60">{i.invoice_no || '—'}</td>
+                <td className="px-5 py-4 text-p-ink/60">{formatDate(i.issued_on)}</td>
+                <td className="px-5 py-4 text-p-ink">{i.description}</td>
+                <td className="px-5 py-4 text-p-ink font-semibold">
                   {formatMoney(i.amount_cents)}
                 </td>
                 <td className="px-5 py-4">
@@ -82,15 +82,15 @@ export default function InvoicesPage() {
           <Card key={i.id} className="p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-white text-sm">{i.description}</p>
-                <p className="text-white/30 text-xs mt-1">
+                <p className="text-p-ink text-sm">{i.description}</p>
+                <p className="text-p-ink/30 text-xs mt-1">
                   {i.invoice_no ? `${i.invoice_no} · ` : ''}
                   {formatDate(i.issued_on)}
                 </p>
               </div>
               <StatusBadge status={i.status} />
             </div>
-            <p className="text-white font-semibold mt-3">{formatMoney(i.amount_cents)}</p>
+            <p className="text-p-ink font-semibold mt-3">{formatMoney(i.amount_cents)}</p>
           </Card>
         ))}
       </div>

@@ -27,6 +27,18 @@ const config: Config = {
         
         // Borders (subtle lines)
         border: "#2a2a2a",
+
+        // PodLab Portal theme: CSS variables on .portal, flipped by
+        // data-theme="light" (globals.css). Use these, never raw hex, in the portal.
+        "p-paper": "rgb(var(--p-paper) / <alpha-value>)",
+        "p-card": "rgb(var(--p-card) / <alpha-value>)",
+        "p-line": "rgb(var(--p-line) / <alpha-value>)",
+        "p-ink": "rgb(var(--p-ink) / <alpha-value>)",
+        "p-brand": "rgb(var(--p-brand) / <alpha-value>)",
+        "p-brandink": "rgb(var(--p-brandink) / <alpha-value>)",
+        "p-pop": "rgb(var(--p-pop) / <alpha-value>)",
+        "p-warn": "rgb(var(--p-warn) / <alpha-value>)",
+        "p-bad": "rgb(var(--p-bad) / <alpha-value>)",
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

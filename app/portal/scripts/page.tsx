@@ -32,22 +32,22 @@ function ScriptRow({ script, data }: ScriptRowProps) {
     <li>
       <Link
         href={`/portal/scripts/${script.id}`}
-        className="group flex flex-col gap-3 py-5 transition hover:bg-white/[0.02] sm:flex-row sm:items-center sm:gap-6 sm:px-4"
+        className="group flex flex-col gap-3 py-5 transition hover:bg-p-ink/[0.02] sm:flex-row sm:items-center sm:gap-6 sm:px-4"
       >
         <span className="min-w-0 flex-1">
-          <span className="portal-label block !text-[9px] text-[#eeeeee]/40">{meta.join('  ·  ')}</span>
-          <span className="mt-1.5 block text-base font-semibold text-[#eeeeee] transition group-hover:text-[#2add1b] sm:text-lg">
+          <span className="portal-label block !text-[9px] text-p-ink/40">{meta.join('  ·  ')}</span>
+          <span className="mt-1.5 block text-base font-semibold text-p-ink transition group-hover:text-p-brandink sm:text-lg">
             {script.title}
           </span>
           {open > 0 && (
-            <span className="mt-1 block text-xs text-[#eeeeee]/50">
+            <span className="mt-1 block text-xs text-p-ink/50">
               {open} open note{open === 1 ? '' : 's'}
             </span>
           )}
         </span>
         <span className="sm:hidden"><ScriptStatusBadge status={script.status} showPlain /></span>
         <span className="hidden sm:block"><ScriptStatusBadge status={script.status} showPlain align="end" /></span>
-        <span className="hidden shrink-0 text-[#eeeeee]/30 transition group-hover:translate-x-1 group-hover:text-[#2add1b] sm:block" aria-hidden="true">
+        <span className="hidden shrink-0 text-p-ink/30 transition group-hover:translate-x-1 group-hover:text-p-brandink sm:block" aria-hidden="true">
           →
         </span>
       </Link>
@@ -71,7 +71,7 @@ export default function ScriptsPage() {
   }, [client]);
 
   if (portalLoading || (client && !data)) {
-    return <p className="portal-label !text-[9px] text-[#eeeeee]/40">Loading scripts</p>;
+    return <p className="portal-label !text-[9px] text-p-ink/40">Loading scripts</p>;
   }
 
   if (!client || !data || data.scripts.length === 0) {
@@ -102,25 +102,25 @@ export default function ScriptsPage() {
       {waiting.length > 0 ? (
         <div>
           <div className="flex items-baseline gap-3">
-            <span className="portal-label text-yellow-300">Waiting on you</span>
-            <span className="portal-label !text-[9px] text-[#eeeeee]/40">{waiting.length}</span>
+            <span className="portal-label text-p-warn">Waiting on you</span>
+            <span className="portal-label !text-[9px] text-p-ink/40">{waiting.length}</span>
           </div>
-          <ul className="mt-4 divide-y divide-[#1a1a1a] border-y border-[#1a1a1a]">
+          <ul className="mt-4 divide-y divide-p-line border-y border-p-line">
             {waiting.map((s) => (
               <ScriptRow key={s.id} script={s} data={data} />
             ))}
           </ul>
         </div>
       ) : (
-        <p className="border-l-2 border-[#2add1b] pl-5 text-sm leading-relaxed text-[#eeeeee]/70">
+        <p className="border-l-2 border-p-brandink pl-5 text-sm leading-relaxed text-p-ink/70">
           Nothing is waiting on you. The moment a script is ready to read, it shows up here and on your dashboard.
         </p>
       )}
 
       {rest.length > 0 && (
         <div className="mt-12">
-          <span className="portal-label block text-[#2add1b]">{waiting.length > 0 ? 'Everything else' : 'All scripts'}</span>
-          <ul className="mt-4 divide-y divide-[#1a1a1a] border-y border-[#1a1a1a]">
+          <span className="portal-label block text-p-brandink">{waiting.length > 0 ? 'Everything else' : 'All scripts'}</span>
+          <ul className="mt-4 divide-y divide-p-line border-y border-p-line">
             {rest.map((s) => (
               <ScriptRow key={s.id} script={s} data={data} />
             ))}

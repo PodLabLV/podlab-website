@@ -9,7 +9,7 @@ const STAGES = ['Discovery', 'Strategy', 'Production', 'Review', 'Delivered'];
 export default function ProgressPage() {
   const { loading, client, projects } = usePortal();
 
-  if (loading) return <p className="portal-label !text-[9px] text-[#eeeeee]/40">Loading</p>;
+  if (loading) return <p className="portal-label !text-[9px] text-p-ink/40">Loading</p>;
 
   const header = (
     <>
@@ -41,11 +41,11 @@ export default function ProgressPage() {
   return (
     <>
       {header}
-      <span className="portal-label mb-4 mt-12 block text-[#2add1b]">Projects in flight</span>
+      <span className="portal-label mb-4 mt-12 block text-p-brandink">Projects in flight</span>
 
       <div className="flex flex-wrap gap-x-6 gap-y-2 mb-6">
         {STAGES.map((s, i) => (
-          <span key={s} className="font-display text-[10px] uppercase tracking-widest text-white/30">
+          <span key={s} className="font-display text-[10px] uppercase tracking-widest text-p-ink/30">
             {String(i + 1).padStart(2, '0')} {s}
           </span>
         ))}
@@ -59,9 +59,9 @@ export default function ProgressPage() {
             <Card key={p.id} className="p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-white text-sm font-semibold">{p.name}</p>
+                  <p className="text-p-ink text-sm font-semibold">{p.name}</p>
                   {p.lab && (
-                    <p className="font-display text-[10px] uppercase tracking-widest text-[#2ADD1B] mt-1.5">
+                    <p className="font-display text-[10px] uppercase tracking-widest text-p-brandink mt-1.5">
                       {p.lab}
                     </p>
                   )}
@@ -69,7 +69,7 @@ export default function ProgressPage() {
                 <span
                   className={`font-display text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-lg border ${
                     done
-                      ? 'bg-[#2ADD1B]/10 text-[#2ADD1B] border-[#2ADD1B]/20'
+                      ? 'bg-p-brand/10 text-p-brandink border-p-brandink/20'
                       : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
                   }`}
                 >
@@ -82,13 +82,13 @@ export default function ProgressPage() {
                   <div
                     key={i}
                     className={`h-1.5 flex-1 rounded-full ${
-                      i < p.stage_index ? 'bg-[#2ADD1B]' : 'bg-white/10'
+                      i < p.stage_index ? 'bg-p-brand' : 'bg-p-ink/10'
                     }`}
                   />
                 ))}
               </div>
 
-              <div className="flex flex-wrap gap-x-6 gap-y-1 mt-4 text-xs text-white/40">
+              <div className="flex flex-wrap gap-x-6 gap-y-1 mt-4 text-xs text-p-ink/40">
                 {p.started_on && <span>Started {formatDate(p.started_on)}</span>}
                 {p.eta && <span>{done ? 'Completed' : 'Target'} {p.eta}</span>}
                 {p.owner && <span>Lead: {p.owner}</span>}

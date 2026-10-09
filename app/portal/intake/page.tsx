@@ -37,7 +37,7 @@ export default function IntakePage() {
     [accessToken, setAnswer],
   );
 
-  if (loading) return <p className="text-white/40 text-sm">Loading...</p>;
+  if (loading) return <p className="text-p-ink/40 text-sm">Loading...</p>;
 
   if (!client || intakeItems.length === 0) {
     return (
@@ -84,33 +84,33 @@ export default function IntakePage() {
 
       <Card className="sticky top-0 z-10 mb-8 p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="text-sm text-white">
+          <p className="text-sm text-p-ink">
             {answered} of {intakeItems.length} answered
             {requiredLeft > 0 && (
-              <span className="text-white/40"> · {requiredLeft} required left</span>
+              <span className="text-p-ink/40"> · {requiredLeft} required left</span>
             )}
           </p>
           <button
             onClick={submit}
             disabled={submitted}
-            className="rounded-full bg-[#2ADD1B] px-5 py-2.5 text-[13px] font-semibold text-black transition hover:bg-[#2ADD1B]/90 disabled:opacity-50"
+            className="rounded-full bg-p-brand px-5 py-2.5 text-[13px] font-semibold text-black transition hover:bg-p-brand/90 disabled:opacity-50"
           >
             {submitted ? 'Sent to PodLab' : 'Submit intake'}
           </button>
         </div>
-        <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10">
+        <div className="mt-3 h-1 overflow-hidden rounded-full bg-p-ink/10">
           <div
-            className="h-full bg-[#2ADD1B] transition-[width] duration-500"
+            className="h-full bg-p-brand transition-[width] duration-500"
             style={{ width: `${(answered / intakeItems.length) * 100}%` }}
           />
         </div>
-        {error && <p className="mt-3 text-xs text-red-400">{error}</p>}
+        {error && <p className="mt-3 text-xs text-p-bad">{error}</p>}
       </Card>
 
       <div className="space-y-10">
         {sections.map((section) => (
           <section key={section}>
-            <h2 className="font-display mb-4 text-sm uppercase tracking-wider text-[#2ADD1B]">
+            <h2 className="font-display mb-4 text-sm uppercase tracking-wider text-p-brandink">
               {section}
             </h2>
             <div className="space-y-4">
@@ -122,12 +122,12 @@ export default function IntakePage() {
                   return (
                     <Card key={item.id} className="p-5">
                       <label htmlFor={item.id} className="block">
-                        <span className="text-[14.5px] font-medium text-white">
+                        <span className="text-[14.5px] font-medium text-p-ink">
                           {item.prompt}
-                          {item.required && <span className="text-[#2ADD1B]"> *</span>}
+                          {item.required && <span className="text-p-brandink"> *</span>}
                         </span>
                         {item.help && (
-                          <span className="mt-1.5 block text-[13px] leading-relaxed text-white/45">
+                          <span className="mt-1.5 block text-[13px] leading-relaxed text-p-ink/45">
                             {item.help}
                           </span>
                         )}
@@ -141,8 +141,8 @@ export default function IntakePage() {
                               onClick={() => save(item.id, opt)}
                               className={`block w-full rounded-xl border px-4 py-3 text-left text-[13px] transition ${
                                 value === opt
-                                  ? 'border-[#2ADD1B]/40 bg-[#2ADD1B]/10 text-white'
-                                  : 'border-white/10 text-white/60 hover:border-white/25'
+                                  ? 'border-p-brandink/40 bg-p-brand/10 text-p-ink'
+                                  : 'border-p-ink/10 text-p-ink/60 hover:border-p-ink/25'
                               }`}
                             >
                               {opt}
@@ -154,7 +154,7 @@ export default function IntakePage() {
                           id={item.id}
                           value={value}
                           onChange={(e) => save(item.id, e.target.value)}
-                          className="mt-4 w-full rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-[14px] text-white placeholder:text-white/25 focus:border-[#2ADD1B]/40 focus:outline-none"
+                          className="mt-4 w-full rounded-xl border border-p-ink/10 bg-p-card px-4 py-3 text-[14px] text-p-ink placeholder:text-p-ink/25 focus:border-p-brandink/40 focus:outline-none"
                           placeholder="Your answer"
                         />
                       ) : (
@@ -163,16 +163,16 @@ export default function IntakePage() {
                           rows={4}
                           value={value}
                           onChange={(e) => save(item.id, e.target.value)}
-                          className="mt-4 w-full resize-y rounded-xl border border-white/10 bg-[#0F0F0F] px-4 py-3 text-[14px] leading-relaxed text-white placeholder:text-white/25 focus:border-[#2ADD1B]/40 focus:outline-none"
+                          className="mt-4 w-full resize-y rounded-xl border border-p-ink/10 bg-p-card px-4 py-3 text-[14px] leading-relaxed text-p-ink placeholder:text-p-ink/25 focus:border-p-brandink/40 focus:outline-none"
                           placeholder="Rough and honest beats considered and late."
                         />
                       )}
 
-                      <p className="mt-2 h-4 text-[11px] text-white/30">
+                      <p className="mt-2 h-4 text-[11px] text-p-ink/30">
                         {state === 'saving' && 'Saving...'}
                         {state === 'saved' && 'Saved'}
                         {state === 'error' && (
-                          <span className="text-red-400">Not saved. Check your connection.</span>
+                          <span className="text-p-bad">Not saved. Check your connection.</span>
                         )}
                       </p>
                     </Card>

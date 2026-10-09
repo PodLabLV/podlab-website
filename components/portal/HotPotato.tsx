@@ -17,7 +17,7 @@ export function PotatoIcon({ heat, size = 22 }: { heat: Heat; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" className={heat === 'hot' ? 'potato-hot' : undefined} style={{ overflow: 'visible' }}>
       {heat === 'warm' && (
-        <g stroke="#eeeeee" strokeOpacity=".55" strokeWidth="1.4" fill="none" strokeLinecap="round">
+        <g className="text-p-ink" stroke="currentColor" strokeOpacity=".55" strokeWidth="1.4" fill="none" strokeLinecap="round">
           <path className="potato-steam" d="M12 9c-1.5-2 1.5-3 0-5" />
           <path className="potato-steam potato-steam-2" d="M19 9c-1.5-2 1.5-3 0-5" />
         </g>
@@ -95,8 +95,24 @@ const dayWord = (d: number) => (d === 0 ? 'today' : d === 1 ? 'day 1' : `day ${d
 
 // ── sidebar tray ─────────────────────────────────────────────────────────
 
+const TRAY_KEY = 'podlab:potato-tray';
+
 export function PotatoTray({ onNavigate }: { onNavigate: () => void }) {
   const potatoes = usePotatoes();
+  // Open by default; folding it is a per-browser preference.
+  const [open, setOpen] = useState(true);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(TRAY_KEY) === 'closed') setOpen(false);
+    } catch {}
+  }, []);
+  const toggle = () =>
+    setOpen((o) => {
+      try {
+        localStorage.setItem(TRAY_KEY, o ? 'closed' : 'open');
+      } catch {}
+      return !o;
+    });
   if (!potatoes || !potatoes.length) return null;
   const mine = potatoes.filter((p) => p.holder === 'client');
   const ours = potatoes.filter((p) => p.holder === 'team');
@@ -105,8 +121,8 @@ export function PotatoTray({ onNavigate }: { onNavigate: () => void }) {
       <Link href={p.href} onClick={onNavigate} className="group flex items-center gap-2.5 py-1.5" title={`${HEAT_LABEL[p.heat]} · ${p.why}`}>
         <PotatoIcon heat={p.heat} size={20} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[12.5px] text-[#eeeeee]/80 group-hover:text-[#2add1b]">{p.title}</span>
-          <span className="block truncate text-[10.5px] text-[#eeeeee]/35">
+          <span className="block truncate text-[12.5px] text-p-ink/80 group-hover:text-p-brandink">{p.title}</span>
+          <span className="block truncate text-[10.5px] text-p-ink/35">
             {p.holder === 'team' ? `${p.who} · ` : ''}
             {p.why} · {dayWord(p.days)}
           </span>
@@ -114,22 +130,40 @@ export function PotatoTray({ onNavigate }: { onNavigate: () => void }) {
       </Link>
     </li>
   );
+  const hottest = potatoes[0];
   return (
-    <div className="mx-4 mt-3 border border-[#1a1a1a] bg-[#0a0a0a] px-4 py-3">
-      <p className="portal-label !text-[9px] text-[#ff8a1f]">Hot potatoes</p>
+    <div className="mx-4 mt-3 border border-p-line bg-p-card px-4 py-3">
+      <button onClick={toggle} aria-expanded={open} className="flex w-full items-center gap-2 text-left">
+        <span className="portal-label flex-1 !text-[9px] text-[#ff8a1f]">Hot potatoes</span>
+        {!open && (
+          <span className="flex items-center gap-1.5">
+            <PotatoIcon heat={hottest.heat} size={16} />
+            <span className="portal-label !text-[8.5px] text-p-ink/50">
+              {mine.length} on you{ours.length ? ` · ${ours.length} on us` : ''}
+            </span>
+          </span>
+        )}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true" className={`shrink-0 text-p-ink/40 transition-transform ${open ? 'rotate-180' : ''}`}>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {open && (
+      <>
       {mine.length > 0 && (
         <>
-          <p className="portal-label mt-2.5 !text-[8px] text-[#eeeeee]/35">On you · {mine.length}</p>
+          <p className="portal-label mt-2.5 !text-[8px] text-p-ink/35">On you · {mine.length}</p>
           <ul>{mine.slice(0, 4).map(row)}</ul>
         </>
       )}
       {ours.length > 0 && (
         <>
-          <p className="portal-label mt-2.5 !text-[8px] text-[#eeeeee]/35">On PodLab · {ours.length}</p>
+          <p className="portal-label mt-2.5 !text-[8px] text-p-ink/35">On PodLab · {ours.length}</p>
           <ul>{ours.slice(0, 4).map(row)}</ul>
         </>
       )}
-      {!mine.length && <p className="mt-2 text-[11.5px] text-[#eeeeee]/45">Nothing on you. The ball is in our court.</p>}
+      {!mine.length && <p className="mt-2 text-[11.5px] text-p-ink/45">Nothing on you. The ball is in our court.</p>}
+      </>
+      )}
     </div>
   );
 }
@@ -207,25 +241,25 @@ export function PotatoSmoke() {
       </div>
 
       <div className="relative flex h-full items-center justify-center px-4">
-        <div className="w-full max-w-sm border border-[#ff8a1f]/40 bg-black/95 p-6 text-center shadow-[0_0_80px_rgba(255,106,19,.25)]">
+        <div className="w-full max-w-sm border border-[#ff8a1f]/40 bg-p-paper/95 p-6 text-center shadow-[0_0_80px_rgba(255,106,19,.25)]">
           <div className="flex justify-center">
             <PotatoIcon heat="smoke" size={72} />
           </div>
           <p className="portal-label mt-4 !text-[9px] text-[#ff8a1f]">Hot potato · {dayWord(target.days)}</p>
-          <h2 id="potato-smoke-title" className="mt-2 text-xl font-bold leading-tight text-[#eeeeee]">
+          <h2 id="potato-smoke-title" className="mt-2 text-xl font-bold leading-tight text-p-ink">
             {target.title}
           </h2>
-          <p className="mt-2 text-sm text-[#eeeeee]/60">
+          <p className="mt-2 text-sm text-p-ink/60">
             This one has been on you for {target.days} days and it&apos;s smoking up the place. {target.why}.
           </p>
           <Link
             href={target.href}
             onClick={wave}
-            className="portal-label mt-5 inline-flex w-full items-center justify-center bg-[#2add1b] px-5 py-3.5 !text-[10px] text-black transition hover:bg-[#eeeeee]"
+            className="portal-label mt-5 inline-flex w-full items-center justify-center bg-p-brand px-5 py-3.5 !text-[10px] text-black transition hover:bg-p-pop"
           >
             Pass the potato
           </Link>
-          <button onClick={wave} className="portal-label mt-3 !text-[9px] text-[#eeeeee]/40 transition hover:text-[#eeeeee]">
+          <button onClick={wave} className="portal-label mt-3 !text-[9px] text-p-ink/40 transition hover:text-p-ink">
             Wave the smoke away for now
           </button>
         </div>
@@ -240,9 +274,9 @@ export function PotatoBadge({ onOpen }: { onOpen: () => void }) {
   const mine = potatoes?.filter((p) => p.holder === 'client') ?? [];
   if (!mine.length) return null;
   return (
-    <button onClick={onOpen} aria-label={`${mine.length} hot potato${mine.length === 1 ? '' : 'es'} on you`} className="flex h-10 items-center gap-1.5 border border-[#1a1a1a] px-2.5">
+    <button onClick={onOpen} aria-label={`${mine.length} hot potato${mine.length === 1 ? '' : 'es'} on you`} className="flex h-10 items-center gap-1.5 border border-p-line px-2.5">
       <PotatoIcon heat={mine[0].heat} size={20} />
-      <span className="portal-label !text-[9px] text-[#eeeeee]/70">{mine.length}</span>
+      <span className="portal-label !text-[9px] text-p-ink/70">{mine.length}</span>
     </button>
   );
 }

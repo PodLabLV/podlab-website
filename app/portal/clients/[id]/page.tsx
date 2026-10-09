@@ -17,16 +17,16 @@ function Check() {
 }
 
 const STATE_TONE: Record<ElementState, string> = {
-  unlocked: 'border-[#2add1b] bg-[#2add1b] text-black',
-  building: 'border-[#2add1b]/50 text-[#2add1b]',
-  locked: 'border-[#eeeeee]/15 text-[#eeeeee]/45',
+  unlocked: 'border-p-brandink bg-p-brand text-black',
+  building: 'border-p-brandink/50 text-p-brandink',
+  locked: 'border-p-ink/15 text-p-ink/45',
 };
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="mt-12">
-      <span className="portal-label block text-[#2add1b]">{title}</span>
-      {hint && <p className="mt-2 max-w-2xl text-sm text-[#eeeeee]/50">{hint}</p>}
+      <span className="portal-label block text-p-brandink">{title}</span>
+      {hint && <p className="mt-2 max-w-2xl text-sm text-p-ink/50">{hint}</p>}
       <div className="mt-4">{children}</div>
     </div>
   );
@@ -81,7 +81,7 @@ export default function StaffClientPage() {
     [d],
   );
 
-  if (loading || (!d && !error)) return <p className="portal-label !text-[9px] text-[#eeeeee]/40">Loading client</p>;
+  if (loading || (!d && !error)) return <p className="portal-label !text-[9px] text-p-ink/40">Loading client</p>;
   if (error || !d || !chain) {
     return (
       <>
@@ -99,7 +99,7 @@ export default function StaffClientPage() {
 
   return (
     <div>
-      <Link href="/portal/clients" className="portal-label !text-[9px] text-[#eeeeee]/40 transition hover:text-[#2add1b]">
+      <Link href="/portal/clients" className="portal-label !text-[9px] text-p-ink/40 transition hover:text-p-brandink">
         ← All clients
       </Link>
       <div className="mt-6">
@@ -111,7 +111,7 @@ export default function StaffClientPage() {
       </div>
 
       {d.missing.length > 0 && (
-        <p className="border-l-2 border-yellow-300 bg-yellow-300/5 px-4 py-3 text-sm text-[#eeeeee]/80">
+        <p className="border-l-2 border-p-warn bg-p-warn/5 px-4 py-3 text-sm text-p-ink/80">
           Waiting on a migration: {d.missing.join(', ')}. Saving those sections will fail until it runs.
         </p>
       )}
@@ -122,11 +122,11 @@ export default function StaffClientPage() {
               href={d.client.driveFolderUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="portal-label inline-flex items-center gap-2 bg-[#2add1b] px-5 py-3 !text-[10px] text-black transition hover:bg-[#eeeeee]"
+              className="portal-label inline-flex items-center gap-2 bg-p-brand px-5 py-3 !text-[10px] text-black transition hover:bg-p-pop"
             >
               Open in Drive ↗
             </a>
-            <button onClick={() => setDriveDraft(d.client.driveFolderUrl ?? '')} className="portal-label !text-[9px] text-[#eeeeee]/40 transition hover:text-[#2add1b]">
+            <button onClick={() => setDriveDraft(d.client.driveFolderUrl ?? '')} className="portal-label !text-[9px] text-p-ink/40 transition hover:text-p-brandink">
               Change link
             </button>
           </div>
@@ -137,7 +137,7 @@ export default function StaffClientPage() {
               onChange={(e) => setDriveDraft(e.target.value)}
               placeholder="https://drive.google.com/drive/folders/…"
               aria-label="Drive folder link"
-              className="min-w-0 flex-1 border border-[#1a1a1a] bg-black px-3 py-2.5 text-sm text-[#eeeeee] placeholder:text-[#eeeeee]/25 focus:border-[#2add1b] focus:outline-none"
+              className="min-w-0 flex-1 border border-p-line bg-p-paper px-3 py-2.5 text-sm text-p-ink placeholder:text-p-ink/25 focus:border-p-brandink focus:outline-none"
             />
             <button
               disabled={busy !== null}
@@ -145,12 +145,12 @@ export default function StaffClientPage() {
                 await call('drive', '/api/portal/admin/client', 'PATCH', { id: d.client.id, driveFolderUrl: driveDraft ?? '' }, 'Drive folder saved.');
                 setDriveDraft(null);
               }}
-              className="portal-label bg-[#2add1b] px-5 py-3 !text-[10px] text-black transition hover:bg-[#eeeeee] disabled:opacity-40"
+              className="portal-label bg-p-brand px-5 py-3 !text-[10px] text-black transition hover:bg-p-pop disabled:opacity-40"
             >
               Save
             </button>
             {d.client.driveFolderUrl && (
-              <button onClick={() => setDriveDraft(null)} className="portal-label px-3 !text-[9px] text-[#eeeeee]/40 hover:text-[#eeeeee]">
+              <button onClick={() => setDriveDraft(null)} className="portal-label px-3 !text-[9px] text-p-ink/40 hover:text-p-ink">
                 Cancel
               </button>
             )}
@@ -158,31 +158,31 @@ export default function StaffClientPage() {
         )}
       </Section>
 
-      {flash && <p role="status" className="mt-4 border-l-2 border-[#2add1b] bg-[#2add1b]/5 px-4 py-3 text-sm text-[#eeeeee]/85">{flash}</p>}
+      {flash && <p role="status" className="mt-4 border-l-2 border-p-brandink bg-p-brand/5 px-4 py-3 text-sm text-p-ink/85">{flash}</p>}
 
       <Section title="Brand, content and game plan" hint="Their brand kit (add files, make the editors' link), their content calendar (send recorded pieces to the editors), and their 90-day game plan.">
         <Link
           href={`/portal/brand?client=${d.client.id}`}
-          className="portal-label inline-flex items-center gap-2 border border-[#1a1a1a] px-5 py-3 !text-[10px] text-[#eeeeee]/70 transition hover:border-[#2add1b] hover:text-[#2add1b]"
+          className="portal-label inline-flex items-center gap-2 border border-p-line px-5 py-3 !text-[10px] text-p-ink/70 transition hover:border-p-brandink hover:text-p-brandink"
         >
           Open their brand page
         </Link>
         <Link
           href={`/portal/content?client=${d.client.id}`}
-          className="portal-label ml-2 inline-flex items-center gap-2 border border-[#1a1a1a] px-5 py-3 !text-[10px] text-[#eeeeee]/70 transition hover:border-[#2add1b] hover:text-[#2add1b]"
+          className="portal-label ml-2 inline-flex items-center gap-2 border border-p-line px-5 py-3 !text-[10px] text-p-ink/70 transition hover:border-p-brandink hover:text-p-brandink"
         >
           Content plan
         </Link>
         <Link
           href={`/portal/plan?client=${d.client.id}`}
-          className="portal-label ml-2 inline-flex items-center gap-2 border border-[#1a1a1a] px-5 py-3 !text-[10px] text-[#eeeeee]/70 transition hover:border-[#2add1b] hover:text-[#2add1b]"
+          className="portal-label ml-2 inline-flex items-center gap-2 border border-p-line px-5 py-3 !text-[10px] text-p-ink/70 transition hover:border-p-brandink hover:text-p-brandink"
         >
           Game plan
         </Link>
       </Section>
 
       <Section title="What they bought" hint="Drives their Growth Chain: a product moves the elements it unlocks to Building. Edits and recordings show under what they have but unlock nothing.">
-        <ul className="grid gap-px border border-[#1a1a1a] bg-[#1a1a1a] sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-px border border-p-line bg-p-line sm:grid-cols-2 lg:grid-cols-3">
           {PRODUCTS.map((p) => {
             const owned = d.products.includes(p.key);
             return (
@@ -192,15 +192,15 @@ export default function StaffClientPage() {
                   onClick={() =>
                     call(`p-${p.key}`, '/api/portal/growth-chain', 'PATCH', { clientId: d.client.id, product: p.key, remove: owned }, owned ? `Removed ${p.name}.` : `Recorded ${p.name}.`)
                   }
-                  className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition disabled:opacity-60 ${owned ? 'bg-[#2add1b]/[0.08]' : 'bg-black hover:bg-white/[0.03]'}`}
+                  className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition disabled:opacity-60 ${owned ? 'bg-p-brand/[0.08]' : 'bg-p-paper hover:bg-p-ink/[0.03]'}`}
                 >
                   <span>
-                    <span className="block text-sm text-[#eeeeee]">{p.name}</span>
-                    <span className="portal-label mt-1 block !text-[8.5px] text-[#eeeeee]/35">
+                    <span className="block text-sm text-p-ink">{p.name}</span>
+                    <span className="portal-label mt-1 block !text-[8.5px] text-p-ink/35">
                       {p.unlocks.length ? p.unlocks.map((k) => (k === 'br' ? 'Brand' : ELEMENTS.find((e) => e.key === k)!.symbol)).join(' · ') : 'Production'}
                     </span>
                   </span>
-                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center border text-[11px] ${owned ? 'border-[#2add1b] bg-[#2add1b] text-black' : 'border-[#eeeeee]/20'}`}>
+                  <span className={`flex h-5 w-5 shrink-0 items-center justify-center border text-[11px] ${owned ? 'border-p-brandink bg-p-brand text-black' : 'border-p-ink/20'}`}>
                     {owned ? <Check /> : null}
                   </span>
                 </button>
@@ -211,15 +211,15 @@ export default function StaffClientPage() {
       </Section>
 
       <Section title="Growth Chain" hint="States work themselves out: bought → Building, delivered → Unlocked (when all of an element's delivery phases are done, or when you mark it delivered here). Override only when the automatic state is wrong.">
-        <ul className="divide-y divide-[#1a1a1a] border border-[#1a1a1a]">
+        <ul className="divide-y divide-p-line border border-p-line">
           {layers.map((l) => {
             const row = rowFor(l.key);
             return (
-              <li key={l.key} className="flex flex-col gap-3 bg-black px-4 py-3 md:flex-row md:items-center md:justify-between">
+              <li key={l.key} className="flex flex-col gap-3 bg-p-paper px-4 py-3 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-3">
                   <span className={`portal-label border px-2 py-1 !text-[8.5px] ${STATE_TONE[l.state]}`}>{l.state}</span>
-                  <span className="text-sm text-[#eeeeee]">{l.name}</span>
-                  {l.score !== null && <span className="text-xs text-[#eeeeee]/40">score {l.score}</span>}
+                  <span className="text-sm text-p-ink">{l.name}</span>
+                  {l.score !== null && <span className="text-xs text-p-ink/40">score {l.score}</span>}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
@@ -227,7 +227,7 @@ export default function StaffClientPage() {
                     onClick={() =>
                       call(`d-${l.key}`, '/api/portal/growth-chain', 'PATCH', { clientId: d.client.id, element: l.key, delivered: !row?.delivered_at }, row?.delivered_at ? 'Marked not delivered.' : 'Marked delivered.')
                     }
-                    className={`portal-label border px-3 py-2 !text-[9px] transition disabled:opacity-50 ${row?.delivered_at ? 'border-[#2add1b] text-[#2add1b]' : 'border-[#1a1a1a] text-[#eeeeee]/60 hover:border-[#2add1b] hover:text-[#2add1b]'}`}
+                    className={`portal-label border px-3 py-2 !text-[9px] transition disabled:opacity-50 ${row?.delivered_at ? 'border-p-brandink text-p-brandink' : 'border-p-line text-p-ink/60 hover:border-p-brandink hover:text-p-brandink'}`}
                   >
                     {row?.delivered_at ? 'Delivered' : 'Mark delivered'}
                   </button>
@@ -238,7 +238,7 @@ export default function StaffClientPage() {
                     onChange={(e) =>
                       call(`o-${l.key}`, '/api/portal/growth-chain', 'PATCH', { clientId: d.client.id, element: l.key, override: e.target.value || null }, 'Override saved.')
                     }
-                    className="border border-[#1a1a1a] bg-black px-2 py-2 text-xs text-[#eeeeee]/70 focus:border-[#2add1b] focus:outline-none"
+                    className="border border-p-line bg-p-paper px-2 py-2 text-xs text-p-ink/70 focus:border-p-brandink focus:outline-none"
                   >
                     <option value="">Automatic</option>
                     <option value="locked">Force locked</option>
@@ -253,7 +253,7 @@ export default function StaffClientPage() {
       </Section>
 
       <Section title="Production boards" hint="Linked boards show on their Production page, and their revision notes land on these boards' cards.">
-        <ul className="grid gap-px border border-[#1a1a1a] bg-[#1a1a1a] sm:grid-cols-2">
+        <ul className="grid gap-px border border-p-line bg-p-line sm:grid-cols-2">
           {d.boards.map((b) => (
             <li key={b.id}>
               <button
@@ -261,13 +261,13 @@ export default function StaffClientPage() {
                 onClick={() =>
                   call(`b-${b.id}`, '/api/portal/production', 'PATCH', { clientId: d.client.id, boardId: b.id, remove: b.linked }, b.linked ? `Unlinked ${b.name}.` : `Linked ${b.name}.`)
                 }
-                className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition disabled:opacity-60 ${b.linked ? 'bg-[#2add1b]/[0.08]' : 'bg-black hover:bg-white/[0.03]'}`}
+                className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition disabled:opacity-60 ${b.linked ? 'bg-p-brand/[0.08]' : 'bg-p-paper hover:bg-p-ink/[0.03]'}`}
               >
                 <span>
-                  <span className="block text-sm text-[#eeeeee]">{b.name}</span>
-                  <span className="portal-label mt-1 block !text-[8.5px] text-[#eeeeee]/35">{b.type}</span>
+                  <span className="block text-sm text-p-ink">{b.name}</span>
+                  <span className="portal-label mt-1 block !text-[8.5px] text-p-ink/35">{b.type}</span>
                 </span>
-                <span className={`portal-label shrink-0 !text-[8.5px] ${b.linked ? 'text-[#2add1b]' : 'text-[#eeeeee]/30'}`}>{b.linked ? 'Linked' : 'Link'}</span>
+                <span className={`portal-label shrink-0 !text-[8.5px] ${b.linked ? 'text-p-brandink' : 'text-p-ink/30'}`}>{b.linked ? 'Linked' : 'Link'}</span>
               </button>
             </li>
           ))}
@@ -280,12 +280,12 @@ export default function StaffClientPage() {
           hint="Tie a video deliverable to the card the editor works from. When the client sends notes on it, they land on that card with time and chapter, and a card past review goes back to Revising."
         >
           {d.cards.length === 0 ? (
-            <p className="text-sm text-[#eeeeee]/50">Link a production board above first; its cards show up here.</p>
+            <p className="text-sm text-p-ink/50">Link a production board above first; its cards show up here.</p>
           ) : (
-            <ul className="divide-y divide-[#1a1a1a] border border-[#1a1a1a]">
+            <ul className="divide-y divide-p-line border border-p-line">
               {d.videoAssets.map((a) => (
-                <li key={a.id} className="flex flex-col gap-2 bg-black px-4 py-3 md:flex-row md:items-center md:justify-between">
-                  <span className="text-sm text-[#eeeeee]">{a.title}</span>
+                <li key={a.id} className="flex flex-col gap-2 bg-p-paper px-4 py-3 md:flex-row md:items-center md:justify-between">
+                  <span className="text-sm text-p-ink">{a.title}</span>
                   <select
                     aria-label={`Editor card for ${a.title}`}
                     disabled={busy !== null}
@@ -293,7 +293,7 @@ export default function StaffClientPage() {
                     onChange={(e) =>
                       call(`a-${a.id}`, '/api/portal/deliverables', 'POST', { intent: 'link-card', assetId: a.id, crmCardId: e.target.value || null }, e.target.value ? 'Tied to the editor card.' : 'Untied.')
                     }
-                    className="w-full border border-[#1a1a1a] bg-black px-2 py-2 text-xs text-[#eeeeee]/75 focus:border-[#2add1b] focus:outline-none md:w-80"
+                    className="w-full border border-p-line bg-p-paper px-2 py-2 text-xs text-p-ink/75 focus:border-p-brandink focus:outline-none md:w-80"
                   >
                     <option value="">Not tied to a card</option>
                     {d.cards.map((c) => (
@@ -318,11 +318,11 @@ export default function StaffClientPage() {
             <button
               disabled={busy !== null || gen.published >= gen.generated}
               onClick={() => call('publish', '/api/portal/admin/publish-scripts', 'POST', { clientId: d.client.id }, 'Scripts published to their portal.')}
-              className="portal-label bg-[#2add1b] px-5 py-3 !text-[10px] text-black transition hover:bg-[#eeeeee] disabled:cursor-not-allowed disabled:opacity-40"
+              className="portal-label bg-p-brand px-5 py-3 !text-[10px] text-black transition hover:bg-p-pop disabled:cursor-not-allowed disabled:opacity-40"
             >
               {gen.published >= gen.generated ? 'All published' : `Publish ${gen.generated - gen.published} script${gen.generated - gen.published === 1 ? '' : 's'}`}
             </button>
-            <span className="text-xs text-[#eeeeee]/40">
+            <span className="text-xs text-p-ink/40">
               {gen.published} of {gen.generated} already in their portal
             </span>
           </div>
@@ -334,23 +334,23 @@ export default function StaffClientPage() {
           title="TipTop's script drafts"
           hint="Scripts TipTop wrote with the client. They sit in the client's Scripts as Draft (our turn) until you send them for the client's review and approval."
         >
-          <ul className="divide-y divide-[#1a1a1a] border border-[#1a1a1a]">
+          <ul className="divide-y divide-p-line border border-p-line">
             {d.drafts.map((dr) => (
-              <li key={dr.id} className="bg-black p-4">
+              <li key={dr.id} className="bg-p-paper p-4">
                 <details>
                   <summary className="cursor-pointer list-none">
-                    <span className="text-sm font-semibold text-[#eeeeee]">{dr.title}</span>
-                    <span className="ml-2 text-xs text-[#eeeeee]/40">
+                    <span className="text-sm font-semibold text-p-ink">{dr.title}</span>
+                    <span className="ml-2 text-xs text-p-ink/40">
                       {[dr.kind, dr.words ? `${dr.words} words` : null, new Date(dr.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })].filter(Boolean).join(' · ')}
                     </span>
-                    {dr.note && <span className="mt-1 block text-xs text-[#eeeeee]/50">{dr.note}</span>}
+                    {dr.note && <span className="mt-1 block text-xs text-p-ink/50">{dr.note}</span>}
                   </summary>
-                  <p className="mt-3 max-h-80 overflow-y-auto whitespace-pre-wrap border-l border-[#1a1a1a] pl-3 text-sm leading-relaxed text-[#eeeeee]/80">{dr.body}</p>
+                  <p className="mt-3 max-h-80 overflow-y-auto whitespace-pre-wrap border-l border-p-line pl-3 text-sm leading-relaxed text-p-ink/80">{dr.body}</p>
                 </details>
                 <button
                   disabled={busy !== null}
                   onClick={() => call(`draft-${dr.id}`, '/api/portal/scripts', 'PATCH', { scriptId: dr.id, status: 'in review' }, `"${dr.title}" sent to the client for review.`)}
-                  className="portal-label mt-3 bg-[#2add1b] px-4 py-2.5 !text-[9.5px] text-black transition hover:bg-[#eeeeee] disabled:opacity-40"
+                  className="portal-label mt-3 bg-p-brand px-4 py-2.5 !text-[9.5px] text-black transition hover:bg-p-pop disabled:opacity-40"
                 >
                   Send to client for review
                 </button>
@@ -363,7 +363,7 @@ export default function StaffClientPage() {
       <Section title="Access">
         <Link
           href="/portal/clients"
-          className="portal-label inline-flex border border-[#1a1a1a] px-5 py-3 !text-[10px] text-[#eeeeee]/70 transition hover:border-[#2add1b] hover:text-[#2add1b]"
+          className="portal-label inline-flex border border-p-line px-5 py-3 !text-[10px] text-p-ink/70 transition hover:border-p-brandink hover:text-p-brandink"
         >
           {d.client.hasLogin ? 'Send a new sign-in link' : 'Send their invite'} from the client list →
         </Link>
