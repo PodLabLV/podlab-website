@@ -17,7 +17,7 @@ The portal is the one place a client goes for everything PodLab. Staff keep work
 | **Intake** | The portal questionnaire. Saves as they type. | `portal_intake_*` |
 | **Your Answers** | What they told us (free-VSL application, studio intake, portal intake), read-only, with links to what we built from it. | `crm.leads` + `portal_intake_answers` |
 | **Delivery** | The phases of their build. | `portal_delivery_phases` |
-| **Production** | Every video on their CRM boards, live, with its stage. Chapters, a player, and **timestamped revision notes** that land on the editor's card. | `crm.content_*` via `portal_client_boards` + `portal_client_cards` |
+| **Your Videos** (was Production) | Every video on their CRM boards, live, with its stage. Chapters, a player, and **timestamped revision notes** that land on the editor's card. | `crm.content_*` via `portal_client_boards` + `portal_client_cards` |
 | **Brand** | Logos (each shown on light and dark, tagged main / icon / white / dark), colors (hex), fonts, brand guide, font files, do's and don'ts, and b-roll (uploads up to 5 GB per file, or a pasted Drive/Dropbox link). "Still needed" lists what editors are missing. | `portal_brand_kits`, `portal_brand_assets`, private bucket `client-brand` |
 | **Deliverables** | Versioned files. Video cuts get chapters and timestamped notes. Approve or send notes. | `portal_assets` + `portal_asset_versions` / `_comments` |
 | **Scripts** | Versioned scripts, notes pinned to a line, approval with evidence, teleprompter. | `portal_scripts*` |

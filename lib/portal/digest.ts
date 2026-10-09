@@ -189,7 +189,7 @@ export function digestEmail(c: DigestChanges, opts: { firstName?: string | null 
     sections.push({
       heading: c.cuts.length === 1 ? 'A new cut is ready to watch' : 'New cuts are ready to watch',
       items: c.cuts.map((x) => ({ text: x.title, html: e(x.title) })),
-      link: { href: production, label: 'Watch in Production' },
+      link: { href: production, label: 'Watch in Your Videos' },
     });
   }
   if (c.fixed.length) {
@@ -211,7 +211,7 @@ export function digestEmail(c: DigestChanges, opts: { firstName?: string | null 
         return w === 'approved or posted' ? 'Approved and posted' : `${w[0].toUpperCase()}${w.slice(1)}`;
       })(),
       items: c.done.map((x) => ({ text: `${x.title} (${x.stage})`, html: `${e(x.title)} <span style="color:#2add1b;">&middot; ${e(x.stage)}</span>` })),
-      link: { href: production, label: 'Open Production' },
+      link: { href: production, label: 'Open Your Videos' },
     });
   }
   if (c.scripts.length || c.deliverables.length) {

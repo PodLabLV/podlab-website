@@ -87,7 +87,7 @@ async function resolveRevisionTarget(
     const scope = await clientCardScope(db, caller.clientId);
     const { data: card } = await db.schema('crm').from('content_cards').select('id, title, board_id').eq('id', input.id).maybeSingle();
     if (!card || !scope || !cardVisible(scope, card)) return { ok: false, reason: 'No video with that id on this client\'s boards. Check the overview.' };
-    return { ok: true, title: card.title, where: 'Production' };
+    return { ok: true, title: card.title, where: 'Your Videos' };
   }
   if (input.target === 'script') {
     const { data: s } = await db.from('portal_scripts').select('title, status, client_id').eq('id', input.id).maybeSingle();

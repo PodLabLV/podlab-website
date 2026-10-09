@@ -49,7 +49,7 @@ export default function SharedCards({ clientId, accessToken }: SharedCardsProps)
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'Could not save that.');
-      setNote(remove ? 'Removed from their Production page.' : `Shared ${j.shared} card${j.shared === 1 ? '' : 's'}.`);
+      setNote(remove ? 'Removed from their Your Videos page.' : `Shared ${j.shared} card${j.shared === 1 ? '' : 's'}.`);
       await load(q.trim());
     } catch (e) {
       setNote(e instanceof Error ? e.message : 'Could not save that.');
