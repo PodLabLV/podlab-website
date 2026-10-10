@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveStaff, notifySlack } from '@/lib/portal-server';
 
@@ -41,7 +42,7 @@ export async function PATCH(req: Request) {
     .maybeSingle();
 
   if (error) {
-    console.error('[portal] delivery update failed', error.message);
+    reportError('[portal] delivery update failed', error.message);
     return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
   }
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });

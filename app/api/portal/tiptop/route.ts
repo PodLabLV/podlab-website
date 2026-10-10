@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import crypto from 'node:crypto';
 import {
   convertToModelMessages,
@@ -166,7 +167,7 @@ export async function POST(req: Request) {
 
   const mock = mockMode();
   if (!mock && !hasGateway()) {
-    console.error('[tiptop-portal] no AI_GATEWAY_API_KEY / VERCEL_OIDC_TOKEN, serving the offline reply');
+    reportError('[tiptop-portal] no AI_GATEWAY_API_KEY / VERCEL_OIDC_TOKEN, serving the offline reply');
     return scripted("I'm offline for a moment. Everything is still on the pages to your left; for anything urgent, email info@podlablv.com or grab a call.", book);
   }
 
@@ -200,13 +201,13 @@ export async function POST(req: Request) {
           },
       onError: ({ error }) => {
         const e = error as { name?: string; statusCode?: number; message?: string };
-        console.error('[tiptop-portal] model error', e?.name ?? 'Error', e?.statusCode ?? '', mock ? e?.message : '');
+        reportError('[tiptop-portal] model error', e?.name ?? 'Error', e?.statusCode ?? '', mock ? e?.message : '');
       },
     });
 
     return result.toUIMessageStreamResponse({ onError: () => FRIENDLY_ERROR });
   } catch (e) {
-    console.error('[tiptop-portal] request failed', e instanceof Error ? e.name : 'Error');
+    reportError('[tiptop-portal] request failed', e instanceof Error ? e.name : 'Error');
     return scripted(FRIENDLY_ERROR, book);
   }
 }

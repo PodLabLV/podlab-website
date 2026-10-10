@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { notifySlack, logToCrm, type PortalCaller } from '@/lib/portal-server';
 import { PORTAL_COMMENT_SUFFIX } from '@/lib/production';
@@ -151,7 +152,7 @@ export async function reopenIfPastReview(
   let reopened = false;
   if (REOPEN_FROM.has(key) && revising) {
     const { error } = await crm.from('content_cards').update({ list_id: revising.id }).eq('id', card.id);
-    if (error) console.error('[portal] reopen failed', error.message);
+    if (error) reportError('[portal] reopen failed', error.message);
     else reopened = true;
   }
   return { reopened, postedAlready: LIVE.has(key), column };
@@ -189,7 +190,7 @@ export async function mirrorNotesToCard(
     })),
   );
   if (error) {
-    console.error('[portal] mirror to card failed', error.message);
+    reportError('[portal] mirror to card failed', error.message);
     return;
   }
   const r = await reopenIfPastReview(db, card);
@@ -226,7 +227,7 @@ export async function postClientNote(
     .select('id, body, created_at')
     .single();
   if (error || !comment) {
-    console.error('[portal] production note failed', error?.message);
+    reportError('[portal] production note failed', error?.message);
     return { ok: false, status: 500, message: 'Could not send that.' };
   }
 
@@ -266,7 +267,7 @@ export async function approveCut(
     .from('content_comments')
     .insert({ card_id: card.id, author_name: caller.displayName + PORTAL_COMMENT_SUFFIX, body: LOOKS_GOOD_NOTE, resolved: true });
   if (error) {
-    console.error('[portal] looks-good failed', error.message);
+    reportError('[portal] looks-good failed', error.message);
     return { ok: false, status: 500, message: 'Could not send that.' };
   }
   const who = card.editor || card.assignee_name;
@@ -277,7 +278,7 @@ export async function approveCut(
   let moved = false;
   if (here && CLIENT_GATE.test(here.name) && approved) {
     const { error: moveErr } = await crm.from('content_cards').update({ list_id: approved.id }).eq('id', card.id);
-    if (moveErr) console.error('[portal] approve move failed', moveErr.message);
+    if (moveErr) reportError('[portal] approve move failed', moveErr.message);
     else moved = true;
   }
   await Promise.all([

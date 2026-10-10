@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveStaff } from '@/lib/portal-server';
 
@@ -27,7 +28,7 @@ export async function GET(req: Request) {
   // '*' rather than a column list: invited_* only exist once 20261008d has run.
   const rows = await db.from('portal_clients').select('*').order('business_name');
   if (rows.error) {
-    console.error('[portal] staff client list failed', rows.error.message);
+    reportError('[portal] staff client list failed', rows.error.message);
     return NextResponse.json({ error: 'Could not load clients.' }, { status: 500 });
   }
 

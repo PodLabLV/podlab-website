@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveCaller, resolveStaff, notifySlack, logToCrm } from '@/lib/portal-server';
 import {
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
     .select('element, score, delivered_at, state_override');
 
   if (error) {
-    console.error('[portal] growth-chain answers failed', error.message);
+    reportError('[portal] growth-chain answers failed', error.message);
     return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
   }
 
@@ -110,7 +111,7 @@ export async function PATCH(req: Request) {
             { onConflict: 'client_id,product', ignoreDuplicates: true },
           );
     if (error) {
-      console.error('[portal] growth-chain product failed', error.message);
+      reportError('[portal] growth-chain product failed', error.message);
       return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
     }
   }
@@ -131,7 +132,7 @@ export async function PATCH(req: Request) {
     if (p.override !== undefined) row.state_override = p.override;
     const { error } = await db.from('portal_client_elements').upsert(row, { onConflict: 'client_id,element' });
     if (error) {
-      console.error('[portal] growth-chain element failed', error.message);
+      reportError('[portal] growth-chain element failed', error.message);
       return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
     }
   }

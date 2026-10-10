@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sanitize } from '@/lib/sanitize';
 
@@ -205,7 +206,7 @@ export async function saveProfile(
     error = Object.keys(core).length ? (await db.from('portal_clients').update(core).eq('id', clientId)).error : null;
   }
   if (error) {
-    console.error('[portal] profile update failed', error.message);
+    reportError('[portal] profile update failed', error.message);
     return { ok: false, message: 'Could not save that.' };
   }
 
@@ -218,7 +219,7 @@ export async function saveProfile(
     if ('first_name' in changed) meta.first_name = changed.first_name ?? '';
     if ('last_name' in changed) meta.last_name = changed.last_name ?? '';
     const { error: metaErr } = await db.auth.admin.updateUserById(userId, { user_metadata: meta });
-    if (metaErr) console.error('[portal] profile metadata sync failed', metaErr.message);
+    if (metaErr) reportError('[portal] profile metadata sync failed', metaErr.message);
   }
 
   const saved = Object.keys(changed).filter((k) => !pending.includes(k as ProfileField)) as ProfileField[];
@@ -237,7 +238,7 @@ export async function saveDigestOptOut(
   if (current.digestOptOut === optOut) return { ok: true, changed: false };
   const { error } = await db.from('portal_clients').update({ digest_opt_out: optOut }).eq('id', clientId);
   if (error) {
-    console.error('[portal] digest opt-out update failed', error.message);
+    reportError('[portal] digest opt-out update failed', error.message);
     return { ok: false, message: 'Could not save that.' };
   }
   return { ok: true, changed: true };

@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveStaff } from '@/lib/portal-server';
 
@@ -128,7 +129,7 @@ export async function PATCH(req: Request) {
   }
   const { error } = await db.from('portal_clients').update({ drive_folder_url: url }).eq('id', p.id);
   if (error) {
-    console.error('[portal] drive folder save failed', error.message);
+    reportError('[portal] drive folder save failed', error.message);
     return NextResponse.json({ error: /drive_folder_url/.test(error.message) ? 'Run migration 20261011 first.' : 'Could not save that.' }, { status: 500 });
   }
   return NextResponse.json({ ok: true, driveFolderUrl: url });

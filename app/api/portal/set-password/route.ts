@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { rateLimit } from '@/lib/api-utils';
@@ -52,13 +53,13 @@ export async function POST(req: NextRequest) {
   });
   const verified = await auth.auth.verifyOtp({ token_hash: parked.t, type: parked.type });
   if (verified.error || !verified.data.session) {
-    console.error('[portal] access token rejected', verified.error?.message);
+    reportError('[portal] access token rejected', verified.error?.message);
     return done({ error: 'expired' }, 400);
   }
 
   const updated = await auth.auth.updateUser({ password });
   if (updated.error) {
-    console.error('[portal] password update failed', updated.error.message);
+    reportError('[portal] password update failed', updated.error.message);
     // The token is spent either way; the client needs a fresh link.
     return done({ error: updated.error.message.includes('different') ? 'Choose a password you have not used before.' : 'Could not set that password.' }, 400);
   }

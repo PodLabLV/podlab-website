@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -74,7 +75,7 @@ export async function currentDocument(db: SupabaseClient, clientId: string, docK
     .limit(1)
     .maybeSingle();
   const ready = !missingTable(error);
-  if (error && ready) console.error('[portal] document version read failed', error.message);
+  if (error && ready) reportError('[portal] document version read failed', error.message);
   if (data?.html) return { html: data.html, versionNo: data.version_no, source: 'db', ready };
 
   if (docKey !== CLARITY) return null;
@@ -97,7 +98,7 @@ export async function listVersions(
     .order('version_no', { ascending: false })
     .limit(100);
   if (error) {
-    if (!missingTable(error)) console.error('[portal] document versions list failed', error.message);
+    if (!missingTable(error)) reportError('[portal] document versions list failed', error.message);
     return { ready: !missingTable(error), versions: [] };
   }
   return { ready: true, versions: (data ?? []) as DocVersionMeta[] };
@@ -144,7 +145,7 @@ export async function saveVersion(
       return { ok: false, reason: 'not_ready', message: 'Document history is not switched on yet.' };
     }
     if (topErr) {
-      console.error('[portal] document version read failed', topErr.message);
+      reportError('[portal] document version read failed', topErr.message);
       return { ok: false, reason: 'error', message: 'Could not save that.' };
     }
 
@@ -163,7 +164,7 @@ export async function saveVersion(
           note: 'As delivered',
         });
         if (error && error.code !== '23505') {
-          console.error('[portal] baseline version failed', error.message);
+          reportError('[portal] baseline version failed', error.message);
           return { ok: false, reason: 'error', message: 'Could not save that.' };
         }
         if (error) continue; // someone else wrote v1 a moment ago; re-read
@@ -182,7 +183,7 @@ export async function saveVersion(
     });
     if (!error && data) return { ok: true, versionNo: data.version_no };
     if (error?.code === '23505') continue;
-    console.error('[portal] document version insert failed', error?.message);
+    reportError('[portal] document version insert failed', error?.message);
     return { ok: false, reason: 'error', message: 'Could not save that.' };
   }
   return { ok: false, reason: 'error', message: 'Someone else saved a change at the same moment. Try again.' };

@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { admin } from '@/lib/portal-server';
 import { MAX_PROXY_BYTES } from '@/lib/portal/brand';
 import { driveIdOf, fetchContent, verifyPreview } from '@/lib/portal/drive';
@@ -32,7 +33,7 @@ export async function GET(req: Request) {
   try {
     upstream = await fetchContent(driveId, variant);
   } catch (err) {
-    console.error('[portal] brand file proxy failed', err instanceof Error ? err.message : err);
+    reportError('[portal] brand file proxy failed', err instanceof Error ? err.message : err);
   }
   if (!upstream?.body) return new Response('Not available yet', { status: 404 });
 

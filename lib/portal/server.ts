@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { timingSafeEqual } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { resolveCaller, resolveStaff, type PortalCaller } from '@/lib/portal-server';
@@ -75,7 +76,7 @@ export async function recordActivity(
   title: string,
 ): Promise<void> {
   const { error } = await db.from('portal_activity').insert({ client_id: clientId, kind, title });
-  if (error) console.error('[portal] activity insert failed', error.message);
+  if (error) reportError('[portal] activity insert failed', error.message);
 }
 
 /** Vercel puts the caller first in x-forwarded-for; the rest are proxies. */

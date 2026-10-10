@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -145,7 +146,7 @@ export async function notifySlack(text: string, channel: 'default' | 'revisions'
       body: JSON.stringify({ text }),
     });
   } catch (err) {
-    console.error('[portal] slack notify failed', err);
+    reportError('[portal] slack notify failed', err);
   }
 }
 
@@ -165,8 +166,8 @@ export async function logToCrm(
         actor_name: `${caller.displayName} (portal)`,
         text,
       });
-    if (error) console.error('[portal] crm activity failed', error.message);
+    if (error) reportError('[portal] crm activity failed', error.message);
   } catch (err) {
-    console.error('[portal] crm activity threw', err);
+    reportError('[portal] crm activity threw', err);
   }
 }

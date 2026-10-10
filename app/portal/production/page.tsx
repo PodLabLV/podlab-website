@@ -268,7 +268,7 @@ export default function ProductionPage() {
       eyebrow="Your Videos"
       title="Your videos,"
       accent="in the edit."
-      subtitle="Every video we're making for you, live from our editors' board. Jump by chapter, pause on the moment, and your note lands on the editor's card with the time."
+      subtitle="Every video we're making for you, live from our editors' board. Jump by chapter, pause on the moment, and your note lands on the editor's card with the time. Finished videos stay here under each board's Done list; documents and other files are in Files to Review."
     />
   );
 

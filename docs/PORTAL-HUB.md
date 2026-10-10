@@ -203,6 +203,13 @@ Some boards hold several clients' work (Deal Flow Radio, Power of Influence gues
 
 Scope lives in `lib/production-server.ts` (`clientCardScope`, `cardVisible`, `cardsInScope`, `scopeBoardIds`); every client read goes through it. Table: `portal_client_cards` (migration `20261016_portal_client_cards.sql`, service-role only). Before the migration runs, sharing returns "Run migration 20261016 first" and everything else behaves as before. API: `GET/POST /api/portal/admin/cards` (staff only). Tests: `npm run test:cards`.
 
+## Alerts, staff and teammates (2026-10-09)
+
+- **Failure alerts:** every tagged server error (`reportError('[area] …')`, `lib/alerts.ts`) still logs and also posts to Slack (`ALERTS_SLACK_WEBHOOK_URL`, else `SLACK_WEBHOOK_URL`), at most once per tag per 10 minutes per instance. Anything a route throws without catching goes the same way through `instrumentation.ts` (`onRequestError`). New server code: use `reportError`, not `console.error`, for anything someone should hear about.
+- **Staff:** Clients page → **PodLab staff**: add (name + their CRM login email) or remove. A client's login can't be added; you can't remove yourself or the last staffer. `app/api/portal/admin/staff`.
+- **Teammates get the daily update** too, addressed to them, right after the owner's send succeeds.
+- **Names:** "Deliverables" is now **Files to Review** (documents and files). Videos live on **Your Videos**; Progress & Delivered is the record.
+
 ## Referrals (Beaker inside the portal)
 
 Approved Beakers who are clients get a **Referrals** item (Results group): their links with Copy, money (available / on hold / paid / credit), cash-out setup (Whop username, payout terms clickwrap, W-9 upload), **Use it on PodLab** (turn everything available into credit, 1:1, with a credit-terms clickwrap), a refer-someone form, their referrals and their earnings.

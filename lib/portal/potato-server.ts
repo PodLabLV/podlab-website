@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { cardsInScope, clientCardScope, scopeBoardIds } from '@/lib/production-server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { driveFileId } from '@/lib/chapters';
@@ -39,7 +40,7 @@ export async function potatoesFor(db: SupabaseClient, clientId: string, now = Da
 }
 
 type Add = (p: Omit<Potato, 'days' | 'heat' | 'clientId' | 'clientName'>) => void;
-const warn = (what: string) => (err: unknown) => console.error(`[potato] ${what} failed`, err instanceof Error ? err.message : err);
+const warn = (what: string) => (err: unknown) => reportError(`[potato] ${what} failed`, err instanceof Error ? err.message : err);
 
 async function scripts(db: SupabaseClient, id: string, you: string, add: Add) {
   const [s, v] = await Promise.all([

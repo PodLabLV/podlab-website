@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { SITE_URL, EMAIL_STYLE, emailLayout } from '@/lib/portal-email';
 
@@ -53,14 +54,14 @@ export async function createAccessLink(
     }
     // Already registered falls through to a recovery link; anything else is a real failure.
     if (invite.error && !/already/i.test(invite.error.message)) {
-      console.error('[portal] invite link failed', invite.error.message);
+      reportError('[portal] invite link failed', invite.error.message);
       return null;
     }
   }
 
   const rec = await db.auth.admin.generateLink({ type: 'recovery', email: opts.email });
   if (rec.error || !rec.data?.properties?.hashed_token || !rec.data.user) {
-    console.error('[portal] recovery link failed', rec.error?.message);
+    reportError('[portal] recovery link failed', rec.error?.message);
     return null;
   }
   return { userId: rec.data.user.id, kind: 'recovery', url: linkFor('recovery', rec.data.properties.hashed_token) };
@@ -137,10 +138,10 @@ export async function sendAccessEmail(
         html: emailHtml(kind, url, firstName, teamOf),
       }),
     });
-    if (!res.ok) console.error('[portal] access email rejected', res.status, (await res.text()).slice(0, 300));
+    if (!res.ok) reportError('[portal] access email rejected', res.status, (await res.text()).slice(0, 300));
     return res.ok;
   } catch (err) {
-    console.error('[portal] access email threw', err);
+    reportError('[portal] access email threw', err);
     return false;
   }
 }

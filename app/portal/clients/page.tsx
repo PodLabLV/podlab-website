@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePortal, formatDate } from '@/lib/portal-data';
 import { PageHeader, EmptyState } from '@/components/portal/Shared';
+import StaffTeam from '@/components/portal/StaffTeam';
 import type { StaffClientRow } from '@/app/api/portal/admin/clients/route';
 
 const ACCESS_LABEL: Record<StaffClientRow['access'], string> = {
@@ -202,6 +203,14 @@ export default function StaffClientsPage() {
           <ClientRow key={c.id} c={c} token={accessToken!} onDone={load} />
         ))}
       </ul>
+
+      <section className="mt-12">
+        <span className="portal-label block text-p-brandink">PodLab staff</span>
+        <p className="mt-2 max-w-2xl text-base text-p-ink/75">Staff see every client, Manage pages, View as client and the Hot Potato board. They sign in with their CRM login.</p>
+        <div className="mt-4">
+          <StaffTeam accessToken={accessToken!} />
+        </div>
+      </section>
     </div>
   );
 }

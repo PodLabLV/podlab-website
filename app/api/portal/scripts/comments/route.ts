@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin } from '@/lib/portal-server';
 import { resolveActor, MAX_NOTE } from '@/lib/portal/server';
@@ -110,7 +111,7 @@ export async function POST(req: Request) {
     .single();
 
   if (error) {
-    console.error('[portal] script comment failed', error.message);
+    reportError('[portal] script comment failed', error.message);
     return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
   }
 
@@ -143,7 +144,7 @@ export async function PATCH(req: Request) {
     .maybeSingle();
 
   if (error) {
-    console.error('[portal] script comment resolve failed', error.message);
+    reportError('[portal] script comment resolve failed', error.message);
     return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
   }
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });

@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveStaff } from '@/lib/portal-server';
 import { createAccessLink, sendAccessEmail } from '@/lib/portal-invite';
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
   const row = { client_id: client.id, user_id: link.userId, email, first_name: firstName, last_name: lastName || null, role, invited_at: new Date().toISOString(), invited_by: staff.email };
   const { error } = await db.from('portal_client_members').upsert(row, { onConflict: 'user_id' });
   if (error) {
-    console.error('[portal] member invite failed', error.message);
+    reportError('[portal] member invite failed', error.message);
     return NextResponse.json({ error: /portal_client_members/.test(error.message) ? MISSING : 'Could not save the invite.' }, { status: 500 });
   }
   if (!existing) await recordActivity(db, client.id, 'update', `${firstName} (${role}) now has access to this portal`);

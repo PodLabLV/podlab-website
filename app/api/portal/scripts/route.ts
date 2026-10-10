@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin } from '@/lib/portal-server';
 import {
@@ -88,7 +89,7 @@ export async function POST(req: Request) {
     if (vErr || !version) {
       // 23505 = someone else published the same version number a moment ago.
       const conflict = vErr?.code === '23505';
-      console.error('[portal] script version insert failed', vErr?.message);
+      reportError('[portal] script version insert failed', vErr?.message);
       return NextResponse.json(
         { error: conflict ? 'Another version was just published. Retry.' : 'Could not save that.' },
         { status: conflict ? 409 : 500 },
@@ -141,7 +142,7 @@ export async function POST(req: Request) {
     .single();
 
   if (sErr || !script) {
-    console.error('[portal] script insert failed', sErr?.message);
+    reportError('[portal] script insert failed', sErr?.message);
     return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
   }
 
@@ -164,7 +165,7 @@ export async function POST(req: Request) {
   if (vErr || !version) {
     // Don't leave a script with no text behind.
     await db.from('portal_scripts').delete().eq('id', script.id);
-    console.error('[portal] first version insert failed', vErr?.message);
+    reportError('[portal] first version insert failed', vErr?.message);
     return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
   }
 
@@ -217,7 +218,7 @@ export async function PATCH(req: Request) {
     .maybeSingle();
 
   if (error) {
-    console.error('[portal] script patch failed', error.message);
+    reportError('[portal] script patch failed', error.message);
     return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
   }
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -274,7 +275,7 @@ async function carryNotesForward(
 
   const { error } = await db.from('portal_script_comments').insert(rows);
   if (error) {
-    console.error('[portal] carry-forward failed', error.message);
+    reportError('[portal] carry-forward failed', error.message);
     return;
   }
   await db

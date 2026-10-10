@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { rateLimit } from '@/lib/api-utils';
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
-    console.error('[affiliate/invite] Supabase env missing');
+    reportError('[affiliate/invite] Supabase env missing');
     return NextResponse.json({ ok: false, error: "We couldn't load your invite. You can still apply below." }, { status: 503 });
   }
   const crm = createClient(url, key, { db: { schema: 'crm' } });
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     .eq('token', token)
     .maybeSingle();
   if (error) {
-    console.error('[affiliate/invite]', error);
+    reportError('[affiliate/invite]', error);
     return NextResponse.json({ ok: false, error: "We couldn't load your invite. You can still apply below." }, { status: 500 });
   }
   if (!data) return NextResponse.json({ ok: false, error: "That invite link isn't valid." }, { status: 404 });

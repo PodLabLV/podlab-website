@@ -31,7 +31,7 @@ export const PAGES = {
   production: { href: '/portal/production', label: 'Your Videos' },
   brand: { href: '/portal/brand', label: 'Brand' },
   actions: { href: '/portal/actions', label: 'Action Items' },
-  deliverables: { href: '/portal/deliverables', label: 'Deliverables' },
+  deliverables: { href: '/portal/deliverables', label: 'Files to Review' },
   scripts: { href: '/portal/scripts', label: 'Scripts' },
   progress: { href: '/portal/progress', label: 'Progress' },
   reports: { href: '/portal/reports', label: 'Reports' },
