@@ -203,6 +203,16 @@ Some boards hold several clients' work (Deal Flow Radio, Power of Influence gues
 
 Scope lives in `lib/production-server.ts` (`clientCardScope`, `cardVisible`, `cardsInScope`, `scopeBoardIds`); every client read goes through it. Table: `portal_client_cards` (migration `20261016_portal_client_cards.sql`, service-role only). Before the migration runs, sharing returns "Run migration 20261016 first" and everything else behaves as before. API: `GET/POST /api/portal/admin/cards` (staff only). Tests: `npm run test:cards`.
 
+## Referrals (Beaker inside the portal)
+
+Approved Beakers who are clients get a **Referrals** item (Results group): their links with Copy, money (available / on hold / paid / credit), cash-out setup (Whop username, payout terms clickwrap, W-9 upload), **Use it on PodLab** (turn everything available into credit, 1:1, with a credit-terms clickwrap), a refer-someone form, their referrals and their earnings.
+
+- **The CRM owns every rule.** The portal calls `crm.podlablv.com/api/beaker/portal` server to server with `Authorization: Bearer PORTAL_BRIDGE_SECRET` (same value in both Vercel projects, at least 32 characters), passing the client's verified email and their own deal id (`portal_clients.crm_lead_id`). `lib/portal/beaker.ts`, `app/api/portal/referrals`, `app/portal/referrals`.
+- **Who:** the account owner only (never a teammate login), matched by `portal_clients.email` or their own login email against an `approved` `crm.affiliates` row. View as client previews it (read-only).
+- **Cash out** isn't a button: payable earnings ≥ $100 go out automatically on the 1st/14th once Whop, terms and W-9 are done; the page says when and how much.
+- **Credit** (podlab-crm phase115): redeeming claims the payable rows like a payout (`affiliate_payouts.method = 'credit'`), so they can't also be cashed out and they still count as paid compensation. The credit sits on the client's deal (`crm.beaker_credits`); the team ticks **Use Beaker credit** on a one-time link or invoice and it comes off (`crm.beaker_credit_uses`). Whop needs at least $1 left to charge.
+- Tests: `npm run test:team` (who sees it).
+
 ## Client-approval gate (what a client sees)
 
 A board with a **Pending Client Approval** column shows the client a video only once its card reaches that column or anything after it (Approved, Posted). Editing, Revising and our own Pending Quality Control stay internal. A card the client already left notes on stays visible when it goes back to Revising, so their notes never vanish. Scrapped is never shown. **Boards without the column show every card, as before.**

@@ -51,3 +51,15 @@ test('a removed teammate (or migration not run) opens nothing', async () => {
   const db = fakeDb('u-asst', 'jane@x.com', { portal_clients: [{ ...UDAY, user_id: 'u-owner' }] });
   assert.equal(await resolveCaller(req(), db), null);
 });
+
+test('Beaker referrals: the owner only, under their portal email and their own login', async () => {
+  const { beakerEmails } = await import('@/lib/portal/beaker');
+  const db = { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { email: 'Uday@Bond.ai' } }) }) }) }) } as never;
+  const owner = { clientId: 'c', businessName: 'b', displayName: 'Uday', crmLeadId: null, email: 'uday@bond.ai', isStaff: false, member: null };
+  assert.deepEqual(await beakerEmails(db, owner, false), ['uday@bond.ai']);
+  assert.deepEqual(await beakerEmails(db, { ...owner, email: 'other@x.com' }, false), ['uday@bond.ai', 'other@x.com']);
+  // Staff previewing: never the staffer's own email.
+  assert.deepEqual(await beakerEmails(db, { ...owner, email: 'info@podlablv.com' }, true), ['uday@bond.ai']);
+  // A teammate's login is not the Beaker.
+  assert.deepEqual(await beakerEmails(db, { ...owner, member: { name: 'Jane', role: 'Assistant' } }, false), []);
+});

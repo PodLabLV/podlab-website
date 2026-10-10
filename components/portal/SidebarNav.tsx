@@ -57,6 +57,7 @@ const GROUPS: Group[] = [
     label: 'Results',
     items: [
       { href: '/portal/progress', label: 'Progress & Delivered' },
+      { href: '/portal/referrals', label: 'Referrals', show: 'referrals' },
       { href: '/portal/reports', label: 'Reports', show: 'reports' },
     ],
   },

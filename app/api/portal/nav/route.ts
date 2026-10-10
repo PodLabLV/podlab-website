@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { admin, resolveCaller } from '@/lib/portal-server';
+import { admin, resolveCaller, viewAsId } from '@/lib/portal-server';
 import { buildOverview } from '@/lib/tiptop/overview';
 import { gameFor, type Game } from '@/lib/portal/game';
+import { beakerEmails, isBeaker } from '@/lib/portal/beaker';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,7 +14,7 @@ export interface NavPayload {
   /** Pages that are finished on the client's side: a check instead of a badge. */
   done: Partial<Record<'intake' | 'brand', boolean>>;
   /** Pages with something in them. Hidden pages are still reachable by URL. */
-  show: Record<'growth' | 'document' | 'intake' | 'delivery' | 'production' | 'deliverables' | 'scripts' | 'actions' | 'reports' | 'invoices', boolean>;
+  show: Record<'growth' | 'document' | 'intake' | 'delivery' | 'production' | 'deliverables' | 'scripts' | 'actions' | 'reports' | 'invoices' | 'referrals', boolean>;
   chain: { unlocked: number; available: boolean };
 }
 
@@ -23,9 +24,12 @@ export async function GET(req: Request) {
   const caller = await resolveCaller(req, db);
   if (!caller) return NextResponse.json({ error: 'Not authorized' }, { status: 401 });
 
-  const [o, reports] = await Promise.all([
+  const [o, reports, beaker] = await Promise.all([
     buildOverview(db, caller),
     db.from('portal_report_metrics').select('id', { count: 'exact', head: true }).eq('client_id', caller.clientId),
+    beakerEmails(db, caller, Boolean(viewAsId(req)))
+      .then((emails) => isBeaker(db, emails))
+      .catch(() => null),
   ]);
 
   const waitingScripts = o.scripts.items.filter((s) => s.waitingOnYou).length;
@@ -57,6 +61,7 @@ export async function GET(req: Request) {
       actions: o.actionItems.open.length + o.actionItems.done > 0,
       reports: (reports.count ?? 0) > 0,
       invoices: o.invoices.open.length + o.invoices.paidCount > 0,
+      referrals: Boolean(beaker),
     },
     chain: { unlocked: o.chain.unlocked, available: o.chain.available },
   };
