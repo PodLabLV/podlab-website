@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveStaff, notifySlack } from '@/lib/portal-server';
 import { recordActivity } from '@/lib/portal/server';
@@ -80,7 +81,7 @@ export async function POST(req: Request) {
       .select('id')
       .single();
     if (error || !script) {
-      console.error('[portal] publish script failed', error?.message);
+      reportError('[portal] publish script failed', error?.message);
       continue;
     }
     const { error: vErr } = await db.from('portal_script_versions').insert({
@@ -96,7 +97,7 @@ export async function POST(req: Request) {
     });
     if (vErr) {
       await db.from('portal_scripts').delete().eq('id', script.id);
-      console.error('[portal] publish script version failed', vErr.message);
+      reportError('[portal] publish script version failed', vErr.message);
       continue;
     }
     published++;

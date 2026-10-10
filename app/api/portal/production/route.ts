@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveCaller, resolveStaff } from '@/lib/portal-server';
 import {
@@ -57,7 +58,7 @@ export async function GET(req: Request) {
       crm.from('content_lists').select('id, board_id, name, sort').in('board_id', boardIds).eq('archived', false).order('sort'),
     ]);
     if (boards.error || lists.error || cards.error) {
-      console.error('[portal] production read failed', boards.error?.message, lists.error?.message, cards.error);
+      reportError('[portal] production read failed', boards.error?.message, lists.error?.message, cards.error);
       return NextResponse.json({ error: 'Could not load production.' }, { status: 500 });
     }
 
@@ -203,7 +204,7 @@ export async function PATCH(req: Request) {
         .from('portal_client_boards')
         .upsert({ client_id: p.clientId, board_id: p.boardId, linked_by: staff.email }, { onConflict: 'client_id,board_id', ignoreDuplicates: true });
   if (error) {
-    console.error('[portal] production link failed', error.message);
+    reportError('[portal] production link failed', error.message);
     return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
   }
   return NextResponse.json({ ok: true });

@@ -452,7 +452,7 @@ export default function DeliverablesPage() {
 
   const header = (
     <PageHeader
-      eyebrow="Deliverables & Files"
+      eyebrow="Files to Review"
       title="Everything we've made,"
       accent="in one place."
       subtitle="Open it, watch it, leave a note at the exact second something should change, and approve it when it's right."

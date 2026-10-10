@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { cardsInScope, clientCardScope, scopeBoardIds } from '@/lib/production-server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { PORTAL_COMMENT_SUFFIX } from '@/lib/production';
@@ -273,15 +274,30 @@ export async function runDigest(
       sentOne = true;
       if (!sent.ok) {
         // Keep the old snapshot: tomorrow's digest carries today's changes.
-        console.error('[digest] send failed', c.id, sent.error);
+        reportError('[digest] send failed', c.id, sent.error);
         results.push({ ...base, outcome: 'failed', subject: mail.subject, changes, error: sent.error });
         continue;
       }
       await store.save({ client_id: c.id, snapshot: next, last_sent_at: startedAt });
       results.push({ ...base, outcome: 'sent', subject: mail.subject, changes });
+
+      // Teammates (an assistant, a partner) get the same update, addressed to them.
+      // Best effort: a failure here never holds back the owner's digest.
+      try {
+        const { data: team } = await db.from('portal_client_members').select('email, first_name').eq('client_id', c.id);
+        for (const m of (team ?? []) as Array<{ email: string; first_name: string | null }>) {
+          if (!m.email || m.email.toLowerCase() === c.email.toLowerCase()) continue;
+          if (opts.sendGapMs !== 0) await new Promise((r) => setTimeout(r, opts.sendGapMs ?? 600));
+          const own = digestEmail(changes, { firstName: m.first_name });
+          const res = await sendPortalEmail({ to: m.email, subject: own.subject, html: own.html, text: own.text });
+          if (!res.ok) reportError('[digest] teammate send failed', c.id, m.email, res.error);
+        }
+      } catch (err) {
+        reportError('[digest] teammates failed', c.id, err instanceof Error ? err.message : String(err));
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error('[digest] client failed', c.id, message);
+      reportError('[digest] client failed', c.id, message);
       results.push({ ...base, outcome: 'failed', error: message });
     }
   }

@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { admin } from '@/lib/portal-server';
 import { driveFileId } from '@/lib/chapters';
 import { fetchRange, verifyStream } from '@/lib/portal/drive';
@@ -38,7 +39,7 @@ export async function GET(req: Request) {
   try {
     upstream = await fetchRange(fileId, req.headers.get('range'));
   } catch (err) {
-    console.error('[portal] stream auth failed', err instanceof Error ? err.message : err);
+    reportError('[portal] stream auth failed', err instanceof Error ? err.message : err);
     return new Response('Not available', { status: 502 });
   }
   // 403/404 here usually means the cut lives in a drive the portal account can't

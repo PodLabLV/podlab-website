@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 /**
  * Notification utilities for PodLab form submissions.
  * Sends Slack messages and email notifications via Resend.
@@ -67,10 +68,10 @@ export async function notifySlack(message: SlackMessage): Promise<void> {
     })
 
     if (!response.ok) {
-      console.error('[notifications] Slack webhook failed:', response.status, await response.text())
+      reportError('[notifications] Slack webhook failed:', response.status, await response.text())
     }
   } catch (error) {
-    console.error('[notifications] Slack notification error:', error)
+    reportError('[notifications] Slack notification error:', error)
   }
 }
 
@@ -176,10 +177,10 @@ export async function notifyEmail(
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('[notifications] Resend email failed:', response.status, errorText)
+      reportError('[notifications] Resend email failed:', response.status, errorText)
     }
   } catch (error) {
-    console.error('[notifications] Email notification error:', error)
+    reportError('[notifications] Email notification error:', error)
   }
 }
 

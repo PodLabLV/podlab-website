@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveCaller, notifySlack, logToCrm } from '@/lib/portal-server';
 import { recordActivity, trimTo, MAX_NOTE } from '@/lib/portal/server';
@@ -81,7 +82,7 @@ export async function POST(req: Request) {
     .update({ status: 'changes requested', changes_requested_at: now, updated_at: now })
     .eq('id', script.id);
   if (error) {
-    console.error('[portal] script changes update failed', error.message);
+    reportError('[portal] script changes update failed', error.message);
     return NextResponse.json({ error: 'Could not send that.' }, { status: 500 });
   }
 

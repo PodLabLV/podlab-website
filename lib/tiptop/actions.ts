@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { postClientNote } from '@/lib/production-server';
 import { notifySlack, logToCrm, type PortalCaller } from '@/lib/portal-server';
@@ -97,7 +98,7 @@ export async function sendScriptRevision(
     author_kind: 'client',
   });
   if (cErr) {
-    console.error('[tiptop] script note failed', cErr.message);
+    reportError('[tiptop] script note failed', cErr.message);
     return { ok: false, message: 'Could not save that note.' };
   }
 
@@ -115,7 +116,7 @@ export async function sendScriptRevision(
     .update({ status: 'changes requested', changes_requested_at: now, updated_at: now })
     .eq('id', script.id);
   if (error) {
-    console.error('[tiptop] script changes update failed', error.message);
+    reportError('[tiptop] script changes update failed', error.message);
     return { ok: false, message: 'Your note is saved on the script, but I could not send it. Press "Send notes to PodLab" on the script page.' };
   }
 
@@ -178,7 +179,7 @@ export async function sendDeliverableRevision(
     author_kind: 'client',
   });
   if (cErr) {
-    console.error('[tiptop] asset note failed', cErr.message);
+    reportError('[tiptop] asset note failed', cErr.message);
     return { ok: false, message: 'Could not save that note.' };
   }
 
@@ -195,7 +196,7 @@ export async function sendDeliverableRevision(
     .update({ status: 'changes requested', changes_requested_at: now, updated_at: now })
     .eq('id', asset.id);
   if (error) {
-    console.error('[tiptop] asset changes failed', error.message);
+    reportError('[tiptop] asset changes failed', error.message);
     return { ok: false, message: 'Your note is saved, but I could not send it. Press "Send notes" on the deliverable.' };
   }
 
@@ -229,7 +230,7 @@ export async function setActionItem(
     .select('id, title, status')
     .maybeSingle();
   if (error) {
-    console.error('[tiptop] action item update failed', error.message);
+    reportError('[tiptop] action item update failed', error.message);
     return { ok: false, message: 'Could not save that.' };
   }
   if (!data) return { ok: false, message: 'I could not find that action item.' };

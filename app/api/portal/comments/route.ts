@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveCaller, notifySlack, logToCrm } from '@/lib/portal-server';
 
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
     .single();
 
   if (error) {
-    console.error('[portal] comment insert failed', error.message);
+    reportError('[portal] comment insert failed', error.message);
     return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
   }
 

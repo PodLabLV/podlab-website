@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { timingSafeEqual } from 'node:crypto';
 import { admin, resolveStaff } from '@/lib/portal-server';
@@ -40,7 +41,7 @@ export async function GET(req: Request) {
     const run = await runDigest(db, { dry, clientId: params.get('clientId') ?? undefined });
     const tally = run.results.reduce<Record<string, number>>((acc, r) => ((acc[r.outcome] = (acc[r.outcome] ?? 0) + 1), acc), {});
     console.log('[digest] run', JSON.stringify({ dry, eligible: run.eligible, skipped: run.skipped, ...tally }));
-    for (const r of run.results) if (r.outcome === 'failed') console.error('[digest] failed', r.clientId, r.error);
+    for (const r of run.results) if (r.outcome === 'failed') reportError('[digest] failed', r.clientId, r.error);
 
     if (dry) {
       return NextResponse.json(
@@ -58,7 +59,7 @@ export async function GET(req: Request) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error('[digest] run failed', message);
+    reportError('[digest] run failed', message);
     return NextResponse.json({ error: message }, { status: err instanceof DigestNotReady ? 503 : 500 });
   }
 }

@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { cardsInScope, clientCardScope, scopeBoardIds } from '@/lib/production-server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { PortalCaller } from '@/lib/portal-server';
@@ -91,7 +92,7 @@ async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   try {
     return await fn();
   } catch (err) {
-    console.error('[tiptop] overview block failed', err instanceof Error ? err.message : err);
+    reportError('[tiptop] overview block failed', err instanceof Error ? err.message : err);
     return fallback;
   }
 }

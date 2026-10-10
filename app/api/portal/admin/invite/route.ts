@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveStaff } from '@/lib/portal-server';
 import { createAccessLink, sendAccessEmail } from '@/lib/portal-invite';
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
     ({ error } = await db.from('portal_clients').update(update).eq('id', client.id));
   }
   if (error) {
-    console.error('[portal] invite link-up failed', error.message);
+    reportError('[portal] invite link-up failed', error.message);
     return NextResponse.json({ error: 'Could not save the invite.' }, { status: 500 });
   }
 

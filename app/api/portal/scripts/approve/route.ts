@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveCaller, notifySlack, logToCrm } from '@/lib/portal-server';
 import { recordActivity, clientIp } from '@/lib/portal/server';
@@ -72,7 +73,7 @@ export async function POST(req: Request) {
     .single();
 
   if (error) {
-    console.error('[portal] script approval failed', error.message);
+    reportError('[portal] script approval failed', error.message);
     return NextResponse.json({ error: 'Could not record that.' }, { status: 500 });
   }
 

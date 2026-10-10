@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveCaller, notifySlack, logToCrm } from '@/lib/portal-server';
 
@@ -68,7 +69,7 @@ export async function POST(req: Request) {
   );
 
   if (error) {
-    console.error('[portal] intake save failed', error.message);
+    reportError('[portal] intake save failed', error.message);
     return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
   }
 

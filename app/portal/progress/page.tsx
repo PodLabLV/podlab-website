@@ -17,7 +17,7 @@ export default function ProgressPage() {
         eyebrow="Progress"
         title="Everything we've"
         accent="delivered."
-        subtitle="Finished videos, approved files and scripts, and completed build phases, newest first."
+        subtitle="A record of everything finished: videos, approved files and scripts, and completed build phases, newest first. To watch a video or leave notes, open it in Your Videos."
       />
       <DeliveredList />
     </>

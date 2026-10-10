@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { randomBytes } from 'node:crypto';
 import { NextResponse, after } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -153,7 +154,7 @@ export async function POST(req: Request) {
         const sessionUrl = await openUploadSession({ folderId, name: filename.slice(0, 200), mimeType: p.mimeType ?? '', size: p.sizeBytes, origin: uploadOrigin(req) });
         return NextResponse.json({ target: 'drive', sessionUrl });
       } catch (err) {
-        console.error('[portal] drive upload session failed; using the bucket', err instanceof Error ? err.message : err);
+        reportError('[portal] drive upload session failed; using the bucket', err instanceof Error ? err.message : err);
       }
     }
 
@@ -164,7 +165,7 @@ export async function POST(req: Request) {
     const path = `${actor.clientId}/${kind}/${Date.now()}-${randomBytes(3).toString('hex')}-${safe}`;
     const { data, error } = await db.storage.from(BRAND_BUCKET).createSignedUploadUrl(path);
     if (error || !data) {
-      console.error('[portal] brand signed upload failed', error?.message);
+      reportError('[portal] brand signed upload failed', error?.message);
       return NextResponse.json({ error: /bucket/i.test(error?.message ?? '') ? 'Uploads are not switched on yet.' : 'Could not start that upload.' }, { status: 500 });
     }
     return NextResponse.json({ target: 'bucket', path, signedUrl: data.signedUrl });
@@ -189,7 +190,7 @@ export async function POST(req: Request) {
         }
         drive = { id: f.id, name: f.name, size: f.size ? Number(f.size) : null, mime: f.mimeType ?? null };
       } catch (err) {
-        console.error('[portal] drive register check failed', err instanceof Error ? err.message : err);
+        reportError('[portal] drive register check failed', err instanceof Error ? err.message : err);
         return NextResponse.json({ error: 'The upload did not finish. Try that file again.' }, { status: 400 });
       }
     } else if (p.path) {
@@ -232,7 +233,7 @@ export async function POST(req: Request) {
       .select('id')
       .single();
     if (error) {
-      console.error('[portal] brand register failed', error.message);
+      reportError('[portal] brand register failed', error.message);
       return /portal_brand_assets/.test(error.message) ? notReady() : NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
     }
     return NextResponse.json({ id: data.id });
@@ -290,7 +291,7 @@ export async function POST(req: Request) {
       .from('portal_brand_kits')
       .upsert({ client_id: actor.clientId, ...kit, notes: kit.notes || null, updated_by: actor.name, updated_at: new Date().toISOString() }, { onConflict: 'client_id' });
     if (error) {
-      console.error('[portal] brand kit save failed', error.message);
+      reportError('[portal] brand kit save failed', error.message);
       return /portal_brand_kits/.test(error.message) ? notReady() : NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
     }
     if (actor.caller) await logToCrm(db, actor.caller, 'Updated their brand colors, fonts and notes on the portal.');
@@ -307,7 +308,7 @@ export async function POST(req: Request) {
         .from('portal_brand_kits')
         .upsert({ client_id: actor.clientId, share_token: token }, { onConflict: 'client_id' });
       if (error) {
-        console.error('[portal] brand share failed', error.message);
+        reportError('[portal] brand share failed', error.message);
         return /portal_brand_kits/.test(error.message) ? notReady() : NextResponse.json({ error: 'Could not make that link.' }, { status: 500 });
       }
     }
@@ -344,7 +345,7 @@ async function linkOnCards(db: SupabaseClient, clientId: string, url: string): P
     if (d.includes(line)) continue;
     const next = LINE.test(d) ? d.replace(LINE, line) : `${d.trimEnd()}${d.trim() ? '\n\n' : ''}${line}\n`;
     const { error } = await crm.from('content_cards').update({ description: next }).eq('id', c.id);
-    if (error) console.error('[portal] brand link on card failed', c.id, error.message);
+    if (error) reportError('[portal] brand link on card failed', c.id, error.message);
     else n++;
   }
   return { cards: n, boards: boardIds.length };

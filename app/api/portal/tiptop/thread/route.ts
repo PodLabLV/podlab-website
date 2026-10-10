@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveCaller } from '@/lib/portal-server';
 import { LIMITS } from '@/lib/tiptop/schema';
@@ -29,7 +30,7 @@ export async function GET(req: Request) {
     .eq('client_id', caller.clientId)
     .maybeSingle();
   if (error) {
-    if (!missingTable(error)) console.error('[tiptop-portal] thread read failed', error.message);
+    if (!missingTable(error)) reportError('[tiptop-portal] thread read failed', error.message);
     return NextResponse.json({ ready: !missingTable(error), messages: [] }, { headers: { 'Cache-Control': 'no-store' } });
   }
   return NextResponse.json(
@@ -60,7 +61,7 @@ export async function PUT(req: Request) {
     .upsert({ client_id: caller.clientId, messages, updated_at: new Date().toISOString() }, { onConflict: 'client_id' });
   if (error) {
     if (missingTable(error)) return NextResponse.json({ ready: false });
-    console.error('[tiptop-portal] thread save failed', error.message);
+    reportError('[tiptop-portal] thread save failed', error.message);
     return NextResponse.json({ error: 'Could not save' }, { status: 500 });
   }
   return NextResponse.json({ ready: true });
@@ -71,6 +72,6 @@ export async function DELETE(req: Request) {
   const caller = await resolveCaller(req, db);
   if (!caller) return NextResponse.json({ error: 'Not authorized' }, { status: 401 });
   const { error } = await db.from('portal_tiptop_threads').delete().eq('client_id', caller.clientId);
-  if (error && !missingTable(error)) console.error('[tiptop-portal] thread clear failed', error.message);
+  if (error && !missingTable(error)) reportError('[tiptop-portal] thread clear failed', error.message);
   return NextResponse.json({ ok: true });
 }

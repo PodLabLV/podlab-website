@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveCaller, viewAsId } from '@/lib/portal-server';
 import { beakerEmails, bridge, bridgeReady, isBeaker } from '@/lib/portal/beaker';
@@ -34,7 +35,7 @@ export async function GET(req: Request) {
     const { status, data } = await bridge({ action: 'summary', email: w.email, leadId: w.leadId });
     return NextResponse.json(data, { status });
   } catch (e) {
-    console.error('[portal] beaker summary failed', e instanceof Error ? e.message : e);
+    reportError('[portal] beaker summary failed', e instanceof Error ? e.message : e);
     return NextResponse.json({ error: 'Could not reach the referral system. Try again in a minute.' }, { status: 502 });
   }
 }
@@ -78,7 +79,7 @@ export async function POST(req: Request) {
     const { status, data } = await bridge(body);
     return NextResponse.json(data, { status });
   } catch (e) {
-    console.error('[portal] beaker action failed', e instanceof Error ? e.message : e);
+    reportError('[portal] beaker action failed', e instanceof Error ? e.message : e);
     return NextResponse.json({ error: 'Could not reach the referral system. Nothing changed; try again.' }, { status: 502 });
   }
 }

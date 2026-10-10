@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveCaller, notifySlack, logToCrm } from '@/lib/portal-server';
 
@@ -37,7 +38,7 @@ export async function PATCH(req: Request) {
     .maybeSingle();
 
   if (error) {
-    console.error('[portal] action item update failed', error.message);
+    reportError('[portal] action item update failed', error.message);
     return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
   }
   if (!data) {

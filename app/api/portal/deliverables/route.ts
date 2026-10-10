@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { driveFileId, parseChapters } from '@/lib/chapters';
 import { driveConfigured, streamUrl } from '@/lib/portal/drive';
@@ -63,7 +64,7 @@ export async function GET(req: Request) {
 
   const { data, error } = await db.storage.from(BUCKET).createSignedUrl(version.storage_path, SIGNED_URL_TTL);
   if (error || !data) {
-    console.error('[portal] signed url failed', error?.message);
+    reportError('[portal] signed url failed', error?.message);
     return NextResponse.json({ error: 'Could not open that file.' }, { status: 500 });
   }
   return NextResponse.json({ url: data.signedUrl, expiresIn: SIGNED_URL_TTL, external: false });
@@ -114,7 +115,7 @@ export async function POST(req: Request) {
     const path = `${clientId}/${Date.now()}-${safe}`;
     const { data, error } = await db.storage.from(BUCKET).createSignedUploadUrl(path);
     if (error || !data) {
-      console.error('[portal] signed upload failed', error?.message);
+      reportError('[portal] signed upload failed', error?.message);
       return NextResponse.json({ error: 'Could not start that upload.' }, { status: 500 });
     }
     return NextResponse.json({ path, token: data.token, signedUrl: data.signedUrl });
@@ -130,7 +131,7 @@ export async function POST(req: Request) {
       .select('id')
       .maybeSingle();
     if (error) {
-      console.error('[portal] link card failed', error.message);
+      reportError('[portal] link card failed', error.message);
       return NextResponse.json({ error: 'Could not link that card.' }, { status: 500 });
     }
     if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -148,7 +149,7 @@ export async function POST(req: Request) {
       .select('id')
       .maybeSingle();
     if (error) {
-      console.error('[portal] chapters update failed', error.message);
+      reportError('[portal] chapters update failed', error.message);
       return NextResponse.json({ error: 'Could not save chapters.' }, { status: 500 });
     }
     if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -199,7 +200,7 @@ export async function POST(req: Request) {
       .select('id')
       .single();
     if (error || !asset) {
-      console.error('[portal] asset insert failed', error?.message);
+      reportError('[portal] asset insert failed', error?.message);
       return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
     }
     assetId = asset.id;
@@ -232,7 +233,7 @@ export async function POST(req: Request) {
 
   if (vErr || !version) {
     const conflict = vErr?.code === '23505';
-    console.error('[portal] asset version insert failed', vErr?.message);
+    reportError('[portal] asset version insert failed', vErr?.message);
     return NextResponse.json(
       { error: conflict ? 'Another version was just published. Retry.' : 'Could not save that.' },
       { status: conflict ? 409 : 500 },
@@ -318,7 +319,7 @@ export async function PATCH(req: Request) {
       })
       .eq('id', asset.id);
     if (error) {
-      console.error('[portal] asset approve failed', error.message);
+      reportError('[portal] asset approve failed', error.message);
       return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
     }
     await db
@@ -362,7 +363,7 @@ export async function PATCH(req: Request) {
     .update({ status: 'changes requested', changes_requested_at: now, updated_at: now })
     .eq('id', asset.id);
   if (error) {
-    console.error('[portal] asset changes failed', error.message);
+    reportError('[portal] asset changes failed', error.message);
     return NextResponse.json({ error: 'Could not send that.' }, { status: 500 });
   }
 

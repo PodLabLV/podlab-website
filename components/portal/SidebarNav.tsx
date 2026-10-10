@@ -36,7 +36,7 @@ const GROUPS: Group[] = [
       { href: '/portal/production', label: 'Your Videos', show: 'production', badge: 'production' },
       { href: '/portal/intake', label: 'Intake', show: 'intake', badge: 'intake', done: 'intake' },
       { href: '/portal/scripts', label: 'Scripts', show: 'scripts', badge: 'scripts' },
-      { href: '/portal/deliverables', label: 'Deliverables', show: 'deliverables', badge: 'deliverables' },
+      { href: '/portal/deliverables', label: 'Files to Review', show: 'deliverables', badge: 'deliverables' },
       { href: '/portal/brand', label: 'Brand', badge: 'brand', done: 'brand' },
       { href: '/portal/actions', label: 'Action Items', show: 'actions', badge: 'actions' },
     ],
