@@ -71,11 +71,14 @@ export const PORTAL_COMMENT_SUFFIX = ' (client, via portal)';
 
 // The editors' column names, in client words. Anything not listed shows as-is.
 const STAGE_WORDS: Record<string, string> = {
-  editing: 'Editing',
-  'waiting on trailer': 'Editing',
-  'piecing episode': 'Editing',
+  // Everything before the client's review reads the same to them.
+  editing: 'In the edit',
+  'waiting on trailer': 'In the edit',
+  'piecing episode': 'In the edit',
   revising: 'Revising',
-  'pending quality control': 'Quality check',
+  'pending quality control': 'In the edit',
+  'quality control': 'In the edit',
+  qc: 'In the edit',
   'pending client approval': 'Ready for your review',
   'pending customer approval': 'Ready for your review',
   'pending customer review': 'Ready for your review',
