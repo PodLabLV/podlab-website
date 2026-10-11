@@ -203,6 +203,17 @@ Some boards hold several clients' work (Deal Flow Radio, Power of Influence gues
 
 Scope lives in `lib/production-server.ts` (`clientCardScope`, `cardVisible`, `cardsInScope`, `scopeBoardIds`); every client read goes through it. Table: `portal_client_cards` (migration `20261016_portal_client_cards.sql`, service-role only). Before the migration runs, sharing returns "Run migration 20261016 first" and everything else behaves as before. API: `GET/POST /api/portal/admin/cards` (staff only). Tests: `npm run test:cards`.
 
+## Where client notes go (editors see all of them)
+
+| Client action | Lands in | Slack |
+| --- | --- | --- |
+| Note on a video (Your Videos, or via TipTop) | The editor's CRM card, tagged with time + chapter; past-review cards reopen to Revising | #revisions |
+| Looks good | Resolved comment on the card; review column → Approved | #revisions |
+| Notes on a file (Files to Review) | The editor's card when the file is tied to one; otherwise the CRM **Client notes** panel | #revisions |
+| Script notes ("Send notes to PodLab") | The CRM **Client notes** panel (`notesToCrm`, `lib/portal/client-notes.ts`) | #revisions |
+
+The **Client notes** panel (podlab-crm phase116, `crm.client_portal_notes`) sits at the top of every board linked to that client or holding a card shared with them. Editors resolve or reopen each note; "Open in portal" is a View as client link for staff. Every send also goes on the deal timeline.
+
 ## Alerts, staff and teammates (2026-10-09)
 
 - **Failure alerts:** every tagged server error (`reportError('[area] …')`, `lib/alerts.ts`) still logs and also posts to Slack (`ALERTS_SLACK_WEBHOOK_URL`, else `SLACK_WEBHOOK_URL`), at most once per tag per 10 minutes per instance. Anything a route throws without catching goes the same way through `instrumentation.ts` (`onRequestError`). New server code: use `reportError`, not `console.error`, for anything someone should hear about.

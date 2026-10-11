@@ -1,3 +1,5 @@
+import { SITE_URL } from '@/lib/portal-email';
+import { notesToCrm } from '@/lib/portal/client-notes';
 import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { driveFileId, parseChapters } from '@/lib/chapters';
@@ -376,10 +378,18 @@ export async function PATCH(req: Request) {
   const more = lines.length > 12 ? `\n…and ${lines.length - 12} more in the portal.` : '';
 
   await Promise.all([
-    notifySlack(`*Deliverable revision requested* — ${caller.businessName}\n*${label}* · ${count} note${count === 1 ? '' : 's'}\n${shown}${more}`),
+    notifySlack(`*Deliverable revision requested* — ${caller.businessName}\n*${label}* · ${count} note${count === 1 ? '' : 's'}\n${shown}${more}`, 'revisions'),
     logToCrm(db, caller, `Requested changes in portal on ${label} (${count} note${count === 1 ? '' : 's'}): ${trimTo(lines.join(' | '), 1500)}`),
     recordActivity(db, caller.clientId, 'deliverable', `You sent ${count} note${count === 1 ? '' : 's'} on ${label}`),
   ]);
+
+  // Not tied to an editor's card: the CRM's Client notes panel is where editors see them.
+  if (!asset.crm_card_id) {
+    await notesToCrm(db, caller, { kind: 'file', subject: label, url: `${SITE_URL}/portal/deliverables?viewAs=${asset.client_id}` }, [
+      ...(message ? [{ body: `Overall: ${message}` }] : []),
+      ...unsent.map((n) => ({ quoted: n.time_seconds !== null ? `At ${clock(Number(n.time_seconds))}` : null, body: n.body })),
+    ]);
+  }
 
   // Tied to an editor's card: the notes go onto the card too, where the editor works.
   if (asset.crm_card_id) {

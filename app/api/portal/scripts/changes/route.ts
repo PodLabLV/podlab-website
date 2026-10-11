@@ -1,3 +1,5 @@
+import { SITE_URL } from '@/lib/portal-email';
+import { notesToCrm } from '@/lib/portal/client-notes';
 import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveCaller, notifySlack, logToCrm } from '@/lib/portal-server';
@@ -98,7 +100,11 @@ export async function POST(req: Request) {
   const more = lines.length > 12 ? `\n…and ${lines.length - 12} more in the portal.` : '';
 
   await Promise.all([
-    notifySlack(`*Script revision requested* — ${caller.businessName}\n*${label}* · ${count} note${count === 1 ? '' : 's'}\n${shown}${more}`),
+    notifySlack(`*Script revision requested* — ${caller.businessName}\n*${label}* · ${count} note${count === 1 ? '' : 's'}\n${shown}${more}`, 'revisions'),
+    notesToCrm(db, caller, { kind: 'script', subject: label, url: `${SITE_URL}/portal/scripts/${script.id}?viewAs=${script.client_id}` }, [
+      ...(message ? [{ body: `Overall: ${message}` }] : []),
+      ...unsent.map((n) => ({ quoted: n.quoted_text, body: n.body })),
+    ]),
     logToCrm(db, caller, `Requested script changes in portal on ${label} (${count} note${count === 1 ? '' : 's'}): ${trimTo(lines.join(' | '), 1500)}`),
     recordActivity(db, caller.clientId, 'update', `You sent ${count} note${count === 1 ? '' : 's'} on ${label}`),
   ]);
