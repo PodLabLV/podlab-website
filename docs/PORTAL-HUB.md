@@ -222,7 +222,7 @@ Approved Beakers who are clients get a **Referrals** item (Results group): their
 
 ## Client-approval gate (what a client sees)
 
-A board with a **Pending Client Approval** column shows the client a video only once its card reaches that column or anything after it (Approved, Posted). Editing, Revising and our own Pending Quality Control stay internal. A card the client already left notes on stays visible when it goes back to Revising, so their notes never vanish. Scrapped is never shown. **Boards without the column show every card, as before.**
+A board with a **Pending Client Approval** column (any name matching `(client|customer) (approval|review)`, e.g. "Pending Customer Review") shows the client a video only once its card reaches that column or anything after it (Approved, Posted). Editing, Revising and our own Pending Quality Control stay internal. A card the client already left notes on stays visible when it goes back to Revising, so their notes never vanish. Scrapped is never shown. **Boards without the column show every card, as before.**
 
 - New CRM boards get the column (podlab-crm phase114 + `BOARD_LADDER`). Existing boards are untouched; to switch one over, add a column named "Pending Client Approval" between Pending Quality Control and Approved.
 - CRM work queue: QC **approve** moves the card to Pending Client Approval when the board has it.

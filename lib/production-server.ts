@@ -17,7 +17,7 @@ import { LOOKS_GOOD_NOTE } from '@/lib/portal/potato';
  *  3. Slack (#revisions when configured) names the card's editor.
  */
 
-const REOPEN_FROM = new Set(['pending quality control', 'quality control', 'qc', 'pending client approval', 'client approval', 'approved']);
+const REOPEN_FROM = new Set(['pending quality control', 'quality control', 'qc', 'pending client approval', 'client approval', 'pending customer review', 'pending client review', 'pending customer approval', 'customer review', 'client review', 'approved']);
 const LIVE = new Set(['posted', 'published', 'live']);
 
 export type NoteResult =
@@ -60,7 +60,7 @@ export function cardVisible(scope: CardScope, card: { id: string; board_id: stri
  * Revising, so their notes never vanish. Boards without the column (older
  * boards) show every card, as before.
  */
-export const CLIENT_GATE = /client\s*approval/i;
+export const CLIENT_GATE = /(client|customer)\s*(approval|review)/i;
 
 interface GateList { id: string; board_id: string; name: string; sort: number; role: string | null }
 

@@ -61,3 +61,12 @@ test('client-approval gate: hidden while in the edit or QC, visible from Pending
   const legacy = [L('e', 'Editing', 1000), L('q', 'Pending Quality Control', 3000)];
   assert.equal(gateOpen(legacy, at('e')), true);
 });
+
+test('the gate also accepts a "Pending Customer Review" column', async () => {
+  const { gateOpen } = await import('@/lib/production-server');
+  const L = (id: string, name: string, sort: number) => ({ id, board_id: 'b', name, sort, role: 'step' });
+  const lists = [L('q', 'Pending Quality Control', 3000), L('c', 'Pending Customer Review', 3500), L('a', 'Approved', 4000)];
+  assert.equal(gateOpen(lists, { board_id: 'b', list_id: 'q' }), false);
+  assert.equal(gateOpen(lists, { board_id: 'b', list_id: 'c' }), true);
+  assert.equal(gateOpen(lists, { board_id: 'b', list_id: 'a' }), true);
+});
