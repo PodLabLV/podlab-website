@@ -11,7 +11,13 @@ import { getSupabaseBrowser } from '@/lib/supabase-browser';
 /** Only same-site paths, so ?redirect= can't bounce a client off to another domain. */
 function redirectTarget(): string {
   const raw = new URLSearchParams(window.location.search).get('redirect') || '';
-  return raw.startsWith('/') && !raw.startsWith('//') ? raw : '/portal';
+  // "/\\evil.com" is read by browsers as "//evil.com", so check the resolved origin.
+  try {
+    const u = new URL(raw, window.location.origin);
+    return raw.startsWith('/') && u.origin === window.location.origin ? u.pathname + u.search + u.hash : '/portal';
+  } catch {
+    return '/portal';
+  }
 }
 
 const inputClass =

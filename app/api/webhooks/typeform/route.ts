@@ -20,7 +20,13 @@ async function verifyTypeformSignature(rawBody: string, signature: string, secre
   const expected = Array.from(new Uint8Array(sig))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
-  return expected === receivedHex
+  // Constant-time compare so the signature can't be guessed byte by byte.
+  const a = new TextEncoder().encode(expected)
+  const b = new TextEncoder().encode(receivedHex)
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i]
+  return diff === 0
 }
 
 function getSupabase() {
@@ -72,11 +78,13 @@ export async function POST(request: NextRequest) {
   const rawBody = await request.text()
   const signature = request.headers.get('typeform-signature') ?? ''
 
-  if (TYPEFORM_WEBHOOK_SECRET) {
-    const valid = await verifyTypeformSignature(rawBody, signature, TYPEFORM_WEBHOOK_SECRET)
-    if (!valid) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
-    }
+  // Fail closed: without the secret anyone could post fake submissions.
+  if (!TYPEFORM_WEBHOOK_SECRET) {
+    return NextResponse.json({ error: 'webhook not configured' }, { status: 503 })
+  }
+  const valid = await verifyTypeformSignature(rawBody, signature, TYPEFORM_WEBHOOK_SECRET)
+  if (!valid) {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
   let body: Record<string, unknown>

@@ -40,6 +40,32 @@ export const EDIT_LIMITS = {
 
 const BLOCKED_TAGS = 'script|style|iframe|frame|frameset|object|embed|applet|link|meta|base|form|input|button|textarea|select|svg|math|template|noscript';
 
+const URL_ATTR = /\b(href|src|xlink:href|action|formaction|poster|background|srcset|data|ping|cite|longdesc)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi;
+const NAMED: Record<string, string> = { colon: ':', tab: '\t', newline: '\n', sol: '/', lpar: '(', rpar: ')', amp: '&', quot: '"', apos: "'" };
+
+/** An attribute value as the browser will read it: entities decoded, quotes and the
+ *  whitespace/control characters browsers ignore inside a scheme removed. */
+export function decodeAttr(raw: string): string {
+  let v = raw.trim().replace(/^["']|["']$/g, '');
+  for (let i = 0; i < 3; i++) {
+    v = v
+      .replace(/&#x([0-9a-f]+);?/gi, (_, h: string) => String.fromCodePoint(parseInt(h, 16) || 32))
+      .replace(/&#(\d+);?/g, (_, d: string) => String.fromCodePoint(Number(d) || 32))
+      .replace(/&([a-z]+);?/gi, (m, n: string) => NAMED[n.toLowerCase()] ?? m);
+  }
+  return v.replace(/[\u0000-\u0020\u007f-\u009f]/g, '').toLowerCase();
+}
+
+/** Links may be web, email, phone or in-page/relative. Everything else (javascript:,
+ *  vbscript:, data:, file:, …) is refused. */
+export function isSafeUrl(raw: string): boolean {
+  const v = decodeAttr(raw);
+  if (!v || v.startsWith('#') || v.startsWith('/') || v.startsWith('?') || v.startsWith('.')) return true;
+  const scheme = v.match(/^([a-z][a-z0-9+.-]*):/);
+  if (!scheme) return true; // relative path like page.html
+  return ['http', 'https', 'mailto', 'tel'].includes(scheme[1]);
+}
+
 /** Make a replacement safe to splice into the document. Text stays text. */
 export function sanitizeFragment(input: string): string {
   let s = String(input ?? '');
@@ -51,11 +77,9 @@ export function sanitizeFragment(input: string): string {
   s = s.replace(/<!--[\s\S]*?-->/g, '');
   // Event handler attributes, quoted or not.
   s = s.replace(/[\s/"']on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, ' ');
-  // Script-capable URLs in any attribute (entity-encoded colons included).
-  s = s.replace(
-    /((?:href|src|xlink:href|action|formaction|poster|background|srcset|data)\s*=\s*["']?)\s*(?:j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t|v\s*b\s*s\s*c\s*r\s*i\s*p\s*t|d\s*a\s*t\s*a)\s*(?::|&colon;|&#0*58;?|&#x0*3a;?)[^"'\s>]*/gi,
-    '$1#',
-  );
+  // URL attributes: decode, then keep only safe schemes. Matching the encoded text
+  // (the old approach) misses forms like &#106;avascript: or java&#x09;script:.
+  s = s.replace(URL_ATTR, (attr, name: string, raw: string) => (isSafeUrl(raw) ? attr : `${name}="#"`));
   // Inline styles stay (an edit often keeps the original markup), unless they can load or run something.
   s = s.replace(/\sstyle\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, (attr) =>
     /expression|url\s*\(|javascript|@import|behavior|-moz-binding/i.test(attr) ? '' : attr,
@@ -69,7 +93,7 @@ export function dangerProfile(html: string): Record<string, number> {
   return {
     blockedTags: count(new RegExp(`<\\s*(${BLOCKED_TAGS})\\b`, 'gi')),
     handlers: count(/[\s/"']on[a-z]+\s*=/gi),
-    scriptUrls: count(/(?:j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t|v\s*b\s*s\s*c\s*r\s*i\s*p\s*t)\s*(?::|&colon;|&#0*58;?|&#x0*3a;?)/gi),
+    scriptUrls: (html.match(URL_ATTR) ?? []).filter((a) => !isSafeUrl(a.replace(/^[^=]*=\s*/, ''))).length,
     dataUrls: count(/=\s*["']?\s*data\s*:/gi),
   };
 }

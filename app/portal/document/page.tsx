@@ -116,6 +116,7 @@ export default function DocumentPage() {
             <iframe
               src={docUrl ?? 'about:blank'}
               title="Clarity Document"
+              sandbox="allow-popups allow-popups-to-escape-sandbox"
               className="block w-full border-0"
               style={{ minWidth: 880, height: '80vh' }}
             />

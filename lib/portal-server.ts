@@ -48,7 +48,7 @@ export async function resolveCaller(
   // so no route can act on a client's account from a preview.
   const viewAs = viewAsId(req);
   if (viewAs) {
-    if (!['GET', 'HEAD'].includes(req.method) || !(await isStaff(db, userData.user.email))) return null;
+    if (!['GET', 'HEAD'].includes(req.method) || !(await isStaff(db, userData.user))) return null;
   }
 
   const { data: client } = await (viewAs
@@ -84,7 +84,7 @@ export async function resolveCaller(
     displayName: member ? `${member.name} (${member.role})` : name || owned.business_name,
     crmLeadId: owned.crm_lead_id ?? null,
     email: userData.user.email ?? '',
-    isStaff: viewAs ? false : await isStaff(db, userData.user.email),
+    isStaff: viewAs ? false : await isStaff(db, userData.user),
     member,
   };
 }
@@ -99,8 +99,14 @@ export function viewAsId(req: Request): string | null {
  * Staff check, server-side only. The browser never gets to assert this - a client
  * session that claims to be staff is still just a client session.
  */
-export async function isStaff(db: SupabaseClient, email?: string | null): Promise<boolean> {
-  if (!email) return false;
+export async function isStaff(
+  db: SupabaseClient,
+  user?: { email?: string | null; email_confirmed_at?: string | null } | null,
+): Promise<boolean> {
+  // Staff is matched on email, so the email must be one the person proved they own:
+  // an unconfirmed sign-up (or unconfirmed email change) to a staff address gets nothing.
+  const email = user?.email;
+  if (!email || !user?.email_confirmed_at) return false;
   const { data } = await db
     .from('portal_staff')
     .select('email')
@@ -123,7 +129,7 @@ export async function resolveStaff(
   if (!token) return null;
   const { data, error } = await db.auth.getUser(token);
   if (error || !data?.user?.email) return null;
-  if (!(await isStaff(db, data.user.email))) return null;
+  if (!(await isStaff(db, data.user))) return null;
   const { data: row } = await db
     .from('portal_staff')
     .select('name')

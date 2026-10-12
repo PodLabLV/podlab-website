@@ -11,7 +11,7 @@ const CLIENT = '3f1c2b9e-1111-4a2b-9c3d-123456789abc';
 const STAFF_EMAIL = 'info@podlablv.com';
 
 /** Just enough of the Supabase client for resolveCaller/resolveStaff/isStaff. */
-function fakeDb(userEmail: string, ownClient: string | null = null): SupabaseClient {
+function fakeDb(userEmail: string, ownClient: string | null = null, confirmed = true): SupabaseClient {
   const tables: Record<string, Array<Record<string, unknown>>> = {
     portal_staff: [{ email: STAFF_EMAIL, name: 'Hiram' }],
     portal_clients: [
@@ -28,7 +28,7 @@ function fakeDb(userEmail: string, ownClient: string | null = null): SupabaseCli
     };
     return q;
   };
-  return { auth: { getUser: async () => ({ data: { user: { id: 'u1', email: userEmail } }, error: null }) }, from: query } as unknown as SupabaseClient;
+  return { auth: { getUser: async () => ({ data: { user: { id: 'u1', email: userEmail, email_confirmed_at: confirmed ? '2026-01-01T00:00:00Z' : null } }, error: null }) }, from: query } as unknown as SupabaseClient;
 }
 
 const req = (method: string, viewAs?: string) =>
@@ -89,4 +89,12 @@ test('browser reads go through the proxy even when the env URL has a stray newli
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+test('a staff email that was never confirmed is not staff', async () => {
+  // Staff is matched on email, so an unconfirmed sign-up to a staff address must get nothing.
+  const staff = await resolveStaff(req('GET'), fakeDb(STAFF_EMAIL, null, false));
+  assert.equal(staff, null);
+  const c = await resolveCaller(req('GET', CLIENT), fakeDb(STAFF_EMAIL, null, false));
+  assert.notEqual(c?.clientId, CLIENT);
 });

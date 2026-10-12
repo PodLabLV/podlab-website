@@ -52,6 +52,8 @@ const PORTAL_QUICK_ACTIONS = [
 ]
 
 function linkify(text: string): string {
+  // Escape first: model output is untrusted text, and only the markup added below is allowed.
+  text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
   // Convert **bold** FIRST (before URL detection, so **url** doesn't get ** in the href)
   text = text.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
   // Convert markdown-style links [text](url) to HTML
