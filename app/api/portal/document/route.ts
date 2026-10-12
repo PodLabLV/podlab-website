@@ -11,6 +11,10 @@ const HEADERS = {
   'X-Robots-Tag': 'noindex, nofollow',
   'X-Frame-Options': 'SAMEORIGIN',
   'Referrer-Policy': 'no-referrer',
+  // Clarity Documents are static HTML. Sandboxed without allow-scripts or
+  // allow-same-origin: no script runs and the page gets an opaque origin, so a
+  // malicious link or tag a client slips in can never read a staff session.
+  'Content-Security-Policy': "sandbox allow-popups allow-popups-to-escape-sandbox; script-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'",
 };
 
 /**

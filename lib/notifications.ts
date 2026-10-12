@@ -1,3 +1,4 @@
+import { escapeHtml } from '@/lib/sanitize'
 import { reportError } from '@/lib/alerts';
 /**
  * Notification utilities for PodLab form submissions.
@@ -226,8 +227,8 @@ export function buildEmailHtml(title: string, fields: Record<string, string>): s
     .map(
       ([key, value]) => `
       <tr>
-        <td style="padding:10px 16px;border-bottom:1px solid #2a2a2a;color:#c0c0c0;font-weight:600;white-space:nowrap;vertical-align:top;">${key}</td>
-        <td style="padding:10px 16px;border-bottom:1px solid #2a2a2a;color:#fafafa;">${value}</td>
+        <td style="padding:10px 16px;border-bottom:1px solid #2a2a2a;color:#c0c0c0;font-weight:600;white-space:nowrap;vertical-align:top;">${escapeHtml(key)}</td>
+        <td style="padding:10px 16px;border-bottom:1px solid #2a2a2a;color:#fafafa;white-space:pre-wrap;">${escapeHtml(value)}</td>
       </tr>`
     )
     .join('')

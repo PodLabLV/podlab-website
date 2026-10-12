@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import crypto from 'node:crypto'
 
 const MONDAY_API_TOKEN = process.env.MONDAY_API_TOKEN!
 const MONDAY_BOARD_ID = '18400694687'
@@ -13,11 +14,12 @@ function getSupabase() {
 }
 
 async function findMondayItemByEmail(email: string): Promise<string | null> {
+  // Values go in as GraphQL variables, never pasted into the query text.
   const query = `
-    {
-      boards(ids: [${MONDAY_BOARD_ID}]) {
+    query ($board: [ID!], $email: CompareValue!) {
+      boards(ids: $board) {
         items_page(limit: 1, query_params: {
-          rules: [{ column_id: "email_mm1h2bvd", compare_value: ["${email}"] }]
+          rules: [{ column_id: "email_mm1h2bvd", compare_value: $email }]
         }) {
           items { id }
         }
@@ -30,21 +32,17 @@ async function findMondayItemByEmail(email: string): Promise<string | null> {
       Authorization: MONDAY_API_TOKEN,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, variables: { board: [MONDAY_BOARD_ID], email: [email] } }),
   })
   const data = await res.json()
   return data?.data?.boards?.[0]?.items_page?.items?.[0]?.id ?? null
 }
 
 async function updateMondayItemStatus(itemId: string, statusLabel: string) {
+  if (!/^\d+$/.test(itemId)) throw new Error('unexpected Monday item id')
   const mutation = `
-    mutation {
-      change_simple_column_value(
-        board_id: ${MONDAY_BOARD_ID},
-        item_id: ${itemId},
-        column_id: "status",
-        value: "${statusLabel}"
-      ) { id }
+    mutation ($board: ID!, $item: ID!, $value: String!) {
+      change_simple_column_value(board_id: $board, item_id: $item, column_id: "status", value: $value) { id }
     }
   `
   const res = await fetch('https://api.monday.com/v2', {
@@ -53,7 +51,7 @@ async function updateMondayItemStatus(itemId: string, statusLabel: string) {
       Authorization: MONDAY_API_TOKEN,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ query: mutation }),
+    body: JSON.stringify({ query: mutation, variables: { board: MONDAY_BOARD_ID, item: itemId, value: statusLabel } }),
   })
   return res.json()
 }
@@ -88,10 +86,33 @@ async function createMondayItemForBooking(name: string, email: string, eventType
   return res.json()
 }
 
+// Calendly signs every delivery: "t=<unix>,v1=<hex HMAC-SHA256 of `${t}.${rawBody}`>"
+// (same check as the CRM's Calendly webhook). Older than 5 minutes = replay.
+function verifyCalendly(rawBody: string, header: string | null, key: string): boolean {
+  if (!header) return false
+  const parts = Object.fromEntries(header.split(',').map((kv) => {
+    const i = kv.indexOf('=')
+    return [kv.slice(0, i).trim(), kv.slice(i + 1).trim()]
+  })) as Record<string, string>
+  if (!parts.t || !parts.v1) return false
+  const age = Date.now() / 1000 - Number(parts.t)
+  if (!isFinite(age) || Math.abs(age) > 300) return false
+  const expected = Buffer.from(crypto.createHmac('sha256', key).update(`${parts.t}.${rawBody}`).digest('hex'))
+  const got = Buffer.from(parts.v1)
+  return expected.length === got.length && crypto.timingSafeEqual(expected, got)
+}
+
 export async function POST(request: NextRequest) {
+  // Fail closed: without a signing key anyone could write clients, leads and Monday items.
+  const key = process.env.CALENDLY_WEBHOOK_SIGNING_KEY
+  if (!key) return NextResponse.json({ error: 'webhook not configured' }, { status: 503 })
+  const raw = await request.text()
+  if (!verifyCalendly(raw, request.headers.get('calendly-webhook-signature'), key)) {
+    return NextResponse.json({ error: 'bad signature' }, { status: 403 })
+  }
   let body: Record<string, unknown>
   try {
-    body = await request.json()
+    body = JSON.parse(raw)
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }

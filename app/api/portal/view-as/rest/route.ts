@@ -42,7 +42,7 @@ export async function GET(req: Request) {
   const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
   if (!clientId || !token) return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
   const { data } = await db.auth.getUser(token);
-  if (!data?.user || !(await isStaff(db, data.user.email))) return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
+  if (!data?.user || !(await isStaff(db, data.user))) return NextResponse.json({ message: 'Not authorized' }, { status: 401 });
 
   const u = new URL(req.url);
   const table = u.searchParams.get('t') ?? '';

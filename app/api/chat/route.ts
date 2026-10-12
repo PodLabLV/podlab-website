@@ -176,6 +176,15 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+    // Only the visitor's and the bot's own turns, plain text, bounded. A client-sent
+    // "system" message would override the guardrails, and unbounded text runs up cost.
+    const convo = messages
+      .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+      .slice(-10)
+      .map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }))
+    if (!convo.length || convo[convo.length - 1].role !== 'user') {
+      return NextResponse.json({ error: 'Messages array is required' }, { status: 400 })
+    }
 
     // Save lead to Supabase if we have contact info
     if (visitorInfo?.email) {
@@ -183,27 +192,26 @@ export async function POST(request: NextRequest) {
         const supabase = getSupabase()
         const emailNorm = sanitize(visitorInfo.email).toLowerCase()
 
-        // Check if this lead already exists (avoid duplicate notifications)
+        // Anyone can type any email here, so never touch an existing lead: no overwritten
+        // name/company/status, and no re-stamped affiliate attribution. New leads only.
         const { data: existingLead } = await supabase
           .from('leads')
           .select('id')
           .eq('email', emailNorm)
-          .eq('source_detail', 'AI Chatbot')
           .maybeSingle()
 
-        await supabase.from('leads').upsert(
-          {
+        if (!existingLead) {
+          await supabase.from('leads').insert({
             ...beakerColumn(request),
             email: emailNorm,
-            first_name: visitorInfo.name || null,
-            company: visitorInfo.company || null,
+            first_name: sanitize(visitorInfo.name).slice(0, 120) || null,
+            company: sanitize(visitorInfo.company).slice(0, 160) || null,
             source: 'website',
             source_detail: 'AI Chatbot',
             status: 'new',
             tags: ['chatbot', 'website'],
-          },
-          { onConflict: 'email' }
-        )
+          })
+        }
 
         // Only notify on NEW leads (not repeat messages from same person)
         if (!existingLead) {
@@ -244,7 +252,7 @@ export async function POST(request: NextRequest) {
               ? SYSTEM_PROMPT + buildPortalContextBlock(portalContext)
               : SYSTEM_PROMPT,
           },
-          ...messages.slice(-10), // Keep last 10 messages for context
+          ...convo, // last 10 user/assistant turns, length-capped
         ],
         max_tokens: 400,
         temperature: 0.7,
