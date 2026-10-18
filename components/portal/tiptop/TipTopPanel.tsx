@@ -19,6 +19,7 @@ const AVATAR = '/tiptop/avatar.webp';
 // the fallback before that table exists.
 
 const STORAGE = 'tiptop-portal:v1';
+const PAGE_STARTERS = ['Get to know my business', 'Build my 90-day plan', "What's due this week?", 'Build my AssetsLab'];
 const STARTERS = ["What's waiting on me?", 'Where do things stand?', 'Send a revision note', 'Change something in my Clarity Document'];
 const WRITE_TOOLS = new Set([
   'edit_document',
@@ -34,6 +35,8 @@ const WRITE_TOOLS = new Set([
   'check_in_game_plan',
   'plan_content',
   'update_content',
+  'update_action_items',
+  'queue_asset_build',
 ]);
 
 let sb: SupabaseClient | null = null;
@@ -66,10 +69,11 @@ interface PanelProps {
   onPromptUsed: () => void;
 }
 
-export default function TipTopPanel(props: PanelProps) {
-  // Load the stored thread first, then start the chat with it.
-  const [seed, setSeed] = useState<{ messages: TipTopUIMessage[]; remote: boolean } | null>(null);
+type Seed = { messages: TipTopUIMessage[]; remote: boolean };
 
+/** Load the stored thread (server first, then this tab's copy). */
+function useSeed(): Seed | null {
+  const [seed, setSeed] = useState<Seed | null>(null);
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -88,6 +92,12 @@ export default function TipTopPanel(props: PanelProps) {
       alive = false;
     };
   }, []);
+  return seed;
+}
+
+export default function TipTopPanel(props: PanelProps) {
+  // Load the stored thread first, then start the chat with it.
+  const seed = useSeed();
 
   return (
     <Shell onClose={props.onClose}>
@@ -99,6 +109,22 @@ export default function TipTopPanel(props: PanelProps) {
         </div>
       )}
     </Shell>
+  );
+}
+
+/**
+ * The same thread, full-page (the TipTop tab). Fills its parent, which must be
+ * a flex column with a height. No close button; links navigate normally.
+ */
+export function TipTopThread({ initialPrompt = null, onPromptUsed }: { initialPrompt?: string | null; onPromptUsed?: () => void }) {
+  const seed = useSeed();
+  const noop = useCallback(() => {}, []);
+  return seed ? (
+    <Chat onClose={noop} initialPrompt={initialPrompt} onPromptUsed={onPromptUsed ?? noop} seed={seed} variant="page" />
+  ) : (
+    <div className="flex flex-1 items-center justify-center">
+      <p className="portal-label !text-[12px] text-p-ink/70">Opening</p>
+    </div>
   );
 }
 
@@ -143,7 +169,8 @@ function Shell({ children, onClose }: { children: ReactNode; onClose: () => void
   );
 }
 
-function Chat({ onClose, initialPrompt, onPromptUsed, seed }: PanelProps & { seed: { messages: TipTopUIMessage[]; remote: boolean } }) {
+function Chat({ onClose, initialPrompt, onPromptUsed, seed, variant = 'panel' }: PanelProps & { seed: Seed; variant?: 'panel' | 'page' }) {
+  const page = variant === 'page';
   const { client, setActionItem } = usePortal();
   const [chatId] = useState(() => generateId());
   const [input, setInput] = useState('');
@@ -166,7 +193,7 @@ function Chat({ onClose, initialPrompt, onPromptUsed, seed }: PanelProps & { see
           setActionItem(p.input.id, p.input.done !== false);
         }
         if ((p.type === 'tool-edit_document' || p.type === 'tool-restore_document_version') && p.state === 'output-available' && p.output.saved) docChanged = true;
-        if (p.type.startsWith('tool-') && WRITE_TOOLS.has(p.type.slice(5)) && (p as { state?: string }).state === 'output-available') changed = true;
+        if (p.type.startsWith('tool-') && (WRITE_TOOLS.has(p.type.slice(5)) || p.type === 'tool-remember_business') && (p as { state?: string }).state === 'output-available') changed = true;
       }
       if (docChanged) window.dispatchEvent(new Event('portal:document-changed'));
       if (changed) window.dispatchEvent(new Event('portal:refresh'));
@@ -199,8 +226,9 @@ function Chat({ onClose, initialPrompt, onPromptUsed, seed }: PanelProps & { see
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, status]);
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    // On the full page, don't pop the phone keyboard on arrival.
+    if (!page || window.matchMedia('(min-width: 768px)').matches) inputRef.current?.focus();
+  }, [page]);
 
   const send = useCallback(
     (text: string) => {
@@ -248,7 +276,7 @@ function Chat({ onClose, initialPrompt, onPromptUsed, seed }: PanelProps & { see
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-p-line px-4 py-3" style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
+      <header className="flex items-center gap-3 border-b border-p-line px-4 py-3" style={page ? undefined : { paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
         <Image src={AVATAR} alt="" width={36} height={36} className="h-9 w-9 shrink-0 object-cover" />
         <div className="min-w-0 flex-1 leading-tight">
           <p className="portal-label !text-[13px] text-p-brandink">TipTop</p>
@@ -261,23 +289,34 @@ function Chat({ onClose, initialPrompt, onPromptUsed, seed }: PanelProps & { see
             New chat
           </button>
         )}
+        {!page && (
         <button type="button" onClick={onClose} aria-label="Close TipTop" className="flex h-9 w-9 items-center justify-center border border-transparent text-p-ink/85 transition hover:border-p-line hover:text-p-brandink">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
             <path d="M1 1l12 12M13 1L1 13" />
           </svg>
         </button>
+        )}
       </header>
 
       <div ref={listRef} className="flex-1 overflow-y-auto overscroll-contain px-4 py-5" aria-live="polite" aria-relevant="additions text">
         <div className="flex flex-col gap-4">
           <Assistant>
             <p>
-              {firstName ? `${firstName}, ` : ''}I&apos;m TipTop, PodLab&apos;s chief of staff. I know where everything in your portal lives, I&apos;ll tell you what&apos;s waiting on you,
-              and I can send notes, update your documents and profile, and book calls.
+              {page ? (
+                <>
+                  {firstName ? `${firstName}, ` : ''}I&apos;m TipTop, PodLab&apos;s chief of staff. I learn how your business works, turn it into targets and a weekly plan, build
+                  your assets, and hold you to it. Everything I&apos;m tracking is on this page.
+                </>
+              ) : (
+                <>
+                  {firstName ? `${firstName}, ` : ''}I&apos;m TipTop, PodLab&apos;s chief of staff. I know where everything in your portal lives, I&apos;ll tell you what&apos;s waiting on you,
+                  and I can send notes, update your documents and profile, and book calls.
+                </>
+              )}
             </p>
             {messages.length === 0 && (
               <div className="flex flex-wrap gap-2">
-                {STARTERS.map((s) => (
+                {(page ? PAGE_STARTERS : STARTERS).map((s) => (
                   <button key={s} type="button" onClick={() => send(s)} className="border border-p-line px-3 py-2 text-left text-base text-p-ink/90 transition hover:border-p-brandink hover:text-p-brandink">
                     {s}
                   </button>
@@ -294,7 +333,7 @@ function Chat({ onClose, initialPrompt, onPromptUsed, seed }: PanelProps & { see
             ) : (
               <Assistant key={m.id}>
                 {m.parts.map((p, i) => (
-                  <Part key={i} part={p} approve={approve} busy={busy} onNavigate={onClose} />
+                  <Part key={i} part={p} approve={approve} busy={busy} onNavigate={onClose} page={page} />
                 ))}
               </Assistant>
             ),
@@ -384,7 +423,7 @@ function Quiet({ children }: { children: ReactNode }) {
 
 type AnyPart = TipTopUIMessage['parts'][number];
 
-function Part({ part, approve, busy, onNavigate }: { part: AnyPart; approve: (id: string, ok: boolean) => void; busy: boolean; onNavigate: () => void }) {
+function Part({ part, approve, busy, onNavigate, page = false }: { part: AnyPart; approve: (id: string, ok: boolean) => void; busy: boolean; onNavigate: () => void; page?: boolean }) {
   if (part.type === 'text') return part.text ? <p className="whitespace-pre-wrap">{part.text}</p> : null;
   if (!part.type.startsWith('tool-')) return null;
 
@@ -417,6 +456,11 @@ function Part({ part, approve, busy, onNavigate }: { part: AnyPart; approve: (id
   if (part.type === 'tool-read_intake') return part.state === 'output-available' ? <Quiet>Read your intake</Quiet> : null;
   if (part.type === 'tool-read_client_file') return part.state === 'output-available' ? <Quiet>Read your file</Quiet> : null;
   if (part.type === 'tool-read_script') return part.state === 'output-available' ? <Quiet>Read the script</Quiet> : null;
+  if (part.type === 'tool-remember_business') {
+    if (part.state !== 'output-available' || !part.output.saved) return null;
+    const noted = (part.output as { noted?: string[] }).noted ?? [];
+    return <Quiet>Noted{noted.length ? `: ${noted.join(', ').toLowerCase()}` : ''}{page ? '' : ' · see it on the TipTop tab'}</Quiet>;
+  }
   if (part.type === 'tool-flag_for_team') {
     return part.state === 'output-available' && part.output.flagged ? <Quiet>Flagged for the PodLab team</Quiet> : null;
   }
@@ -479,6 +523,10 @@ function Part({ part, approve, busy, onNavigate }: { part: AnyPart; approve: (id
       );
     case 'draft_script':
       return <Quiet>Saved as a draft · PodLab reviews it, then it comes back to you to approve</Quiet>;
+    case 'update_action_items':
+      return <Quiet>Updated {String(o.updated)} action item{o.updated === 1 ? '' : 's'}</Quiet>;
+    case 'queue_asset_build':
+      return <Quiet>Build started · {String(o.label ?? 'your asset')} · PodLab reviews it, then it shows up in Projects</Quiet>;
     case 'plan_content':
     case 'update_content':
       return (
@@ -681,6 +729,19 @@ function ConfirmCard({
         </ol>
       </>
     );
+  } else if (tool === 'update_action_items' && Array.isArray(input.changes)) {
+    detail = (
+      <ol className="space-y-2">
+        {(input.changes as Array<{ title?: string; due?: string; detail?: string }>).map((c, i) => (
+          <li key={i} className="border-l border-p-line pl-3 text-sm leading-relaxed">
+            {c.title ? <span className="block text-p-ink">{c.title}</span> : null}
+            <span className="block text-p-ink/70">{[c.due ? `due ${c.due}` : null, c.detail ? c.detail.slice(0, 200) : null].filter(Boolean).join(' · ')}</span>
+          </li>
+        ))}
+      </ol>
+    );
+  } else if (tool === 'queue_asset_build') {
+    detail = <p className="max-h-48 overflow-y-auto whitespace-pre-wrap border-l border-p-line pl-3 text-sm leading-relaxed text-p-ink">{String(input.brief ?? '').slice(0, 1500)}</p>;
   } else if (tool === 'check_in_game_plan') {
     detail = <p className="whitespace-pre-wrap border-l border-p-line pl-3 text-sm leading-relaxed text-p-ink">{String(input.note ?? '')}</p>;
   } else if (tool === 'draft_script') {

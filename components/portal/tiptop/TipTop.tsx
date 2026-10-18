@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { usePortal } from '@/lib/portal-data';
 import dynamic from 'next/dynamic';
+import { usePathname } from 'next/navigation';
 
 // The chat (and the AI SDK client) loads on first open, not with every portal page.
 const TipTopPanel = dynamic(() => import('./TipTopPanel'), { ssr: false });
@@ -22,6 +23,7 @@ const subscribeNoop = () => () => {};
 export default function TipTop() {
   const mounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
   const { client, loading } = usePortal();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [prompt, setPrompt] = useState<string | null>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
@@ -45,7 +47,8 @@ export default function TipTop() {
 
   const close = useCallback(() => setOpen(false), []);
 
-  if (!mounted || loading || !client) return null;
+  // The TipTop tab is this same thread full-page; a second copy over it would fight it.
+  if (!mounted || loading || !client || pathname?.startsWith('/portal/tiptop')) return null;
 
   return (
     <>
