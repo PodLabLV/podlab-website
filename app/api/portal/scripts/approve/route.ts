@@ -2,6 +2,7 @@ import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveCaller, notifySlack, logToCrm } from '@/lib/portal-server';
 import { recordActivity, clientIp } from '@/lib/portal/server';
+import { scriptReviewed } from '@/lib/portal/review-notify';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -94,6 +95,7 @@ export async function POST(req: Request) {
     notifySlack(`*Script approved* — ${caller.businessName}\n${label}, approved by ${caller.displayName}. Ready to shoot.`),
     logToCrm(db, caller, `Approved script in portal: ${label}`),
     recordActivity(db, caller.clientId, 'update', `You approved ${label}`),
+    scriptReviewed(caller.clientId, script.id, version.version_no),
   ]);
 
   return NextResponse.json({ approval });

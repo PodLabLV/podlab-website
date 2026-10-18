@@ -4,6 +4,7 @@ import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveCaller, notifySlack, logToCrm } from '@/lib/portal-server';
 import { recordActivity, trimTo, MAX_NOTE } from '@/lib/portal/server';
+import { scriptReviewed } from '@/lib/portal/review-notify';
 import { unsentClientNotes } from '@/lib/portal/scripts';
 
 export const runtime = 'nodejs';
@@ -107,6 +108,7 @@ export async function POST(req: Request) {
     ]),
     logToCrm(db, caller, `Requested script changes in portal on ${label} (${count} note${count === 1 ? '' : 's'}): ${trimTo(lines.join(' | '), 1500)}`),
     recordActivity(db, caller.clientId, 'update', `You sent ${count} note${count === 1 ? '' : 's'} on ${label}`),
+    scriptReviewed(caller.clientId, script.id, version.version_no),
   ]);
 
   return NextResponse.json({ status: 'changes requested', sent: count });
