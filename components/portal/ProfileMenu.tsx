@@ -14,6 +14,8 @@ interface ProfileMenuProps {
   user: MenuUser;
   businessName: string;
   isStaff: boolean;
+  /** A Beaker with no client account: no credits, payments or team to show. */
+  beakerOnly?: boolean;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
   onSignOut: () => void;
@@ -31,13 +33,18 @@ const ITEMS: Array<{ href: string; label: string }> = [
   { href: '/portal/profile#notifications', label: 'Notifications' },
 ];
 
+const BEAKER_ONLY_ITEMS: Array<{ href: string; label: string }> = [
+  { href: '/portal/profile', label: 'Profile' },
+  { href: '/portal/beaker', label: 'Beaker' },
+];
+
 const STAFF: Array<{ href: string; label: string }> = [
   { href: '/portal/clients', label: 'Clients · staff' },
   { href: '/portal/potatoes', label: 'Hot potatoes · staff' },
 ];
 
 /** Avatar + name. Opens the account menu: profile sections, theme, sign out. */
-export default function ProfileMenu({ user, businessName, isStaff, theme, onToggleTheme, onSignOut, direction, compact }: ProfileMenuProps) {
+export default function ProfileMenu({ user, businessName, isStaff, beakerOnly, theme, onToggleTheme, onSignOut, direction, compact }: ProfileMenuProps) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const name = `${user.firstName} ${user.lastName}`.trim() || user.email;
@@ -101,7 +108,7 @@ export default function ProfileMenu({ user, businessName, isStaff, theme, onTogg
             <p className="truncate text-sm text-p-ink/65">{user.email}</p>
           </div>
           <div className="py-1">
-            {ITEMS.map((i) => (
+            {(beakerOnly ? BEAKER_ONLY_ITEMS : ITEMS).map((i) => (
               <Link key={i.href} href={i.href} role="menuitem" onClick={close} className={link}>
                 {i.label}
               </Link>

@@ -16,6 +16,10 @@
     {
       "path": "/api/cron/tiptop-checkin",
       "schedule": "0 16 * * 1"
+    },
+    {
+      "path": "/api/cron/beaker-notify",
+      "schedule": "20 * * * *"
     }
   ]
 }

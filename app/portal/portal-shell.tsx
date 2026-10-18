@@ -13,6 +13,7 @@ import ProfileMenu from '@/components/portal/ProfileMenu';
 import { BottomTabs, TopTabs } from '@/components/portal/PortalTabs';
 import { usePortalTheme, logoFor } from '@/components/portal/theme';
 import { exitViewAs, installViewAs, viewAsClientId } from '@/lib/portal/view-as';
+import { beakerOnlyAllowed } from '@/lib/portal/tabs';
 
 
 interface UserInfo {
@@ -24,12 +25,21 @@ interface UserInfo {
 
 function PortalShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname() ?? '';
   const [user, setUser] = useState<UserInfo | null>(null);
   const [checking, setChecking] = useState(true);
   const [theme, toggleTheme] = usePortalTheme();
   const [viewAs] = useState(() => viewAsClientId());
-  const { client, isStaff } = usePortal();
+  const { client, isStaff, isBeaker, loading } = usePortal();
   const businessName = client?.business_name ?? '';
+  // A Beaker (PodLab affiliate) with no client account: the Beaker tab and their
+  // profile, nothing else. Client pages would only be empty for them.
+  const beakerOnly = !loading && !client && isBeaker && !viewAs;
+  const misplaced = beakerOnly && !beakerOnlyAllowed(pathname);
+
+  useEffect(() => {
+    if (misplaced) router.replace('/portal/beaker');
+  }, [misplaced, router]);
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
@@ -82,8 +92,9 @@ function PortalShell({ children }: { children: React.ReactNode }) {
 
   const menu = user && {
     user,
-    businessName,
+    businessName: beakerOnly ? 'PodLab Beaker' : businessName,
     isStaff,
+    beakerOnly,
     theme,
     onToggleTheme: toggleTheme,
     onSignOut: handleLogout,
@@ -94,12 +105,12 @@ function PortalShell({ children }: { children: React.ReactNode }) {
       {/* Header: logo, the four tabs (desktop), the hot potato. Mobile adds the avatar. */}
       <header className="sticky top-0 z-40 border-b border-p-line bg-p-paper/85 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-8 lg:px-12">
-          <Link href="/portal" aria-label="PodLab Portal home" className="shrink-0">
+          <Link href={beakerOnly ? '/portal/beaker' : '/portal'} aria-label="PodLab Portal home" className="shrink-0">
             <Image src={logoFor(theme)} alt="PodLab Portal" width={720} height={229} unoptimized className="h-auto w-[136px] lg:w-[150px]" />
           </Link>
           <TopTabs />
           <div className="ml-auto flex items-center gap-2">
-            <NotificationBell />
+            {!beakerOnly && <NotificationBell />}
             {menu && (
               <div className="lg:hidden">
                 <ProfileMenu {...menu} direction="down" compact />
@@ -128,7 +139,7 @@ function PortalShell({ children }: { children: React.ReactNode }) {
       )}
 
       <main className="min-w-0">
-        <div className="mx-auto max-w-6xl px-4 pb-32 pt-8 sm:px-8 lg:px-12 lg:pb-28 lg:pt-12">{children}</div>
+        <div className="mx-auto max-w-6xl px-4 pb-32 pt-8 sm:px-8 lg:px-12 lg:pb-28 lg:pt-12">{misplaced ? null : children}</div>
       </main>
 
       {/* Profile: bottom left on desktop. Avatar only until the side gutter is wide enough for the name card. */}
@@ -145,9 +156,9 @@ function PortalShell({ children }: { children: React.ReactNode }) {
 
       <BottomTabs />
 
-      {!isStaff && <PotatoSmoke />}
-      {/* TipTop acts for the client; never in a staff preview. */}
-      {!viewAs && <TipTop />}
+      {!isStaff && !beakerOnly && <PotatoSmoke />}
+      {/* TipTop acts for the client; never in a staff preview, and a Beaker-only account has no client for her to act for. */}
+      {!viewAs && !beakerOnly && <TipTop />}
     </div>
   );
 }

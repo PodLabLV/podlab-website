@@ -137,3 +137,53 @@ see who has access, remove. Every member sees the same client portal.
   turn SMS off. `?dry=1` previews. Logic: `lib/portal/notify-delivery.ts` (`npm run test:notify`).
 - Migration `20261018_portal_v2_d.sql` (applied): `portal_tiptop_profile`, `portal_action_items.due_on`,
   SMS consent columns + trigger, delivery index.
+
+## Track E as built (Beaker tab)
+
+**Who sees it.** `resolveBeaker()` (`lib/portal/beaker-account.ts`) matches the signed-in user to an approved
+`crm.affiliates` row of kind `affiliate` (JV partners stay in the CRM), in order: `profile_id` = their auth user id
+(the login the CRM creates when it approves a Beaker, same Supabase project, same password), their login email
+once confirmed, or, for an account owner, their `portal_clients.email`. Nothing in a request can name an affiliate.
+`/api/portal/whoami` now returns `{ staff, beaker }`; `usePortal().isBeaker` carries it. Tabs come from
+`tabsFor()` in `lib/portal/tabs.ts`: not a Beaker = the same four tabs; client + Beaker = five; Beaker with no
+client record = Beaker only (the shell redirects every other route to `/portal/beaker` and hides the bell, potatoes
+and TipTop; Profile shows login + sign out; the account menu lists Profile and Beaker). Staff view-as resolves the
+viewed client's Beaker record read-only. `/portal/referrals` still works (credit redemption lives there) and
+lights up the Beaker tab; the Dashboard referral card links to `/portal/beaker`.
+
+**`/portal/beaker`** (`app/portal/beaker/page.tsx` + `components/portal/BeakerView.tsx`), one screen:
+link (copy, QR drawn locally with `qrcode-generator`) and "how you earn" from `lib/affiliate-terms.ts`; Refer
+someone (name, email or phone, business, note); My referrals (CRM stage → Submitted / Talking / Bought / Not a fit,
+`plainStatus()`), with earned per referral; Money (earned, on hold, ready, paid out, next payout, payout setup
+steps Whop → terms → W-9, payout history, 1099 note); Toolkit (text, email, social post with the link and the
+§7.1 commission disclosure; who to send; the rules with agreement sections).
+
+**Numbers** (`GET /api/portal/beaker`, service role, scoped to the resolved affiliate id):
+`crm.affiliate_commission_ledger` → earned (non-void sum), on hold (`held` + `disputed`), ready (`payable`, no
+`payout_id`; same rule as the CRM's `payableFor`), per-referral earned; `crm.affiliate_payouts` (status `sent`) →
+paid out + history; `crm.leads.affiliate_id` → referrals; next payout = 1st or 14th Pacific (CRM bridge `nextRun`).
+
+**Writes** (`POST /api/portal/beaker`) go through the existing CRM bridge (`crm.podlablv.com/api/beaker/portal`,
+`PORTAL_BRIDGE_SECRET`, set in Vercel production): `refer` → the CRM's own `addReferral` (dedupe, §2.4
+"already in our system" rule, attribution, team alerts), `linkWhop`, `acceptTerms`, W-9 upload. After a referral
+a `done` notification is written for Beakers with a client record. Without the secret every write answers 503.
+
+**Notifications.** `/api/cron/beaker-notify` (hourly, `?dry=1` for staff) reads the last 3 days per Beaker:
+link-credited leads, `crm.pipeline_events` stage moves (one row per lead per plain status), new commission and
+clawback rows, sent payouts; `notify()` with `beaker:*` refs, so reruns never repeat. Logic:
+`lib/portal/beaker-notify.ts` (`npm run test:beaker`).
+
+**Gap: Beakers with no client record get no notifications.** `portal_notifications.client_id` is NOT NULL and
+the bell, feed and delivery cron are all keyed by client. Today that is every real Beaker (charles-mui). Proposed
+minimal change (not applied; `loadFeed`, the bell and `notify-run` would also need to read by user):
+
+```sql
+alter table public.portal_notifications alter column client_id drop not null,
+  add column if not exists user_id uuid references auth.users(id) on delete cascade,
+  add constraint portal_notifications_owner_chk check (client_id is not null or user_id is not null);
+create unique index if not exists portal_notifications_user_ref_idx on public.portal_notifications (user_id, ref) where client_id is null;
+```
+
+Other open points: the agreement (§4.5) says payouts within 15 days after month end, while the CRM runs on the
+1st and 14th (phase111), which is what the tab says; the CRM bridge strips `_` from emails before matching, so a
+Beaker whose email has an underscore can see the tab but not write until that is fixed in the CRM.
