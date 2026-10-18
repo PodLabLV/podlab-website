@@ -292,3 +292,41 @@ export function verifyPreview(assetId: string, variant: string, exp: string, sig
 /** storage_path for a Drive-backed row: no schema change, and never confused with a bucket path. */
 export const DRIVE_PREFIX = 'drive:';
 export const driveIdOf = (storagePath: string | null) => (storagePath?.startsWith(DRIVE_PREFIX) ? storagePath.slice(DRIVE_PREFIX.length) : null);
+
+// ── footage for editing (Projects → Submit footage) ──────────────────────
+// Raw footage lands in the client's "03- Content / 03- Raw Videos", one
+// subfolder per submission, so the editor's card links to exactly that batch.
+const FOOTAGE_ROUTE: Array<{ match: RegExp; create: string }> = [
+  { match: /content/i, create: '03- Content' },
+  { match: /raw/i, create: '03- Raw Videos' },
+];
+
+export async function createFolder(parent: string, name: string): Promise<string> {
+  const made = await driveJson<{ id: string }>(`/files?supportsAllDrives=true&fields=id`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name.slice(0, 200), mimeType: FOLDER, parents: [parent] }),
+  });
+  return made.id;
+}
+
+/** The client's Raw Videos folder (created from the template's names when missing). */
+export async function footageFolder(rootId: string): Promise<string> {
+  const key = `${rootId}:footage`;
+  const hit = folderCache.get(key);
+  if (hit && Date.now() - hit.at < 10 * 60_000) return hit.id;
+  let parent = await sectionsRoot(rootId);
+  for (const step of FOOTAGE_ROUTE) {
+    const found = (await listFolders(parent)).sort((a, b) => a.name.localeCompare(b.name)).find((f) => step.match.test(f.name));
+    parent = found ? found.id : await createFolder(parent, step.create);
+  }
+  folderCache.set(key, { id: parent, at: Date.now() });
+  return parent;
+}
+
+/** Files (not folders) directly inside a folder: what a submission actually uploaded. */
+export async function listFiles(parent: string): Promise<DriveFile[]> {
+  const q = encodeURIComponent(`'${parent}' in parents and mimeType!='${FOLDER}' and trashed=false`);
+  const { files } = await driveJson<{ files: DriveFile[] }>(`/files?q=${q}&fields=files(id,name,size,mimeType)&pageSize=200&${ALL_DRIVES}`);
+  return files;
+}

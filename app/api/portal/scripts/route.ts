@@ -8,6 +8,7 @@ import {
   nextVersionNo,
 } from '@/lib/portal/server';
 import { SCRIPT_STATUSES, toBlocks, wordCount, runtimeSeconds, reanchor } from '@/lib/portal/scripts';
+import { scriptReady } from '@/lib/portal/review-notify';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -111,6 +112,7 @@ export async function POST(req: Request) {
     if (previous) await carryNotesForward(db, script.id, previous.id, version.id, body);
 
     await recordActivity(db, script.client_id, 'update', `Script v${versionNo} ready for your review: ${script.title}`);
+    await scriptReady(script.client_id, script, versionNo);
 
     return NextResponse.json({ scriptId: script.id, versionId: version.id, versionNo });
   }
@@ -170,6 +172,7 @@ export async function POST(req: Request) {
   }
 
   await recordActivity(db, clientId, 'update', `New script ready for your review: ${script.title}`);
+  await scriptReady(clientId, script, 1);
 
   return NextResponse.json({ scriptId: script.id, versionId: version.id, versionNo: 1 });
 }
@@ -214,7 +217,7 @@ export async function PATCH(req: Request) {
     .from('portal_scripts')
     .update(patch)
     .eq('id', p.scriptId)
-    .select('id, client_id, title, status')
+    .select('id, client_id, title, status, current_version')
     .maybeSingle();
 
   if (error) {
@@ -223,7 +226,10 @@ export async function PATCH(req: Request) {
   }
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  if (p.status === 'in review') await recordActivity(db, data.client_id, 'update', `New script ready for your review: ${data.title}`);
+  if (p.status === 'in review') {
+    await recordActivity(db, data.client_id, 'update', `New script ready for your review: ${data.title}`);
+    await scriptReady(data.client_id, data, data.current_version);
+  }
   if (p.status === 'shot') await recordActivity(db, data.client_id, 'update', `Filmed: ${data.title}`);
   if (p.status === 'published') await recordActivity(db, data.client_id, 'deliverable', `Live: ${data.title}`);
 

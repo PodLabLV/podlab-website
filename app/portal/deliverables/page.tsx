@@ -419,6 +419,15 @@ export default function DeliverablesPage() {
   const [lab, setLab] = useState('All');
   const [openId, setOpenId] = useState<string | null>(null);
 
+  // Deep link from Projects / notifications: ?item=<asset id> opens that review.
+  useEffect(() => {
+    const item = new URLSearchParams(window.location.search).get('item');
+    if (item) setOpenId(item);
+  }, []);
+  useEffect(() => {
+    if (openId && review.versions.length) document.getElementById(`asset-${openId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [openId, review.versions.length]);
+
   const assets: Asset[] = assetOverride ?? (baseAssets as Asset[]);
 
   const refresh = useCallback(async () => {
@@ -478,8 +487,8 @@ export default function DeliverablesPage() {
   const rest = shown.filter((a) => !waiting.includes(a));
 
   const card = (a: Asset) => (
+    <div key={a.id} id={`asset-${a.id}`} className="scroll-mt-24">
     <AssetCard
-      key={a.id}
       asset={a}
       versions={versionsByAsset.get(a.id) ?? []}
       comments={review.comments.filter((c) => c.asset_id === a.id)}
@@ -487,6 +496,7 @@ export default function DeliverablesPage() {
       onToggle={() => setOpenId(openId === a.id ? null : a.id)}
       onChanged={refresh}
     />
+    </div>
   );
 
   return (
