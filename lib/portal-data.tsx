@@ -164,6 +164,8 @@ interface PortalData {
   products: PortalProduct[];
   elementRows: PortalElementRow[];
   isStaff: boolean;
+  /** An approved Beaker (PodLab affiliate): adds the Beaker tab. With no client row, it's the only tab. */
+  isBeaker: boolean;
   /** Signed-in email, so an account with no client row can be told where to go. */
   viewerEmail: string | null;
   setAnswer: (itemId: string, value: string) => void;
@@ -192,6 +194,7 @@ const EMPTY: PortalData = {
   products: [],
   elementRows: [],
   isStaff: false,
+  isBeaker: false,
   viewerEmail: null,
   setAnswer: () => {},
   setPhaseStatus: () => {},
@@ -201,14 +204,16 @@ const EMPTY: PortalData = {
   accessToken: null,
 };
 
-/** Display-only: decides whether staff tools render. Every staff route re-checks server-side. */
-async function checkStaff(token: string | null | undefined): Promise<boolean> {
-  if (!token) return false;
+/** Display-only: decides whether staff tools and the Beaker tab render. Every route re-checks server-side. */
+async function checkWho(token: string | null | undefined): Promise<{ isStaff: boolean; isBeaker: boolean }> {
+  if (!token) return { isStaff: false, isBeaker: false };
   try {
     const res = await fetch('/api/portal/whoami', { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
-    return res.ok && Boolean((await res.json()).staff);
+    if (!res.ok) return { isStaff: false, isBeaker: false };
+    const j = (await res.json()) as { staff?: boolean; beaker?: boolean };
+    return { isStaff: Boolean(j.staff), isBeaker: Boolean(j.beaker) };
   } catch {
-    return false;
+    return { isStaff: false, isBeaker: false };
   }
 }
 
@@ -292,7 +297,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
           loading: false,
           viewerEmail: viewer,
           accessToken: s?.access_token ?? null,
-          isStaff: await checkStaff(s?.access_token),
+          ...(await checkWho(s?.access_token)),
         });
         return;
       }
@@ -341,7 +346,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
         // Staff is asserted by the server on every write; this only decides
         // whether the edit controls render.
         viewerEmail: session.data.session?.user?.email ?? null,
-        isStaff: await checkStaff(session.data.session?.access_token),
+        ...(await checkWho(session.data.session?.access_token)),
         setActionItem,
         addComment,
         setAnswer,

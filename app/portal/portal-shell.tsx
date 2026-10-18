@@ -7,10 +7,13 @@ import { useState, useEffect } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { PortalProvider, usePortal } from '@/lib/portal-data';
 import TipTop from '@/components/portal/tiptop/TipTop';
-import SidebarNav from '@/components/portal/SidebarNav';
-import { PotatoBadge, PotatoSmoke } from '@/components/portal/HotPotato';
+import { PotatoSmoke } from '@/components/portal/HotPotato';
+import NotificationBell from '@/components/portal/NotificationBell';
+import ProfileMenu from '@/components/portal/ProfileMenu';
+import { BottomTabs, TopTabs } from '@/components/portal/PortalTabs';
 import { usePortalTheme, logoFor } from '@/components/portal/theme';
 import { exitViewAs, installViewAs, viewAsClientId } from '@/lib/portal/view-as';
+import { beakerOnlyAllowed } from '@/lib/portal/tabs';
 
 
 interface UserInfo {
@@ -22,13 +25,21 @@ interface UserInfo {
 
 function PortalShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname() ?? '';
   const [user, setUser] = useState<UserInfo | null>(null);
   const [checking, setChecking] = useState(true);
   const [theme, toggleTheme] = usePortalTheme();
   const [viewAs] = useState(() => viewAsClientId());
-  const { client, isStaff } = usePortal();
+  const { client, isStaff, isBeaker, loading } = usePortal();
   const businessName = client?.business_name ?? '';
+  // A Beaker (PodLab affiliate) with no client account: the Beaker tab and their
+  // profile, nothing else. Client pages would only be empty for them.
+  const beakerOnly = !loading && !client && isBeaker && !viewAs;
+  const misplaced = beakerOnly && !beakerOnlyAllowed(pathname);
+
+  useEffect(() => {
+    if (misplaced) router.replace('/portal/beaker');
+  }, [misplaced, router]);
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
@@ -79,114 +90,75 @@ function PortalShell({ children }: { children: React.ReactNode }) {
     );
   }
 
+  const menu = user && {
+    user,
+    businessName: beakerOnly ? 'PodLab Beaker' : businessName,
+    isStaff,
+    beakerOnly,
+    theme,
+    onToggleTheme: toggleTheme,
+    onSignOut: handleLogout,
+  };
+
   return (
-    <div data-theme={theme} className="portal flex min-h-svh bg-p-paper">
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-p-paper/70 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
+    <div data-theme={theme} className="portal portal-v2 min-h-svh bg-p-paper">
+      {/* Header: logo, the four tabs (desktop), the hot potato. Mobile adds the avatar. */}
+      <header className="sticky top-0 z-40 border-b border-p-line bg-p-paper/85 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-8 lg:px-12">
+          <Link href={beakerOnly ? '/portal/beaker' : '/portal'} aria-label="PodLab Portal home" className="shrink-0">
+            <Image src={logoFor(theme)} alt="PodLab Portal" width={720} height={229} unoptimized className="h-auto w-[136px] lg:w-[150px]" />
+          </Link>
+          <TopTabs />
+          <div className="ml-auto flex items-center gap-2">
+            {!beakerOnly && <NotificationBell />}
+            {menu && (
+              <div className="lg:hidden">
+                <ProfileMenu {...menu} direction="down" compact />
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {viewAs && (
+        <div role="status" className="sticky top-16 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-p-warn/50 bg-p-warn/10 px-4 py-3 backdrop-blur sm:px-8 lg:px-12">
+          <p className="text-base text-p-ink">
+            <span className="portal-label mr-2 !text-[12px] text-p-warn">Viewing as client</span>
+            {client?.business_name ?? 'Loading…'} · read-only, nothing you click changes their account.
+          </p>
+          <button
+            onClick={() => {
+              exitViewAs();
+              window.location.href = `/portal/clients/${viewAs}`;
+            }}
+            className="portal-label border border-p-ink/40 px-4 py-2 !text-[12px] text-p-ink transition hover:border-p-brandink hover:text-p-brandink"
+          >
+            Exit
+          </button>
+        </div>
       )}
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed left-0 top-0 z-50 flex h-svh w-72 flex-col border-r border-p-line bg-p-paper transition-transform duration-300 lg:sticky ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
-      >
-        <div className="border-b border-p-line px-6 pb-5 pt-6">
-          <Link href="/" aria-label="PodLab home" className="block">
-            <Image src={logoFor(theme)} alt="PodLab Portal" width={720} height={229} unoptimized className="h-auto w-[184px]" />
-          </Link>
-        </div>
-
-        <SidebarNav isStaff={isStaff} onNavigate={() => setSidebarOpen(false)} />
-
-        <div className="border-t border-p-line px-6 py-5">
-          {user && (
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center border border-p-brandink/40 text-sm font-bold text-p-brandink">
-                {user.initials}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="break-words text-base font-medium text-p-ink">
-                  {user.firstName} {user.lastName}
-                </p>
-                <p className="break-words text-sm text-p-ink/70">{businessName || user.email}</p>
-              </div>
-            </div>
-          )}
-          <div className="mt-4 flex items-center justify-between">
-            <button
-              onClick={handleLogout}
-              className="portal-label !text-[12px] text-p-ink/70 transition hover:text-p-brandink"
-            >
-              Sign out
-            </button>
-            <button
-              onClick={toggleTheme}
-              aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-              title={theme === 'light' ? 'Dark mode' : 'Light mode'}
-              className="portal-label flex items-center gap-1.5 border border-p-line px-2.5 py-1.5 !text-[11px] text-p-ink/75 transition hover:border-p-brandink hover:text-p-brandink"
-            >
-              {theme === 'light' ? (
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
-                </svg>
-              ) : (
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <circle cx="12" cy="12" r="4" />
-                  <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-                </svg>
-              )}
-              {theme === 'light' ? 'Dark' : 'Light'}
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main content area */}
-      <main className="min-h-svh min-w-0 flex-1">
-        {/* Top bar (mobile) */}
-        <div className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-p-line bg-p-paper/80 px-4 backdrop-blur lg:hidden">
-          <Link href="/portal" aria-label="PodLab Portal home">
-            <Image src={logoFor(theme)} alt="PodLab Portal" width={720} height={229} unoptimized className="h-auto w-[136px]" />
-          </Link>
-          <div className="flex items-center gap-2">
-          {!isStaff && <PotatoBadge onOpen={() => setSidebarOpen(true)} />}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Open portal menu"
-            className="flex h-10 w-10 items-center justify-center border border-p-line text-p-ink transition hover:border-p-brandink hover:text-p-brandink"
-          >
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-              <path d="M3 6h14M3 10h14M3 14h14" />
-            </svg>
-          </button>
-          </div>
-        </div>
-
-        {viewAs && (
-          <div role="status" className="sticky top-16 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-p-warn/50 bg-p-warn/10 px-4 py-3 backdrop-blur sm:px-8 lg:top-0 lg:px-12">
-            <p className="text-base text-p-ink">
-              <span className="portal-label mr-2 !text-[12px] text-p-warn">Viewing as client</span>
-              {client?.business_name ?? 'Loading…'} · read-only, nothing you click changes their account.
-            </p>
-            <button
-              onClick={() => {
-                exitViewAs();
-                window.location.href = `/portal/clients/${viewAs}`;
-              }}
-              className="portal-label border border-p-ink/40 px-4 py-2 !text-[12px] text-p-ink transition hover:border-p-brandink hover:text-p-brandink"
-            >
-              Exit
-            </button>
-          </div>
-        )}
-        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8 lg:px-12 lg:py-12">{children}</div>
+      <main className="min-w-0">
+        <div className="mx-auto max-w-6xl px-4 pb-32 pt-8 sm:px-8 lg:px-12 lg:pb-28 lg:pt-12">{misplaced ? null : children}</div>
       </main>
 
-      {!isStaff && <PotatoSmoke />}
-      {/* TipTop acts for the client; never in a staff preview. */}
-      {!viewAs && <TipTop />}
+      {/* Profile: bottom left on desktop. Avatar only until the side gutter is wide enough for the name card. */}
+      {menu && (
+        <div className="fixed bottom-4 left-4 z-40 hidden lg:block">
+          <div className="2xl:hidden">
+            <ProfileMenu {...menu} direction="up" compact />
+          </div>
+          <div className="hidden w-52 2xl:block">
+            <ProfileMenu {...menu} direction="up" />
+          </div>
+        </div>
+      )}
+
+      <BottomTabs />
+
+      {!isStaff && !beakerOnly && <PotatoSmoke />}
+      {/* TipTop acts for the client; never in a staff preview, and a Beaker-only account has no client for her to act for. */}
+      {!viewAs && !beakerOnly && <TipTop />}
     </div>
   );
 }

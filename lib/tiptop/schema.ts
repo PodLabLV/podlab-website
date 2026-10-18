@@ -39,6 +39,7 @@ export const PAGES = {
   profile: { href: '/portal/profile', label: 'Profile' },
   plan: { href: '/portal/plan', label: 'Game Plan' },
   content: { href: '/portal/content', label: 'Content Plan' },
+  tiptop: { href: '/portal/tiptop', label: 'TipTop' },
 } as const;
 export type PageKey = keyof typeof PAGES;
 const PAGE_KEYS = Object.keys(PAGES) as [PageKey, ...PageKey[]];
@@ -233,6 +234,42 @@ export const readScriptInput = z.object({ id: id.describe('Script id from the ov
 
 export const readClientFileInput = z.object({});
 
+// ── Portal v2: understand, plan, build, hold to it ─────────────────────
+
+import { FACT_KEYS } from './understanding';
+import { JOB_KINDS } from './jobs';
+
+export const rememberInput = z.object({
+  facts: z
+    .object(Object.fromEntries(FACT_KEYS.map((k) => [k, z.string().trim().max(600).optional()])) as Record<(typeof FACT_KEYS)[number], z.ZodOptional<z.ZodString>>)
+    .describe('Only the facts this answer gave you, in a line or two each, their words tightened. Empty string clears one that turned out wrong.'),
+});
+
+export const updateActionItemsInput = z.object({
+  changes: z
+    .array(
+      z.object({
+        id: id.describe('Action item id from the snapshot.'),
+        title: z.string().trim().min(3).max(160).optional(),
+        detail: z.string().trim().max(600).optional(),
+        due: DATE.optional().describe('New due date, agreed with the client.'),
+      }),
+    )
+    .min(1)
+    .max(10),
+  why: z.string().trim().min(5).max(300).describe('One line for the card: why the change (moved because…, sharpened because…).'),
+});
+
+export const queueAssetBuildInput = z.object({
+  kind: z.enum(JOB_KINDS).describe('assetslab = the AssetsLab strategic foundation (Clarity Document); vsl_pack = VSL script, confirmation and FAQ scripts; brand_kit = brand identity kit.'),
+  brief: z
+    .string()
+    .trim()
+    .min(60)
+    .max(4000)
+    .describe('What the builder needs that is not already in their intake: the goal, the angle, anything they told you in this chat. Facts only, their words.'),
+});
+
 /** Tools that change something. Each one shows the client a confirm card first. */
 export const WRITE_TOOLS = [
   'edit_document',
@@ -248,5 +285,7 @@ export const WRITE_TOOLS = [
   'check_in_game_plan',
   'plan_content',
   'update_content',
+  'update_action_items',
+  'queue_asset_build',
 ] as const;
 export type WriteTool = (typeof WRITE_TOOLS)[number];

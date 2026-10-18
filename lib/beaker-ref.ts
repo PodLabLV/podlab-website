@@ -42,3 +42,12 @@ export function beakerColumn(request: NextRequest): { beaker_id?: string } {
   const ref = readBeakerRef(request);
   return ref ? { beaker_id: ref } : {};
 }
+
+/** A Beaker's shareable link: lands on podlablv.com and sets the 90-day cookie. */
+export function beakerLink(beakerId: string, path = '/'): string | null {
+  const id = cleanBeakerId(beakerId);
+  if (!id) return null;
+  const u = new URL(path, 'https://podlablv.com');
+  u.searchParams.set('ref', id);
+  return u.toString();
+}

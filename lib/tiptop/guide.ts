@@ -193,8 +193,11 @@ export async function createActionItems(
     source: `Game Plan · ${pillar}`,
     status: 'open',
     sort_order: sort++,
+    due_on: i.due ?? null,
   }));
-  const { error } = await db.from('portal_action_items').insert(rows);
+  let { error } = await db.from('portal_action_items').insert(rows);
+  // Before the 20261018_portal_v2_d migration there is no due_on column; the label in effort still carries it.
+  if (error && /due_on/.test(error.message)) ({ error } = await db.from('portal_action_items').insert(rows.map(({ due_on: _d, ...r }) => r)));
   if (error) throw new Error(`action items failed: ${error.message}`);
   await Promise.all([
     recordActivity(db, caller.clientId, 'update', `Game plan (${pillar}): ${rows.length} new action item${rows.length === 1 ? '' : 's'}`),
@@ -241,4 +244,57 @@ export async function draftScript(
     logToCrm(db, caller, `TipTop drafted a ${d.kind} script with them: "${d.title}". Waiting on PodLab review.`),
   ]);
   return { scriptId: script.id };
+}
+
+// ── action items: change ─────────────────────────────────────────────────
+
+export interface ActionItemChange {
+  id: string;
+  title?: string;
+  detail?: string;
+  due?: string;
+}
+
+/** Which of these ids are this client's action items (with their current title/effort/status). */
+export async function ownedActionItems(
+  db: SupabaseClient,
+  clientId: string,
+  ids: string[],
+): Promise<Map<string, { title: string; effort: string | null; status: string | null }>> {
+  const { data } = await db.from('portal_action_items').select('id, title, effort, status').eq('client_id', clientId).in('id', ids);
+  return new Map(
+    ((data ?? []) as Array<{ id: string; title: string; effort: string | null; status: string | null }>).map((r) => [r.id, { title: r.title, effort: r.effort, status: r.status }]),
+  );
+}
+
+/** Swap the "due Oct 20" part of an effort label for a new date; keep the rest. Pure. */
+export function relabelEffort(effort: string | null, due: string): string {
+  const parts = (effort ?? '').split(' · ').filter((p) => p && !/^due /.test(p));
+  return [...parts, dueLabel(due)].filter(Boolean).join(' · ');
+}
+
+export async function updateActionItems(db: SupabaseClient, caller: PortalCaller, changes: ActionItemChange[], why: string): Promise<{ updated: number }> {
+  const owned = await ownedActionItems(db, caller.clientId, changes.map((c) => c.id));
+  let updated = 0;
+  for (const c of changes) {
+    const cur = owned.get(c.id);
+    if (!cur) continue;
+    const patch: Record<string, unknown> = {};
+    if (c.title) patch.title = c.title;
+    if (c.detail !== undefined) patch.detail = c.detail || null;
+    if (c.due) {
+      patch.effort = relabelEffort(cur.effort, c.due);
+      patch.due_on = c.due;
+    }
+    if (!Object.keys(patch).length) continue;
+    let { error } = await db.from('portal_action_items').update(patch).eq('id', c.id).eq('client_id', caller.clientId);
+    if (error && /due_on/.test(error.message)) {
+      delete patch.due_on;
+      ({ error } = await db.from('portal_action_items').update(patch).eq('id', c.id).eq('client_id', caller.clientId));
+    }
+    if (error) throw new Error(`action item update failed: ${error.message}`);
+    updated += 1;
+  }
+  if (updated) await logToCrm(db, caller, `TipTop updated ${updated} action item${updated === 1 ? '' : 's'} with them (${why.slice(0, 200)}).`);
+  return { updated };
 }

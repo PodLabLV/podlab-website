@@ -13,6 +13,7 @@ import { driveFileId, parseChapters, readNote } from '@/lib/chapters';
 import { driveConfigured, streamUrl } from '@/lib/portal/drive';
 import { approveCut, cardsInScope, clientCardScope, postClientNote, scopeBoardIds } from '@/lib/production-server';
 import { LOOKS_GOOD_NOTE } from '@/lib/portal/potato';
+import { cardReviewed } from '@/lib/portal/review-notify';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -159,6 +160,7 @@ export async function POST(req: Request) {
     if (!p.cardId) return NextResponse.json({ error: 'cardId required' }, { status: 400 });
     const res = await approveCut(db, caller, p.cardId);
     if (!res.ok) return NextResponse.json({ error: res.message }, { status: res.status });
+    await cardReviewed(db, caller.clientId, p.cardId);
     return NextResponse.json({ ok: true });
   }
 
@@ -169,6 +171,7 @@ export async function POST(req: Request) {
 
   const res = await postClientNote(db, caller, p.cardId, body, t);
   if (!res.ok) return NextResponse.json({ error: res.message }, { status: res.status });
+  await cardReviewed(db, caller.clientId, p.cardId);
   const comment = res.comment;
 
   return NextResponse.json({

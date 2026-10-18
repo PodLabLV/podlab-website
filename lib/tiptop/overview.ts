@@ -16,6 +16,8 @@ import { loadPlans } from '@/lib/portal/game-plan-server';
 import { checkInDue, fmtNumber, type GamePlan } from '@/lib/portal/game-plan';
 import { loadContentPlan } from '@/lib/portal/content-plan-server';
 import { jobMix, needsScript, type ContentItem } from '@/lib/portal/content-plan';
+import { loadFacts, renderFacts, type Facts } from './understanding';
+import { JOB_LABELS, isActiveJob, loadJobs, type JobKind, type JobRow } from './jobs';
 
 /**
  * Everything TipTop knows about one client, read server-side with the service
@@ -63,7 +65,7 @@ export interface Overview {
     available: boolean;
     items: Array<{ id: string; title: string; status: string; version: number; waitingOnYou: boolean; unsentNotes: number }>;
   };
-  actionItems: { open: Array<{ id: string; title: string; effort: string | null; source: string | null }>; done: number };
+  actionItems: { open: Array<{ id: string; title: string; effort: string | null; source: string | null; dueOn?: string | null }>; done: number };
   intake: { total: number; answered: number; requiredLeft: number; submitted: boolean };
   invoices: { open: Array<{ no: string | null; description: string | null; amount: string; status: string | null; issued: string | null }>; paidCount: number };
   document: { has: boolean; editable: boolean; historyReady: boolean; versions: number };
@@ -82,6 +84,10 @@ export interface Overview {
   plans: { available: boolean; items: GamePlan[] };
   /** The content calendar from two weeks back. */
   content: { available: boolean; items: ContentItem[] };
+  /** TipTop's notes on the business (portal_tiptop_profile). */
+  understanding?: { available: boolean; facts: Facts };
+  /** Asset builds queued on portal_jobs. */
+  jobs?: { available: boolean; items: JobRow[] };
   /** Nudges, most important first. */
   accountability: string[];
 }
@@ -100,7 +106,7 @@ async function safe<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 export async function buildOverview(db: SupabaseClient, caller: PortalCaller): Promise<Overview> {
   const id = caller.clientId;
 
-  const [profile, chain, phases, production, scripts, deliverables, actionItems, intake, invoices, document, brand, potatoes, plans, content] = await Promise.all([
+  const [profile, chain, phases, production, scripts, deliverables, actionItems, intake, invoices, document, brand, potatoes, plans, content, understanding, jobs] = await Promise.all([
     safe(() => loadProfile(db, id), null),
     safe(() => chainBlock(db, id), emptyChain()),
     safe(() => phasesBlock(db, id), []),
@@ -121,6 +127,14 @@ export async function buildOverview(db: SupabaseClient, caller: PortalCaller): P
       const r = await loadContentPlan(db, id);
       return { available: r.ready, items: r.items };
     }, { available: false, items: [] as ContentItem[] }),
+    safe(async () => {
+      const r = await loadFacts(db, id);
+      return { available: r.ready, facts: r.facts };
+    }, { available: false, facts: {} as Facts }),
+    safe(async () => {
+      const r = await loadJobs(db, id);
+      return { available: r.ready, items: r.jobs };
+    }, { available: false, items: [] as JobRow[] }),
   ]);
 
   const o: Overview = {
@@ -149,6 +163,8 @@ export async function buildOverview(db: SupabaseClient, caller: PortalCaller): P
     potatoes,
     plans,
     content,
+    understanding,
+    jobs,
     accountability: [],
   };
 
@@ -189,6 +205,9 @@ function nudges(o: Overview): string[] {
   const unscripted = o.content.items.filter((i) => needsScript(i));
   if (unscripted.length) out.push(`${unscripted.length} content piece${unscripted.length === 1 ? '' : 's'} go out within 5 days with no script: ${unscripted.map((i) => `"${i.title}" (${i.publishOn})`).join(', ')}. Offer to write ${unscripted.length === 1 ? 'it' : 'them'} (draft_script with content_item_id)`);
   if (o.plans.available && o.plans.items.length === 0) out.push('No Game Plan yet: offer to build the 90-day plan for the pillar holding the rest back');
+  const today = new Date().toISOString().slice(0, 10);
+  const late = o.actionItems.open.filter((a) => a.dueOn && a.dueOn < today);
+  if (late.length) out.push(`${late.length} action item${late.length === 1 ? '' : 's'} past due: ${late.slice(0, 3).map((a) => `"${a.title}" (due ${a.dueOn})`).join(', ')}. Ask what happened, then finish it, move it (update_action_items) or drop it`);
   if (o.actionItems.open.length) out.push(`${o.actionItems.open.length} open action item${o.actionItems.open.length === 1 ? '' : 's'}`);
   if (o.chain.available && o.chain.answered < 8) out.push(o.chain.answered === 0 ? 'Growth Chain check not taken yet (eight questions, about four minutes)' : `Growth Chain check part-done (${o.chain.answered}/8)`);
   const blocked = o.phases.filter((p) => p.status === 'blocked');
@@ -392,12 +411,12 @@ async function deliverablesBlock(db: SupabaseClient, id: string): Promise<Overvi
 async function actionsBlock(db: SupabaseClient, id: string): Promise<Overview['actionItems']> {
   const { data } = await db
     .from('portal_action_items')
-    .select('id, title, effort, source, status')
+    .select('*')
     .eq('client_id', id)
     .order('sort_order');
-  const rows = (data ?? []) as Array<{ id: string; title: string; effort: string | null; source: string | null; status: string | null }>;
+  const rows = (data ?? []) as Array<{ id: string; title: string; effort: string | null; source: string | null; status: string | null; due_on?: string | null }>;
   return {
-    open: rows.filter((r) => (r.status ?? 'open') !== 'done').map(({ id: rid, title, effort, source }) => ({ id: rid, title, effort, source })),
+    open: rows.filter((r) => (r.status ?? 'open') !== 'done').map(({ id: rid, title, effort, source, due_on }) => ({ id: rid, title, effort, source, dueOn: due_on ?? null })),
     done: rows.filter((r) => r.status === 'done').length,
   };
 }
@@ -506,7 +525,7 @@ export function renderOverview(o: Overview): string {
   else if (!o.deliverables.items.length) L.push('Deliverables: none yet.');
   else L.push(`Deliverables:\n${o.deliverables.items.map((d) => `  - id=${d.id} "${d.title}" ${d.status}${d.version ? ` v${d.version}` : ''}${d.waitingOnYou ? ' [WAITING ON CLIENT]' : ''}${d.unsentNotes ? ` [${d.unsentNotes} unsent notes]` : ''}`).join('\n')}`);
 
-  L.push(o.actionItems.open.length ? `Open action items (${o.actionItems.done} done):\n${o.actionItems.open.map((a) => `  - id=${a.id} "${a.title}"${a.effort ? ` (${a.effort})` : ''}`).join('\n')}` : `Action items: none open (${o.actionItems.done} done).`);
+  L.push(o.actionItems.open.length ? `Open action items (${o.actionItems.done} done):\n${o.actionItems.open.map((a) => `  - id=${a.id} "${a.title}"${a.effort ? ` (${a.effort})` : ''}${a.dueOn ? ` due_on ${a.dueOn}` : ''}`).join('\n')}` : `Action items: none open (${o.actionItems.done} done).`);
   L.push(o.intake.total ? `Intake: ${o.intake.answered}/${o.intake.total} answered, ${o.intake.requiredLeft} required left, ${o.intake.submitted ? 'submitted' : 'NOT submitted'}.` : 'Intake: none assigned.');
   L.push(o.invoices.open.length ? `Unpaid invoices: ${o.invoices.open.map((i) => `${i.no ?? 'invoice'} ${i.amount} ${i.status ?? ''}${i.description ? ` (${i.description})` : ''}`).join('; ')}. Paid: ${o.invoices.paidCount}.` : `Invoices: nothing outstanding (${o.invoices.paidCount} paid).`);
   L.push(`Clarity Document: ${o.document.has ? 'published' : 'not published yet'}${o.document.has ? (o.document.editable ? `, you can edit it (${o.document.versions} saved versions)` : o.document.historyReady ? ', hosted externally, so you cannot edit it' : ', editing not switched on yet') : ''}.`);
@@ -542,6 +561,19 @@ export function renderOverview(o: Overview): string {
             .map((i) => `  - id=${i.id} ${i.publishOn} ${i.format}/${i.job} "${i.title}" [${i.status}]${i.pillar ? ` pillar: ${i.pillar}` : ''}`)
             .join('\n')}${ahead.length > 20 ? `\n  …and ${ahead.length - 20} more` : ''}`
         : 'Content plan: nothing planned ahead.',
+    );
+  }
+  if (o.understanding?.available) L.push(renderFacts(o.understanding.facts));
+  if (o.jobs?.available) {
+    const live = o.jobs.items.filter((j) => isActiveJob(j.status));
+    const recent = o.jobs.items.filter((j) => !isActiveJob(j.status)).slice(0, 3);
+    L.push(
+      live.length || recent.length
+        ? `Asset builds (queue_asset_build): ${[
+            ...live.map((j) => `${JOB_LABELS[j.kind as JobKind] ?? j.kind} ${j.status ?? 'queued'} since ${j.created_at.slice(0, 10)}`),
+            ...recent.map((j) => `${JOB_LABELS[j.kind as JobKind] ?? j.kind} ${j.status} (${j.created_at.slice(0, 10)})`),
+          ].join('; ')}.`
+        : 'Asset builds: none queued yet.',
     );
   }
   const g = gameFor(o);

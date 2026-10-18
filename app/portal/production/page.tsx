@@ -30,9 +30,10 @@ function StageTag({ card }: { card: ProductionCard }) {
   return <span className={`portal-label inline-block shrink-0 border px-2 py-1 !text-[11px] ${tone}`}>{card.stage || 'Queued'}</span>;
 }
 
-function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: string, c: ProductionComment, movedTo?: string) => void }) {
+function CardRow({ card, onNote, focus }: { card: ProductionCard; onNote: (cardId: string, c: ProductionComment, movedTo?: string) => void; focus?: boolean }) {
   const { accessToken } = usePortal();
-  const [open, setOpen] = useState(false);
+  // Deep link from Projects / notifications (?card=<id>) opens this one.
+  const [open, setOpen] = useState(Boolean(focus));
 
   async function addNote(t: number | null, body: string) {
     const res = await fetch('/api/portal/production', {
@@ -83,7 +84,7 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
   const fixed = mine.filter((c) => c.resolved).length;
 
   return (
-    <li className="bg-p-paper">
+    <li id={`card-${card.id}`} className="scroll-mt-24 bg-p-paper">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -145,8 +146,8 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
   );
 }
 
-function BoardSection({ board, onNote }: { board: ProductionBoard; onNote: (cardId: string, c: ProductionComment, movedTo?: string) => void }) {
-  const [showDone, setShowDone] = useState(false);
+function BoardSection({ board, onNote, focusId }: { board: ProductionBoard; onNote: (cardId: string, c: ProductionComment, movedTo?: string) => void; focusId?: string | null }) {
+  const [showDone, setShowDone] = useState(() => board.cards.some((c) => c.done && c.id === focusId));
   const active = board.cards.filter((c) => !c.done);
   const done = board.cards.filter((c) => c.done);
   return (
@@ -166,7 +167,7 @@ function BoardSection({ board, onNote }: { board: ProductionBoard; onNote: (card
           {active.length > 0 && (
             <ul className="mt-4 divide-y divide-p-line border border-p-line">
               {active.map((c) => (
-                <CardRow key={c.id} card={c} onNote={onNote} />
+                <CardRow key={c.id} card={c} onNote={onNote} focus={c.id === focusId} />
               ))}
             </ul>
           )}
@@ -181,7 +182,7 @@ function BoardSection({ board, onNote }: { board: ProductionBoard; onNote: (card
               {showDone && (
                 <ul className="mt-3 divide-y divide-p-line border border-p-line">
                   {done.map((c) => (
-                    <CardRow key={c.id} card={c} onNote={onNote} />
+                    <CardRow key={c.id} card={c} onNote={onNote} focus={c.id === focusId} />
                   ))}
                 </ul>
               )}
@@ -226,6 +227,11 @@ export default function ProductionPage() {
   const { loading, client, accessToken } = usePortal();
   const [data, setData] = useState<ProductionPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [focusId] = useState<string | null>(() => (typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('card')));
+
+  useEffect(() => {
+    if (focusId && data) document.getElementById(`card-${focusId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [focusId, data]);
 
   useEffect(() => {
     if (!accessToken || !client) return;
@@ -314,7 +320,7 @@ export default function ProductionPage() {
             ))}
           </Card>
           {data!.boards.map((b) => (
-            <BoardSection key={b.id} board={b} onNote={onNote} />
+            <BoardSection key={b.id} board={b} onNote={onNote} focusId={focusId} />
           ))}
         </>
       )}

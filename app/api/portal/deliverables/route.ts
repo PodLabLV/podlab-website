@@ -17,6 +17,8 @@ import {
   MAX_NOTE,
 } from '@/lib/portal/server';
 import { unsentClientNotes, clock } from '@/lib/portal/scripts';
+import { assetReady, assetReviewed } from '@/lib/portal/review-notify';
+import { onApproved } from '@/lib/portal/on-approved';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -258,6 +260,7 @@ export async function POST(req: Request) {
     .eq('id', assetId);
 
   await recordActivity(db, clientId as string, 'deliverable', `${title} v${versionNo} is ready for your review`);
+  await assetReady(clientId as string, { id: assetId as string, title }, versionNo);
 
   return NextResponse.json({ assetId, versionId: version.id, versionNo });
 }
@@ -334,7 +337,10 @@ export async function PATCH(req: Request) {
       notifySlack(`*Deliverable approved* — ${caller.businessName}\n${label}, approved by ${caller.displayName}.`),
       logToCrm(db, caller, `Approved deliverable in portal: ${label}`),
       recordActivity(db, caller.clientId, 'deliverable', `You approved ${label}`),
+      assetReviewed(caller.clientId, asset.id, version.version_no),
     ]);
+    // Route it to its place in Assets (brand kit → Brand, AssetsLab → Docs + profile).
+    await onApproved(db, { ...asset, approved_version: version.version_no }, caller.displayName);
     return NextResponse.json({ status: 'approved' });
   }
 
@@ -381,6 +387,7 @@ export async function PATCH(req: Request) {
     notifySlack(`*Deliverable revision requested* — ${caller.businessName}\n*${label}* · ${count} note${count === 1 ? '' : 's'}\n${shown}${more}`, 'revisions'),
     logToCrm(db, caller, `Requested changes in portal on ${label} (${count} note${count === 1 ? '' : 's'}): ${trimTo(lines.join(' | '), 1500)}`),
     recordActivity(db, caller.clientId, 'deliverable', `You sent ${count} note${count === 1 ? '' : 's'} on ${label}`),
+    assetReviewed(caller.clientId, asset.id, version.version_no),
   ]);
 
   // Not tied to an editor's card: the CRM's Client notes panel is where editors see them.

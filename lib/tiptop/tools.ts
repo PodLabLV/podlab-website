@@ -49,12 +49,34 @@ import {
   checkInGamePlanInput,
   planContentInput,
   updateContentInput,
+  rememberInput,
+  updateActionItemsInput,
+  queueAssetBuildInput,
   type WriteTool,
 } from './schema';
+import { FACT_LABELS, isFactKey, nextQuestion, saveFacts, type FactKey } from './understanding';
+import { JOB_LABELS, jobBlocker, loadJobs, queueJob } from './jobs';
+import { checkinRef } from './checkin-run';
+import { weekKey } from './checkin';
+import { notify, resolve } from '@/lib/portal/notify';
+import { notifySlack, logToCrm } from '@/lib/portal-server';
+import { SITE_URL } from '@/lib/portal-email';
 import { addContentItems, linkScript, loadContentPlan, ownedCards, ownedItems, updateContentItems } from '@/lib/portal/content-plan-server';
 import { loadPlans, setPlan, checkIn } from '@/lib/portal/game-plan-server';
 import { fmtNumber, paceStatus } from '@/lib/portal/game-plan';
-import { createActionItems, draftScript, nextBrandKit, ownedQuestions, readClientFile, readIntake, readScript, saveBrandKit, saveIntakeAnswers } from './guide';
+import {
+  createActionItems,
+  draftScript,
+  nextBrandKit,
+  ownedActionItems,
+  ownedQuestions,
+  readClientFile,
+  readIntake,
+  readScript,
+  saveBrandKit,
+  saveIntakeAnswers,
+  updateActionItems,
+} from './guide';
 import type { z } from 'zod';
 
 export interface ToolContext {
@@ -242,6 +264,36 @@ export function approvalPolicy(ctx: ToolContext) {
         return `"${it.title}" ${bits.join(', ') || 'updated'}`;
       });
       return { type: 'user-approval', reason: `Update your content plan: ${lines.join('; ')}.` };
+    },
+
+    update_action_items: async (input: z.infer<typeof updateActionItemsInput>): Promise<ToolApprovalStatus> => {
+      const owned = await ownedActionItems(ctx.db, ctx.caller.clientId, input.changes.map((c) => c.id));
+      const unknown = input.changes.filter((c) => !owned.has(c.id));
+      if (unknown.length) return { type: 'denied', reason: 'Some ids are not this client\'s action items. Use ids from the snapshot.' };
+      const closed = input.changes.filter((c) => owned.get(c.id)!.status === 'done');
+      if (closed.length) return { type: 'denied', reason: `Already done: ${closed.map((c) => `"${owned.get(c.id)!.title}"`).join(', ')}. Reopen with complete_action_item first if they want to change it.` };
+      const today = new Date().toISOString().slice(0, 10);
+      const past = input.changes.filter((c) => c.due && c.due < today);
+      if (past.length) return { type: 'denied', reason: `Due dates in the past: ${past.map((c) => c.due).join(', ')}. Today is ${today}.` };
+      const empty = input.changes.filter((c) => !c.title && c.detail === undefined && !c.due);
+      if (empty.length) return { type: 'denied', reason: 'Each change needs a new title, detail or due date.' };
+      const lines = input.changes.map((c) => {
+        const it = owned.get(c.id)!;
+        const bits = [c.title ? `→ "${c.title}"` : null, c.due ? `due ${c.due}` : null, c.detail !== undefined ? 'new detail' : null].filter(Boolean);
+        return `"${it.title}" ${bits.join(', ')}`;
+      });
+      return { type: 'user-approval', reason: `Update your action items: ${lines.join('; ')}. ${input.why}` };
+    },
+
+    queue_asset_build: async (input: z.infer<typeof queueAssetBuildInput>): Promise<ToolApprovalStatus> => {
+      const { ready, jobs } = await loadJobs(ctx.db, ctx.caller.clientId);
+      if (!ready) return { type: 'denied', reason: 'Asset builds are not switched on yet (portal_jobs). Offer to flag the request for the team with flag_for_team instead.' };
+      const blocked = jobBlocker(input.kind, jobs);
+      if (blocked) return { type: 'denied', reason: blocked };
+      return {
+        type: 'user-approval',
+        reason: `Start building your ${JOB_LABELS[input.kind]} from your intake and what you told me here. PodLab reviews it, then it shows up in Projects for you to approve.`,
+      };
     },
   } satisfies Record<WriteTool, unknown>;
 }
@@ -458,7 +510,55 @@ export function makeTools(ctx: ToolContext) {
     check_in_game_plan: tool({
       description: "The weekly check-in on one pillar: the number now and one or two lines on what moved. Status (on track / at risk / off track / done) follows pace automatically. Ask for the number first; never invent it. The client confirms first.",
       inputSchema: checkInGamePlanInput,
-      execute: async ({ pillar, current, note }) => ({ saved: true, plan: await checkIn(db, caller, pillar, current, note), page: PAGES.plan.href }),
+      execute: async ({ pillar, current, note }) => {
+        const plan = await checkIn(db, caller, pillar, current, note);
+        await resolve(caller.clientId, checkinRef(weekKey(Date.now())));
+        return { saved: true, plan, page: PAGES.plan.href };
+      },
+    }),
+
+    remember_business: tool({
+      description:
+        "Save what you just learned about their business to your notes (shown to them on the TipTop tab and in your snapshot): business, offer, audience, numbers, goal, constraint, team, channels, proof, voice. Call it as soon as an answer gives you a fact, then ask the next question. Their words, tightened; never a guess. No confirm card: it's your notebook, and they can see and correct it.",
+      inputSchema: rememberInput,
+      execute: async ({ facts }) => {
+        const patch = Object.fromEntries(Object.entries(facts).filter(([k, v]) => isFactKey(k) && v !== undefined)) as Partial<Record<FactKey, string>>;
+        if (!Object.keys(patch).length) return { saved: false, message: 'Nothing to save: pass at least one fact.' };
+        const res = await saveFacts(db, caller.clientId, patch, `TipTop with ${caller.displayName}`);
+        if (!res.ok) return { saved: false, message: res.message };
+        const next = nextQuestion(res.facts);
+        return {
+          saved: true,
+          noted: Object.keys(patch).map((k) => FACT_LABELS[k as FactKey]),
+          nextUnknown: next ? `${next} (${FACT_LABELS[next]})` : null,
+        };
+      },
+    }),
+
+    update_action_items: tool({
+      description: 'Change open action items: a sharper title, new detail, or a new due date (agreed with them). Use it in check-ins to move a slipped item to a date they will hit, instead of piling on new items. The client confirms on a card.',
+      inputSchema: updateActionItemsInput,
+      execute: async ({ changes, why }) => ({ saved: true, ...(await updateActionItems(db, caller, changes, why)), page: PAGES.actions.href }),
+    }),
+
+    queue_asset_build: tool({
+      description:
+        "Queue a build of one of their assets on PodLab's build system: assetslab (the AssetsLab strategic foundation / Clarity Document), vsl_pack (VSL script, confirmation and FAQ scripts), brand_kit. It builds from their intake and file plus your brief; PodLab reviews it and it lands in Projects. Only when they want it and the inputs are there (intake mostly answered, or the facts in your notes). One per kind at a time. The client confirms on a card.",
+      inputSchema: queueAssetBuildInput,
+      execute: async ({ kind, brief }) => {
+        const { ready, jobs } = await loadJobs(db, caller.clientId);
+        if (!ready) return { saved: false, message: 'Asset builds are not switched on yet.' };
+        const blocked = jobBlocker(kind, jobs);
+        if (blocked) return { saved: false, message: blocked };
+        const res = await queueJob(db, caller.clientId, kind, { brief, source: 'tiptop', requested_by: caller.displayName, requested_at: new Date().toISOString() });
+        if (!res.ok) return { saved: false, message: res.message };
+        await Promise.all([
+          notifySlack(`*TipTop queued a build* for ${caller.businessName}: ${JOB_LABELS[kind]}\n> ${brief.replace(/\s+/g, ' ').slice(0, 300)}\n${SITE_URL}/portal/clients/${caller.clientId}`),
+          logToCrm(db, caller, `TipTop queued a ${JOB_LABELS[kind]} build with them.`),
+          notify(caller.clientId, { kind: 'build_queued', direction: 'done', title: `Your ${JOB_LABELS[kind]} is being built`, body: 'PodLab reviews it before it comes to you in Projects.', link: '/portal/projects', ref: `job:${res.id}:queued` }),
+        ]);
+        return { saved: true, jobId: res.id, kind, label: JOB_LABELS[kind] };
+      },
     }),
 
     plan_content: tool({

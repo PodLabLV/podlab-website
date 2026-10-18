@@ -15,8 +15,13 @@
     "test:guide": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/tiptop-guide.test.ts",
     "test:viewas": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-viewas.test.ts",
     "test:cards": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-cards.test.ts",
+    "test:v2a": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-v2a.test.ts",
     "test:team": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-team.test.ts",
-    "test:docsec": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/doc-edit-security.test.ts"
+    "test:notify": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-notify.test.ts",
+    "test:credits": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-credits.test.ts",
+    "test:onboarding": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-onboarding.test.ts",
+    "test:docsec": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/doc-edit-security.test.ts",
+    "test:beaker": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-beaker.test.ts"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.136",
@@ -28,6 +33,7 @@
     "lucide-react": "^0.577.0",
     "next": "^15.1.6",
     "pg": "^8.20.0",
+    "qrcode-generator": "^1.5.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "zod": "^4.4.3"
