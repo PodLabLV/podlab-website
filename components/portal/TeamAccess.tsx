@@ -4,14 +4,18 @@ import { useCallback, useEffect, useState } from 'react';
 import type { StaffMember } from '@/app/api/portal/admin/members/route';
 
 interface TeamAccessProps {
-  clientId: string;
+  /** Staff mode: the client being managed. Omit in owner mode. */
+  clientId?: string;
   accessToken: string;
+  /** 'staff' (Manage → Team access) or 'owner' (Profile → Team). */
+  mode?: 'staff' | 'owner';
 }
 
 const FIELD = 'w-full border border-p-line bg-p-paper px-4 py-3 text-base text-p-ink placeholder:text-p-ink/50 focus:border-p-brandink focus:outline-none';
 
-/** Staff: extra logins (an assistant, a partner) that open this client's portal under their own name. */
-export default function TeamAccess({ clientId, accessToken }: TeamAccessProps) {
+/** Extra logins (an assistant, a partner) that open this client's portal under their own name. Staff manage any client; the owner manages their own. */
+export default function TeamAccess({ clientId, accessToken, mode = 'staff' }: TeamAccessProps) {
+  const endpoint = mode === 'owner' ? '/api/portal/team' : '/api/portal/admin/members';
   const [members, setMembers] = useState<StaffMember[]>([]);
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', role: 'Assistant' });
   const [busy, setBusy] = useState(false);
@@ -19,11 +23,12 @@ export default function TeamAccess({ clientId, accessToken }: TeamAccessProps) {
   const [link, setLink] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const r = await fetch(`/api/portal/admin/members?clientId=${encodeURIComponent(clientId)}`, { headers: { Authorization: `Bearer ${accessToken}` }, cache: 'no-store' });
+    const url = mode === 'owner' ? endpoint : `${endpoint}?clientId=${encodeURIComponent(clientId ?? '')}`;
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }, cache: 'no-store' });
     const j = await r.json();
     if (!r.ok) setNote(j.error || 'Could not load the team.');
     else setMembers(j.members);
-  }, [clientId, accessToken]);
+  }, [clientId, accessToken, mode, endpoint]);
 
   useEffect(() => {
     load();
@@ -34,10 +39,10 @@ export default function TeamAccess({ clientId, accessToken }: TeamAccessProps) {
     setNote(null);
     setLink(null);
     try {
-      const r = await fetch('/api/portal/admin/members', {
+      const r = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ clientId, ...body }),
+        body: JSON.stringify(mode === 'owner' ? body : { clientId, ...body }),
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'Could not save that.');
@@ -53,8 +58,8 @@ export default function TeamAccess({ clientId, accessToken }: TeamAccessProps) {
     }
   }
 
-  const sent = (j: { emailed?: boolean; email?: string }) =>
-    j.emailed ? `Invite sent to ${j.email}.` : `The email didn't go out. Text or email them the link below.`;
+  const sent = (j: { emailed?: boolean; email?: string; link?: string }) =>
+    j.emailed ? `Invite sent to ${j.email}.` : j.link ? `The email didn't go out. Text or email them the link below.` : `The email didn't go out. Try again in a minute, or email info@podlablv.com.`;
 
   async function invite(e: React.FormEvent) {
     e.preventDefault();
@@ -92,7 +97,7 @@ export default function TeamAccess({ clientId, accessToken }: TeamAccessProps) {
                 </button>
                 <button
                   disabled={busy}
-                  onClick={() => post({ memberId: m.id, remove: true }, () => `${m.name} no longer has access.`)}
+                  onClick={() => window.confirm(`Remove ${m.name}'s access to this portal?`) && post({ memberId: m.id, remove: true }, () => `${m.name} no longer has access.`)}
                   className="portal-label !text-[11px] text-p-ink/70 transition hover:text-p-bad disabled:opacity-40"
                 >
                   Remove

@@ -411,3 +411,7 @@ h1, h2, h3, h4, h5, h6,
   .potato-steam, .potato-hot, .potato-flame, .potato-smoke-puff, .potato-smoke-screen { animation: none !important; }
   .potato-smoke-puff { opacity: .7; }
 }
+
+/* Portal v2: the mobile bottom tab bar. Floating launchers (TipTop) sit above it. */
+.portal-v2 { --portal-dock: 4rem; }
+@media (min-width: 1024px) { .portal-v2 { --portal-dock: 0px; } }

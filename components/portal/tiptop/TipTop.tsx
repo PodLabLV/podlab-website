@@ -57,7 +57,7 @@ export default function TipTop() {
           aria-label="Ask TipTop, your PodLab guide"
           aria-haspopup="dialog"
           className="group fixed right-4 z-[60] flex items-center gap-3 border border-p-brandink/50 bg-p-paper/90 p-1 pr-1 backdrop-blur transition hover:border-p-brandink sm:right-6 sm:pr-4"
-          style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+          style={{ bottom: 'calc(1rem + var(--portal-dock, 0px) + env(safe-area-inset-bottom, 0px))' }}
         >
           <Image src={AVATAR} alt="" width={40} height={40} className="h-10 w-10 object-cover" />
           <span className="portal-label hidden !text-[13px] text-p-brandink sm:inline">Ask TipTop</span>
