@@ -14,6 +14,9 @@ import { buildOverview, renderOverview } from '@/lib/tiptop/overview';
 import { snapshotBlock, systemPrompt } from '@/lib/tiptop/prompt';
 import { LIMITS } from '@/lib/tiptop/schema';
 import { approvalPolicy, bookingUrl, makeTools } from '@/lib/tiptop/tools';
+import { resolve as resolveNotification } from '@/lib/portal/notify';
+import { checkinRef } from '@/lib/tiptop/checkin-run';
+import { weekKey } from '@/lib/tiptop/checkin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -78,6 +81,7 @@ const KNOWN_TOOLS = new Set([
   'restore_document_version', 'update_profile', 'send_revision', 'complete_action_item', 'recommend_product', 'flag_for_team',
   'read_intake', 'read_client_file', 'read_script', 'save_intake_answers', 'update_brand_kit', 'create_action_items', 'draft_script',
   'set_game_plan', 'check_in_game_plan', 'plan_content', 'update_content',
+  'remember_business', 'update_action_items', 'queue_asset_build',
 ]);
 
 type Cleaned = { messages: UIMessage[]; userTurns: number; lastUserChars: number; priorRecommendations: number };
@@ -125,6 +129,9 @@ function cleanMessages(raw: unknown): Cleaned | null {
   const answeredCard =
     tail?.role === 'assistant' && tail.parts.some((p) => (p as { state?: string }).state === 'approval-responded');
   if (userTurns === 0 || !tail || (tail.role !== 'user' && !answeredCard)) return null;
+  // The thread can open with her (the weekly check-in is seeded server-side);
+  // the model API wants a user turn first.
+  if (messages[0]?.role === 'assistant') messages.unshift({ id: 'open', role: 'user', parts: [{ type: 'text', text: '(Opened TipTop)' }] });
   return { messages, userTurns, lastUserChars, priorRecommendations };
 }
 
@@ -169,6 +176,11 @@ export async function POST(req: Request) {
   if (!mock && !hasGateway()) {
     reportError('[tiptop-portal] no AI_GATEWAY_API_KEY / VERCEL_OIDC_TOKEN, serving the offline reply');
     return scripted("I'm offline for a moment. Everything is still on the pages to your left; for anything urgent, email info@podlablv.com or grab a call.", book);
+  }
+
+  // They replied to her: this week's check-in is no longer waiting on them.
+  if (!caller.isStaff && cleaned.messages[cleaned.messages.length - 1]?.role === 'user') {
+    await resolveNotification(caller.clientId, checkinRef(weekKey(Date.now())));
   }
 
   const ctx = { db, caller, priorRecommendations: cleaned.priorRecommendations };

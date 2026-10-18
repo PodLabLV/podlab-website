@@ -114,3 +114,26 @@ see who has access, remove. Every member sees the same client portal.
 - Shared tables (`portal_notifications`, `portal_credit_ledger`, `portal_credit_balance`) already
   exist (`20261018_portal_v2_core.sql`) — don't recreate them.
 - Never send a real email/SMS or charge anything while building. No production deploys.
+
+## Track D as built (TipTop tab + notification delivery)
+
+- **`/portal/tiptop`**: the launcher's thread full-page (`TipTopThread` in `TipTopPanel.tsx`), beside a strip
+  (`TipTopStrip.tsx`, data from `GET /api/portal/tiptop/context`): her notes on the business, Game Plan targets
+  with pace, open action items with due dates (past due flagged), builds. The floating launcher hides on this
+  route; `tiptop:open` events and `?ask=` send prompts into the page's chat. View-as shows the strip read-only.
+- **New TipTop tools**: `remember_business` (her notes, `portal_tiptop_profile`; no confirm card, visible on the
+  tab), `update_action_items` (title/detail/due, confirm), `queue_asset_build` (`portal_jobs` row: kind
+  assetslab|vsl_pack|brand_kit, input `{brief, source, requested_by}`; one active per kind, max 4 per 30 days;
+  denied with a "flag it" reason while the table is missing). Prompt: "Your four jobs" section.
+- **Weekly check-in**: `/api/cron/tiptop-checkin`, Mondays 16:00 UTC. Active clients with a live plan or open
+  items get a data-written opener in their thread (id `checkin-<ISO week>`, no model call) and a `waiting`
+  notification (`checkin:<week>`), resolved when they reply or log a check-in. `?dry=1` previews.
+- **Delivery**: `/api/cron/portal-notify`, every 15 min. Per client: one email (and one text) per burst
+  (burst settles after 10 min quiet, never held over 60 min), max one of each per hour, rows from the last 48 h,
+  skips read rows and resolved `waiting` rows. Email needs `notify_email` and not `digest_opt_out`; SMS needs
+  `notify_sms`, `sms_consent_at` (stamped by a trigger whenever notify_sms turns on), no `sms_opted_out_at`,
+  an E.164-able phone, Twilio env, and 8am–9pm in `portal_clients.timezone`. Rows are claimed before sending
+  and released on failure. Twilio error 21610 and inbound STOP (`/api/twilio/portal-sms`, signature-checked)
+  turn SMS off. `?dry=1` previews. Logic: `lib/portal/notify-delivery.ts` (`npm run test:notify`).
+- Migration `20261018_portal_v2_d.sql` (applied): `portal_tiptop_profile`, `portal_action_items.due_on`,
+  SMS consent columns + trigger, delivery index.
