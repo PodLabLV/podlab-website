@@ -367,8 +367,8 @@ function Referral({ card }: { card: ReferralCard }) {
           </div>
         ))}
       </div>
-      <Link href="/portal/referrals" className="portal-label mt-4 inline-block !text-[11px] text-p-ink/65 transition hover:text-p-brandink">
-        Referrals, payouts and credit
+      <Link href="/portal/beaker" className="portal-label mt-4 inline-block !text-[11px] text-p-ink/65 transition hover:text-p-brandink">
+        Refer someone, referrals and payouts
       </Link>
     </Card>
   );
@@ -377,7 +377,7 @@ function Referral({ card }: { card: ReferralCard }) {
 // ── page ─────────────────────────────────────────────────────────────────
 
 export default function PortalDashboard() {
-  const { loading, error, client, phases, metrics, products, elementRows, viewerEmail, isStaff, accessToken } = usePortal();
+  const { loading, error, client, phases, metrics, products, elementRows, viewerEmail, isStaff, isBeaker, accessToken } = usePortal();
   const { data, failed } = useDashboard(accessToken, client?.id);
   const potatoes = usePotatoes();
 
@@ -388,6 +388,8 @@ export default function PortalDashboard() {
   }
 
   if (!client) {
+    // A Beaker with no client account: the shell is sending them to /portal/beaker.
+    if (isBeaker) return <p className="portal-label !text-[12px] text-p-ink/70">Opening your Beaker account</p>;
     // Team members land here when they sign in on the client door by mistake.
     if (isStaff || viewerEmail?.toLowerCase().endsWith('@podlablv.com')) {
       return (

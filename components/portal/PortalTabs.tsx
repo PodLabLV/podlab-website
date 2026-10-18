@@ -2,9 +2,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { TAB_ROUTES, activeTab } from '@/lib/portal/tabs';
+import { activeTab, tabsFor, type TabRoute } from '@/lib/portal/tabs';
+import { usePortal } from '@/lib/portal-data';
 
-/** Portal v2: the four tabs (routes in lib/portal/tabs.ts). */
+/** Portal v2: the four client tabs, plus Beaker for affiliates (routes in lib/portal/tabs.ts). */
+
+/** This viewer's tabs; none until the account has loaded, so nobody sees a tab they don't have. */
+function useTabs(): TabRoute[] {
+  const { loading, client, isBeaker } = usePortal();
+  return loading ? [] : tabsFor({ client: Boolean(client), beaker: isBeaker });
+}
 
 const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
 
@@ -34,14 +41,22 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M10 9.5l4.5 2.5-4.5 2.5z" />
     </svg>
   ),
+  // A beaker: the program's name.
+  '/portal/beaker': (
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" {...stroke}>
+      <path d="M9 3.5h6M10 3.5v6L4.8 18.6A1.3 1.3 0 0 0 6 20.5h12a1.3 1.3 0 0 0 1.2-1.9L14 9.5v-6" />
+      <path d="M7.2 14.5h9.6" />
+    </svg>
+  ),
 };
 
 /** Desktop: inline in the header. */
 export function TopTabs() {
-  const active = activeTab(usePathname() ?? '');
+  const tabs = useTabs();
+  const active = activeTab(usePathname() ?? '', tabs);
   return (
     <nav aria-label="Portal" className="hidden items-stretch self-stretch lg:flex">
-      {TAB_ROUTES.map((t) => {
+      {tabs.map((t) => {
         const on = active === t.href;
         return (
           <Link
@@ -60,15 +75,20 @@ export function TopTabs() {
 }
 
 /** Mobile: a fixed bottom bar. */
+const COLS: Record<number, string> = { 4: 'grid-cols-4', 5: 'grid-cols-5' };
+
 export function BottomTabs() {
-  const active = activeTab(usePathname() ?? '');
+  const tabs = useTabs();
+  const active = activeTab(usePathname() ?? '', tabs);
+  // One tab (a Beaker with no client account) needs no bar: the header says where they are.
+  if (tabs.length < 2) return null;
   return (
     <nav
       aria-label="Portal"
-      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-p-line bg-p-paper/95 backdrop-blur lg:hidden"
+      className={`fixed inset-x-0 bottom-0 z-40 grid ${COLS[tabs.length] ?? 'grid-cols-4'} border-t border-p-line bg-p-paper/95 backdrop-blur lg:hidden`}
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      {TAB_ROUTES.map((t) => {
+      {tabs.map((t) => {
         const on = active === t.href;
         return (
           <Link

@@ -444,7 +444,7 @@ function Team({ token, readOnly }: { token: string; readOnly: boolean }) {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { loading, client, accessToken } = usePortal();
+  const { loading, client, accessToken, isBeaker, viewerEmail } = usePortal();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [account, setAccount] = useState<Account | null>(null);
   const [prefNote, setPrefNote] = useState<{ ok: boolean; text: string } | null>(null);
@@ -492,6 +492,32 @@ export default function ProfilePage() {
   }, [account]);
 
   if (loading) return <p className="text-base text-p-ink/70">Loading...</p>;
+  // A Beaker with no client account: their login, and the way out. Nothing client-only.
+  if (!client && isBeaker) {
+    return (
+      <>
+        <PageHeader eyebrow="Account" title="Your" accent="profile." subtitle="Your login. Your Beaker link, referrals and payouts are on the Beaker tab." />
+        <div className="space-y-14">
+          <Block id="login" title="Login">
+            <Login email={viewerEmail ?? ''} readOnly={readOnly} />
+          </Block>
+          <section className="border-t border-p-line pt-10">
+            <button
+              type="button"
+              onClick={async () => {
+                exitViewAs();
+                await getSupabaseBrowser().auth.signOut();
+                router.replace('/');
+              }}
+              className="portal-label border border-p-line px-6 py-3.5 !text-[13px] text-p-ink/85 transition hover:border-p-bad hover:text-p-bad"
+            >
+              Sign out
+            </button>
+          </section>
+        </div>
+      </>
+    );
+  }
   if (!client) {
     return (
       <>
