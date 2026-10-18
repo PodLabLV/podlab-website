@@ -17,6 +17,7 @@ import {
   MAX_NOTE,
 } from '@/lib/portal/server';
 import { unsentClientNotes, clock } from '@/lib/portal/scripts';
+import { onApproved } from '@/lib/portal/on-approved';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -335,6 +336,8 @@ export async function PATCH(req: Request) {
       logToCrm(db, caller, `Approved deliverable in portal: ${label}`),
       recordActivity(db, caller.clientId, 'deliverable', `You approved ${label}`),
     ]);
+    // Route it to its place in Assets (brand kit → Brand, AssetsLab → Docs + profile).
+    await onApproved(db, { ...asset, approved_version: version.version_no }, caller.displayName);
     return NextResponse.json({ status: 'approved' });
   }
 

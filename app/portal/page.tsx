@@ -6,6 +6,7 @@ import { usePortal, formatDate, type PortalPhase } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState, StatusBadge } from '@/components/portal/Shared';
 import { chainStatus } from '@/lib/growth-chain';
 import DeliveredList from '@/components/portal/DeliveredList';
+import OnboardingBanner from '@/components/portal/OnboardingBanner';
 import { loadScriptIndex } from '@/lib/portal/browser';
 import { isWaitingOnClient } from '@/lib/portal/scripts';
 import type { ProductionPayload } from '@/lib/production';
@@ -211,6 +212,7 @@ export default function PortalDashboard() {
 
   return (
     <div>
+      <OnboardingBanner />
       <PageHeader
         eyebrow={[client.business_name, client.plan_label].filter(Boolean).join(' · ')}
         title="Welcome back,"

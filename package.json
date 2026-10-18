@@ -16,6 +16,7 @@
     "test:viewas": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-viewas.test.ts",
     "test:cards": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-cards.test.ts",
     "test:team": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-team.test.ts",
+    "test:onboarding": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-onboarding.test.ts",
     "test:docsec": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/doc-edit-security.test.ts"
   },
   "dependencies": {

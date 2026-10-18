@@ -148,12 +148,51 @@ async function sectionsRoot(rootId: string): Promise<string> {
 const folderCache = new Map<string, { id: string; at: number }>();
 
 export async function targetFolder(rootId: string, kind: BrandKind): Promise<string> {
-  const key = `${rootId}:${kind}`;
+  return folderAt(rootId, ROUTES[kind], kind);
+}
+
+/**
+ * Where generated deliverables land: the client's Projects folder
+ * (03- Content / 04- Projects / <AssetsLab | VSL Pack | Brand Kit>).
+ */
+export type ProjectKind = 'assetslab' | 'vsl_pack' | 'brand_kit';
+const PROJECT_LEAF: Record<ProjectKind, { match: RegExp; create: string }> = {
+  assetslab: { match: /assets ?lab/i, create: 'AssetsLab' },
+  vsl_pack: { match: /vsl/i, create: 'VSL Pack' },
+  brand_kit: { match: /brand ?kit/i, create: 'Brand Kit' },
+};
+export async function projectFolder(rootId: string, kind: ProjectKind): Promise<string> {
+  return folderAt(
+    rootId,
+    [
+      { match: /content/i, create: '03- Content' },
+      { match: /projects/i, create: '04- Projects' },
+      PROJECT_LEAF[kind],
+    ],
+    `project:${kind}`,
+  );
+}
+
+/** Files a client attaches during onboarding (mission/vision/values, materials to review). */
+export async function onboardingFolder(rootId: string): Promise<string> {
+  return folderAt(
+    rootId,
+    [
+      { match: /company/i, create: '01- Company' },
+      { match: /onboarding/i, create: 'Onboarding Uploads' },
+    ],
+    'onboarding',
+  );
+}
+
+/** Walk (and create where missing) a path of name-matched folders under a client's sections root. */
+async function folderAt(rootId: string, steps: Array<{ match: RegExp; create: string }>, cacheKey: string): Promise<string> {
+  const key = `${rootId}:${cacheKey}`;
   const hit = folderCache.get(key);
   if (hit && Date.now() - hit.at < 10 * 60_000) return hit.id;
 
   let parent = await sectionsRoot(rootId);
-  for (const step of ROUTES[kind]) {
+  for (const step of steps) {
     const files = await listFolders(parent);
     const found = files.sort((a, b) => a.name.localeCompare(b.name)).find((f) => step.match.test(f.name));
     if (found) {
