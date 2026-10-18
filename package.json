@@ -19,6 +19,7 @@
     "test:team": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-team.test.ts",
     "test:notify": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-notify.test.ts",
     "test:credits": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-credits.test.ts",
+    "test:onboarding": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-onboarding.test.ts",
     "test:docsec": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/doc-edit-security.test.ts"
   },
   "dependencies": {

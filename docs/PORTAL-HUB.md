@@ -264,6 +264,62 @@ Clients → **View as client**, or the button on a client's Manage page, opens `
 - **TipTop is hidden** in the preview, because she acts for the client.
 - **Tests:** `npm run test:viewas` (staff only, GET only, client logins can't borrow it, ids validated).
 
+## Onboarding, generation jobs and Assets (portal v2, track C)
+
+**Onboarding** (`/portal/welcome`, first login while `portal_clients.onboarding_completed_at` is null):
+
+1. **AssetsLab intake.** 30 questions in 5 groups, prefilled from the free-VSL application, saved as they type. What changed from the Typeform and why: `docs/ONBOARDING-INTAKE.md`. Definitions: `lib/portal/onboarding-questions.ts`. Attachments (mission/vision/values, materials) upload to `01- Company / Onboarding Uploads` in their Drive folder, or they paste a link.
+2. **Brand.** Upload their own (the Brand page's manager, embedded) or "I need help" → 9 brand questions for the brandkit skill.
+3. **Confirm** → `onboarding_completed_at`, and jobs are queued.
+
+Answers live in `portal_onboarding` (one row per client). `<OnboardingBanner />` (`components/portal/OnboardingBanner.tsx`) shows a "Finish setting up" strip on any page that includes it (Dashboard, Assets); `<OnboardingBanner redirect />` also sends them to the welcome page once per browser session. **The Dashboard uses the banner only, not the redirect,** because every existing client has `onboarding_completed_at` null too (see "Before launch").
+
+**Generation jobs** (`portal_jobs`, migration `20261018_portal_v2_c.sql`). On submit: `assetslab` always; `vsl_pack` when they have a VSL shoot booked (a booked, upcoming `crm.bookings` row with kind `vsl` or "VSL"/"Studio Session" in the name, or `crm.leads.booked_for`); `brand_kit` when they chose "I need help". One job per kind per client (`ref`), so a second submit queues nothing.
+
+The worker, `scripts/portal-jobs-worker.py`, runs on the Mac mini like the pre-interview prep job:
+
+| Step | What |
+|---|---|
+| Claim | `rpc portal_claim_job` (FOR UPDATE SKIP LOCKED; a job running > 2 h is handed out again; 3 attempts). AssetsLab and brand kits first, so a VSL pack can read the AssetsLab. |
+| Inputs | `~/.podlab/portal-jobs/<job>/`: `job.json`, `intake.json` (assetslab field names), `intake.txt`, `brand.json`, `prompt.md`, attachments (downloaded through `POST /api/portal/jobs` intent `drive-file`). |
+| Generate | `claude -p` with the `assetslab`, `vsllab` or `brandkit` skill, unattended (never asks; assumptions go in the deliverable). Writes PDFs + `manifest.json` into `out/`. |
+| Deliver | Main PDF → private `client-deliverables` bucket (what the client opens). Every PDF/image → their Drive `03- Content / 04- Projects / <AssetsLab · VSL Pack · Brand Kit>` (session from `POST /api/portal/jobs` intent `drive-session`; Drive auth lives on Vercel). `portal_assets` + v1 (status `in review`, `source_job_id`), VSL/confirmation/FAQ scripts as `portal_scripts` + v1, a `waiting` notification ("Your AssetsLab is ready to review"), job → `done`. A copy goes to `~/PodLab OS/<lab>/<client>/portal-<date>-<job>/` (never overwrites). |
+| Output | Silent when idle; one line per finished/failed job (Telegram via Hermes). A VSL pack with no mechanism fails with "needs input: <question>". |
+
+```bash
+python3 scripts/portal-jobs-worker.py                     # dry run (default): list queued jobs, build their folders + prompts
+python3 scripts/portal-jobs-worker.py --job-file job.json # dry run against a local job, no database
+python3 scripts/portal-jobs-worker.py --live              # claim and run one job
+python3 scripts/portal-jobs-worker.py --live --hold       # run + upload, publish nothing to the client (output.held)
+python3 scripts/portal-jobs-worker.py --publish <job> --live  # release a held job after review
+```
+
+**Install on the Mac mini (not done):** add the Keychain item `portal-publish-key` (account `podlab`, the same value as `PORTAL_PUBLISH_KEY` on Vercel, 24+ chars); `supabase-url` / `supabase-key` are already there. Then a wrapper and the cron:
+
+```bash
+printf '#!/bin/bash\nexec python3 "$HOME/.openclaw/workspace/sites/podlab-site/scripts/portal-jobs-worker.py" --live --max 1\n' > ~/.hermes/scripts/podlab_portal_jobs.sh
+hermes cron create "every 10m" --name "PodLab Portal Jobs" --script podlab_portal_jobs.sh --no-agent --deliver telegram:1969428996
+```
+
+Start with `--hold` in the wrapper for the first few clients and release with `--publish` after reading the PDF.
+
+**Approval routing** (`lib/portal/on-approved.ts`, called by `PATCH /api/portal/deliverables` after an approval): sets `portal_assets.library` and moves what the item carries to where the portal reads it:
+
+- **Brand kit** → colors and fonts merged into `portal_brand_kits` (the client's own entries are kept), the guide and board added to Brand files (Drive-backed), library `branding`.
+- **AssetsLab** → library `docs`, and its profile (one-liner, offer, ICP, outcome, mechanism, voice, mission, vision, values) becomes the Assets profile summary (`portal_onboarding.profile`).
+- **VSL pack / other PDFs** → `docs`; videos → `videos`.
+- The "ready to review" notification is resolved, and a "filed under Assets" one is added.
+
+**Assets tab** (`/portal/assets`, `GET /api/portal/assets`): profile (approved AssetsLab, else their intake), docs (Clarity Document, approved documents opened through a signed link, approved scripts), branding and b-roll (the Brand manager embedded, uploads straight to Drive), finished videos (approved video deliverables + delivered CRM cards).
+
+**Notifications:** `lib/portal/notify.ts` here is a minimal `notify(clientId, {kind, direction, title, body?, link?, ref?})` / `resolve(clientId, ref)` upserting on `(client_id, ref)`; track A's version replaces it with the same signature.
+
+**Before launch (Hiram):**
+- Run `20261018_portal_v2_c.sql` (not applied yet).
+- Decide on existing clients: all of them have `onboarding_completed_at` null, so the banner shows for them and a submit would queue a second AssetsLab. To skip them: `update portal_clients set onboarding_completed_at = now() where onboarding_completed_at is null;` before launch, then null it for anyone you do want to onboard.
+- Formspree copy of each submission (`xqpejdvv`): not built; needs your go-ahead (see `docs/ONBOARDING-INTAKE.md`).
+- Tests: `npm run test:onboarding`.
+
 ## Staff: running it
 
 You need a row in `portal_staff`. info@ already has one. Staff get **Clients · staff** in the portal sidebar.

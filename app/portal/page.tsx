@@ -9,6 +9,7 @@ import { chainStatus } from '@/lib/growth-chain';
 import { fmtNumber, paceStatus, progress, type GamePlan, type PlanStatus } from '@/lib/portal/game-plan';
 import { BOARD_STAGES, boardStageIndex, boardStageLabel, type DashboardPayload, type ReferralCard } from '@/lib/portal/dashboard';
 import type { Heat } from '@/lib/portal/potato';
+import OnboardingBanner from '@/components/portal/OnboardingBanner';
 
 const Arrow = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -452,6 +453,7 @@ export default function PortalDashboard() {
 
   return (
     <div>
+      <OnboardingBanner />
       <PageHeader eyebrow={[client.business_name, client.plan_label].filter(Boolean).join(' · ')} title="Welcome back," accent={`${firstName}.`} />
 
       {client.welcome_note && <p className="-mt-4 mb-10 max-w-3xl border-l-2 border-p-brandink pl-5 text-lg leading-relaxed text-p-ink/90">{client.welcome_note}</p>}

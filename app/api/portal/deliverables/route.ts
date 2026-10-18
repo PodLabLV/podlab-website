@@ -18,6 +18,7 @@ import {
 } from '@/lib/portal/server';
 import { unsentClientNotes, clock } from '@/lib/portal/scripts';
 import { assetReady, assetReviewed } from '@/lib/portal/review-notify';
+import { onApproved } from '@/lib/portal/on-approved';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -338,6 +339,8 @@ export async function PATCH(req: Request) {
       recordActivity(db, caller.clientId, 'deliverable', `You approved ${label}`),
       assetReviewed(caller.clientId, asset.id, version.version_no),
     ]);
+    // Route it to its place in Assets (brand kit → Brand, AssetsLab → Docs + profile).
+    await onApproved(db, { ...asset, approved_version: version.version_no }, caller.displayName);
     return NextResponse.json({ status: 'approved' });
   }
 
