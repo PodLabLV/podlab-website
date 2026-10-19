@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { copyOnboardingToFormspree } from '@/lib/portal/formspree';
 import { reportError } from '@/lib/alerts';
 import { admin, resolveCaller, resolveStaff, notifySlack, logToCrm } from '@/lib/portal-server';
 import { notify, resolve } from '@/lib/portal/notify';
@@ -185,6 +186,14 @@ export async function POST(req: Request) {
           (state.vslBooking ? `\nVSL shoot: ${state.vslBooking.eventName} ${state.vslBooking.startAt.slice(0, 10)}` : ''),
       ),
       logToCrm(db, caller, `Finished portal onboarding. Queued: ${building.join(', ') || 'nothing new'}.`),
+      // The Formspree inbox copy: first submission only, never blocks the submit.
+      state.submittedAt
+        ? Promise.resolve(false)
+        : copyOnboardingToFormspree({
+            business: caller.businessName, name: caller.displayName, email: caller.email,
+            questions: INTAKE_QUESTIONS, answers: state.answers,
+            brandQuestions: BRAND_QUESTIONS, brandAnswers: state.brandAnswers, brandMode: state.brandMode,
+          }).catch(() => false),
     ]);
 
     return NextResponse.json({ ok: true, queued });

@@ -110,7 +110,7 @@ function PortalShell({ children }: { children: React.ReactNode }) {
           </Link>
           <TopTabs />
           <div className="ml-auto flex items-center gap-2">
-            {!beakerOnly && <NotificationBell />}
+            <NotificationBell />
             {menu && (
               <div className="lg:hidden">
                 <ProfileMenu {...menu} direction="down" compact />

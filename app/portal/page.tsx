@@ -455,7 +455,7 @@ export default function PortalDashboard() {
 
   return (
     <div>
-      <OnboardingBanner />
+      <OnboardingBanner redirect />
       <PageHeader eyebrow={[client.business_name, client.plan_label].filter(Boolean).join(' · ')} title="Welcome back," accent={`${firstName}.`} />
 
       {client.welcome_note && <p className="-mt-4 mb-10 max-w-3xl border-l-2 border-p-brandink pl-5 text-lg leading-relaxed text-p-ink/90">{client.welcome_note}</p>}

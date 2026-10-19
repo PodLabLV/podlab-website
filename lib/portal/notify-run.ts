@@ -33,7 +33,7 @@ export interface NotifyResult {
   sms: { outcome: 'sent' | 'would-send' | 'skipped' | 'failed'; reason?: string; rows: number; body?: string; error?: string };
 }
 
-const ROW_COLS = 'id, client_id, kind, direction, title, body, link, created_at, read_at, resolved_at, emailed_at, texted_at';
+const ROW_COLS = 'id, client_id, user_id, kind, direction, title, body, link, created_at, read_at, resolved_at, emailed_at, texted_at';
 
 export async function runNotify(
   db: SupabaseClient,
@@ -51,19 +51,40 @@ export async function runNotify(
 
   const byClient = new Map<string, NotificationRow[]>();
   // Every recent row, sent or not: the sent ones drive the once-an-hour limit.
+  const byUser = new Map<string, NotificationRow[]>();
   for (const r of rows) {
+    if (!r.client_id) {
+      if (r.user_id) byUser.set(r.user_id, [...(byUser.get(r.user_id) ?? []), r]);
+      continue;
+    }
     const list = byClient.get(r.client_id) ?? [];
     list.push(r);
     byClient.set(r.client_id, list);
   }
   // Only clients with something not yet delivered on some channel.
   const ids = [...byClient.entries()].filter(([, list]) => list.some((r) => r.emailed_at === null || r.texted_at === null)).map(([id]) => id);
-  if (!ids.length) return { startedAt, clients: 0, results: [] };
+  const userIds = opts.clientId ? [] : [...byUser.entries()].filter(([, list]) => list.some((r) => r.emailed_at === null)).map(([id]) => id);
+  if (!ids.length && !userIds.length) return { startedAt, clients: 0, results: [] };
 
   // select('*') so a column a later migration adds (sms consent) reads as absent rather than failing.
-  const { data: clientData, error: clientErr } = await db.from('portal_clients').select('*').in('id', ids);
+  const { data: clientData, error: clientErr } = ids.length ? await db.from('portal_clients').select('*').in('id', ids) : { data: [], error: null };
   if (clientErr) throw new Error(`clients: ${clientErr.message}`);
   const clients = (clientData ?? []) as ClientPrefs[];
+
+  // Logins with no client record (Beakers who only refer): email only, to the
+  // login's own address. No texts — there's no SMS consent on record for them.
+  for (const uid of userIds) {
+    const { data } = await db.auth.admin.getUserById(uid);
+    const u = data?.user;
+    if (!u?.email) continue;
+    const meta = (u.user_metadata ?? {}) as Record<string, unknown>;
+    clients.push({
+      id: uid, user_id: uid, email: u.email, first_name: (meta.first_name as string) || null, business_name: '',
+      phone: null, timezone: null, notify_email: true, notify_sms: false, digest_opt_out: false,
+    });
+    byClient.set(uid, byUser.get(uid) ?? []);
+  }
+  const loginOnly = new Set(userIds);
 
   const smsOn = smsConfigured();
   const gap = opts.sendGapMs ?? 600;
@@ -96,7 +117,7 @@ export async function runNotify(
             const sent = await sendPortalEmail({ to: c.email, subject: mail.subject, html: mail.html, text: mail.text });
             if (sent.ok) {
               result.email = { outcome: 'sent', rows: claimed.length, subject: mail.subject };
-              await copyTeam(db, c, batch, pause);
+              if (!loginOnly.has(c.id)) await copyTeam(db, c, batch, pause);
             } else {
               await unclaim(db, 'emailed_at', claimed, startedAt);
               result.email = { outcome: 'failed', rows: claimed.length, subject: mail.subject, error: sent.error };

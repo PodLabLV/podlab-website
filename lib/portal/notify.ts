@@ -70,13 +70,28 @@ export function safeLink(v: string | null | undefined): string | null {
 }
 
 export async function notify(clientId: string, n: NotifyInput, db: SupabaseClient = admin()): Promise<boolean> {
+  return write({ column: 'client_id', id: clientId }, n, db);
+}
+
+/**
+ * For a login with no client record (a Beaker who only refers). Same row,
+ * same dedupe, owned by the auth user instead of a client
+ * (20261019_portal_v2_user_notifications.sql).
+ */
+export async function notifyUser(userId: string, n: NotifyInput, db: SupabaseClient = admin()): Promise<boolean> {
+  return write({ column: 'user_id', id: userId }, n, db);
+}
+
+export type FeedOwner = { column: 'client_id' | 'user_id'; id: string };
+
+async function write(owner: FeedOwner, n: NotifyInput, db: SupabaseClient): Promise<boolean> {
   const title = clip(n.title, 200);
-  if (!ID.test(clientId) || !title || !n.kind || !['done', 'waiting'].includes(n.direction)) {
-    reportError('[portal] notify refused bad input', { clientId, kind: n.kind, direction: n.direction });
+  if (!ID.test(owner.id) || !title || !n.kind || !['done', 'waiting'].includes(n.direction)) {
+    reportError('[portal] notify refused bad input', { owner: owner.column, id: owner.id, kind: n.kind, direction: n.direction });
     return false;
   }
   const row = {
-    client_id: clientId,
+    [owner.column]: owner.id,
     kind: clip(n.kind, 40)!,
     direction: n.direction,
     title,
@@ -88,7 +103,7 @@ export async function notify(clientId: string, n: NotifyInput, db: SupabaseClien
     // With a ref: upsert on (client_id, ref). Only the columns sent are updated
     // on conflict, so read_at / resolved_at / emailed_at survive a retry.
     const { error } = row.ref
-      ? await db.from('portal_notifications').upsert(row, { onConflict: 'client_id,ref' })
+      ? await db.from('portal_notifications').upsert(row, { onConflict: `${owner.column},ref` })
       : await db.from('portal_notifications').insert(row);
     if (error) {
       reportError('[portal] notify failed', error.message);
@@ -126,14 +141,15 @@ export async function resolve(clientId: string, ref: string, db: SupabaseClient 
 /** The bell's feed: unread 'done' rows, recently read ones, and every open 'waiting' row. */
 export async function loadFeed(
   db: SupabaseClient,
-  clientId: string,
+  clientId: string | FeedOwner,
 ): Promise<{ ready: boolean; done: PortalNotification[]; earlier: PortalNotification[]; waiting: PortalNotification[] }> {
+  const owner: FeedOwner = typeof clientId === 'string' ? { column: 'client_id', id: clientId } : clientId;
   const cols = 'id, kind, direction, title, body, link, ref, created_at, read_at, resolved_at';
   const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
   const [done, earlier, waiting] = await Promise.all([
-    db.from('portal_notifications').select(cols).eq('client_id', clientId).eq('direction', 'done').is('read_at', null).order('created_at', { ascending: false }).limit(30),
-    db.from('portal_notifications').select(cols).eq('client_id', clientId).eq('direction', 'done').not('read_at', 'is', null).gte('created_at', since).order('created_at', { ascending: false }).limit(8),
-    db.from('portal_notifications').select(cols).eq('client_id', clientId).eq('direction', 'waiting').is('resolved_at', null).order('created_at', { ascending: true }).limit(30),
+    db.from('portal_notifications').select(cols).eq(owner.column, owner.id).eq('direction', 'done').is('read_at', null).order('created_at', { ascending: false }).limit(30),
+    db.from('portal_notifications').select(cols).eq(owner.column, owner.id).eq('direction', 'done').not('read_at', 'is', null).gte('created_at', since).order('created_at', { ascending: false }).limit(8),
+    db.from('portal_notifications').select(cols).eq(owner.column, owner.id).eq('direction', 'waiting').is('resolved_at', null).order('created_at', { ascending: true }).limit(30),
   ]);
   if (done.error || waiting.error) return { ready: false, done: [], earlier: [], waiting: [] };
   return {

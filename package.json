@@ -21,7 +21,8 @@
     "test:credits": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-credits.test.ts",
     "test:onboarding": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-onboarding.test.ts",
     "test:docsec": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/doc-edit-security.test.ts",
-    "test:beaker": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-beaker.test.ts"
+    "test:beaker": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-beaker.test.ts",
+    "test:formspree": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-formspree.test.ts"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.136",

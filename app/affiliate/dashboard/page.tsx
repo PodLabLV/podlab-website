@@ -1,9 +1,8 @@
 'use client';
 
-// Beaker affiliates' front door on podlablv.com. The dashboard itself lives in
-// the CRM (crm.podlablv.com → Referrals), where affiliates sign in: their
-// links, tier progress, referrals, commission statement, payouts and payout
-// setup are real data there. This page used to be a static mock with sample
+// Beaker affiliates' front door on podlablv.com. The dashboard itself is the
+// Beaker tab of the client portal (podlablv.com/login → /portal/beaker): their
+// link, referrals, money and payout setup are real data there. This page used to be a static mock with sample
 // numbers; it now points affiliates at the real thing and keeps the swipe
 // copy and FAQ, which are the same for everyone.
 
@@ -11,7 +10,9 @@ import { useState } from 'react';
 import Navigation from '@/components/Navigation';
 import HomePageWrapper from '@/components/HomePageWrapper';
 
-const CRM_LOGIN = 'https://crm.podlablv.com/login';
+// Beakers sign in to the client portal now (portal v2, 2026-10-19): the
+// Beaker tab has their link, referrals, money and payout setup.
+const PORTAL_LOGIN = '/login';
 
 const INSIDE = [
   ['Your links', 'Every PodLab page with your Beaker ID on it — anyone who arrives is remembered for 90 days.'],
@@ -51,7 +52,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'When do I get paid?',
-    answer: 'Payouts are sent within 15 days after the end of each month, to your own Whop account (you withdraw to your bank from there). You need a minimum of $100 in cleared commissions, a linked Whop account and a W-9 on file.',
+    answer: 'Payouts go out on the 1st and the 14th of each month (always within 15 days of month end, as your agreement says), to your own Whop account (you withdraw to your bank from there). You need a minimum of $100 in cleared commissions, a linked Whop account and a W-9 on file.',
   },
   {
     question: "What's the hold period?",
@@ -63,7 +64,7 @@ const FAQ_ITEMS = [
   },
   {
     question: 'How do I sign in?',
-    answer: 'At crm.podlablv.com with the email you applied with. PodLab sends your login once your application is approved. Forgot it? Email info@podlablv.com and we\'ll reset it.',
+    answer: 'At podlablv.com/login with the email you applied with: your Beaker tab is in the PodLab portal. PodLab sends your login once your application is approved. Forgot it? Email info@podlablv.com and we\'ll reset it.',
   },
 ];
 
@@ -122,7 +123,7 @@ export default function BeakerDashboardHome() {
               Your links, referrals, commissions and payouts live in your PodLab account. Sign in with the email you applied with.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <a href={CRM_LOGIN} className="px-6 py-3 rounded-xl font-bold bg-[#2ADD1B] text-black hover:shadow-[0_0_30px_rgba(42,221,27,0.4)] transition-all">
+              <a href={PORTAL_LOGIN} className="px-6 py-3 rounded-xl font-bold bg-[#2ADD1B] text-black hover:shadow-[0_0_30px_rgba(42,221,27,0.4)] transition-all">
                 Sign in to your dashboard
               </a>
               <a href="/affiliate/apply" className="px-6 py-3 rounded-xl font-semibold border border-white/15 text-white hover:border-[#2ADD1B]/50 transition-all">

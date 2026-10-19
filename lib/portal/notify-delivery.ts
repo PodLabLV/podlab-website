@@ -28,7 +28,9 @@ export const DEFAULT_TZ = 'America/Los_Angeles';
 
 export interface NotificationRow {
   id: string;
-  client_id: string;
+  /** Null for a login-only row (user_id set instead). */
+  client_id: string | null;
+  user_id?: string | null;
   kind: string;
   direction: 'done' | 'waiting';
   title: string;

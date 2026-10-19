@@ -152,7 +152,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-16">
-          <span className="portal-label text-[#2add1b]">Client sign-in</span>
+          <span className="portal-label text-[#2add1b]">Client &amp; Beaker sign-in</span>
           <h1 className="mt-4 text-4xl font-bold leading-[1.05] tracking-tight text-[#eeeeee] md:text-5xl">
             {mode === 'login' ? (
               <>

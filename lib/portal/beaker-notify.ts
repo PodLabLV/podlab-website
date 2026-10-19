@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { notify, type NotifyInput } from '@/lib/portal/notify';
+import { notify, notifyUser, type NotifyInput } from '@/lib/portal/notify';
 import { likeExact, personName, plainStatus, shortDate, usd, type PlainStatus } from '@/lib/portal/beaker-view';
 
 /**
@@ -10,7 +10,7 @@ import { likeExact, personName, plainStatus, shortDate, usd, type PlainStatus } 
  * (`beaker:…`), and notify() upserts on (client_id, ref), so running it again,
  * or over an overlapping window, never notifies twice.
  *
- * Only Beakers with a portal client record get rows: portal_notifications.
+ * Beakers with a client record get client rows; Beakers who only refer get rows on their login (user_id).
  * client_id is NOT NULL. Beakers with no client record are the documented gap
  * (docs/PORTAL-V2.md, "Track E as built").
  */
@@ -139,7 +139,9 @@ export async function runBeakerNotify(db: SupabaseClient, opts: { dry: boolean; 
     const byLogin = a.profile_id ? await db.from('portal_clients').select('id').eq('user_id', a.profile_id).limit(1) : { data: [] };
     const byEmail = byLogin.data?.length ? byLogin : await db.from('portal_clients').select('id').ilike('email', likeExact(a.email)).limit(1);
     const clientId = (byEmail.data?.[0]?.id as string | undefined) ?? null;
-    if (!clientId) {
+    // No client record: their own login gets the rows instead (20261019 user notifications).
+    const userId = !clientId && a.profile_id ? String(a.profile_id) : null;
+    if (!clientId && !userId) {
       result.noPortalIdentity.push(a.beaker_id);
       continue;
     }
@@ -161,8 +163,13 @@ export async function runBeakerNotify(db: SupabaseClient, opts: { dry: boolean; 
       payouts: (payouts.data ?? []) as SentPayout[],
     });
     if (!rows.length) continue;
-    result.planned.push({ beakerId: a.beaker_id, clientId, rows });
-    if (!opts.dry) for (const r of rows) if (await notify(clientId, r, db)) result.written += 1;
+    result.planned.push({ beakerId: a.beaker_id, clientId: clientId || `user:${userId}`, rows });
+    if (!opts.dry) {
+      for (const r of rows) {
+        const ok = clientId ? await notify(clientId, r, db) : await notifyUser(userId!, r, db);
+        if (ok) result.written += 1;
+      }
+    }
   }
   return result;
 }
