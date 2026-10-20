@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Michroma, Playfair_Display } from 'next/font/google';
 import Script from 'next/script';
-import ChatBot from '@/components/ChatBot';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -145,7 +144,9 @@ export default function RootLayout({
 
         <div id="content-overlay" />
         {children}
-        <ChatBot />
+        {/* No chat widget here (2026-10-20). TipTop is PodLab's only assistant: she
+            runs on podlablv.com and in the portal. The old "Cleetus" widget and
+            its /api/chat endpoint were removed. */}
       </body>
     </html>
   );
