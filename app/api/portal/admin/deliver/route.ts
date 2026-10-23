@@ -21,6 +21,8 @@ interface Payload {
   planLabel?: string;
   kind?: 'new' | 'revised';
   dryRun?: boolean;
+  /** false = create/link the client only, no login and no email (publish first, then call again). */
+  send?: boolean;
 }
 
 const COPY = {
@@ -50,7 +52,8 @@ const COPY = {
  * this same email (one email, not an invite plus a notice). A client who has
  * signed in before gets a plain link to their scripts.
  *
- * kind "revised" respects notify_email; the first delivery always sends, since
+ * send:false only ensures the client row, so scripts can be published before the
+ * email goes out. kind "revised" respects notify_email; the first delivery always sends, since
  * it carries the only way in.
  */
 export async function POST(req: Request) {
@@ -110,6 +113,7 @@ export async function POST(req: Request) {
   }
 
   if (p.dryRun) return NextResponse.json({ dryRun: true, clientId: client.id, kind, hasLogin: Boolean(client.user_id) });
+  if (p.send === false) return NextResponse.json({ clientId: client.id, created, emailed: false });
 
   if (kind === 'revised' && client.notify_email === false) {
     return NextResponse.json({ clientId: client.id, created, emailed: false, skipped: 'notify_email is off' });
