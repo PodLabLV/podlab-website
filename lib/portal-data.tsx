@@ -46,6 +46,10 @@ export interface PortalAsset {
   status: string | null;
   size_label: string | null;
   sort_order: number;
+  /** 'hiram' = held for staff review; RLS hides these from clients. */
+  held_for?: 'hiram' | null;
+  held_released_at?: string | null;
+  held_released_by?: string | null;
 }
 
 export interface PortalProject {

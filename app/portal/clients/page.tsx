@@ -84,6 +84,14 @@ function ClientRow({ c, token, onDone }: { c: StaffClientRow; token: string; onD
         <div className="flex items-center gap-3">
           <p className="break-words text-[17px] font-semibold text-p-ink">{c.businessName}</p>
           <AccessTag access={c.access} />
+          {c.heldCount > 0 && (
+            <Link
+              href={`/portal/clients/${c.id}`}
+              className="portal-label inline-block shrink-0 border border-p-warn/50 px-2 py-1 !text-[11px] text-p-warn"
+            >
+              {c.heldCount} awaiting Hiram
+            </Link>
+          )}
         </div>
         <p className="mt-1 break-words text-sm text-p-ink/70">
           {[c.name, c.planLabel].filter(Boolean).join(' · ') || ' '}

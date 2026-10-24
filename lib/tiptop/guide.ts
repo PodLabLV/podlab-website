@@ -110,7 +110,7 @@ export async function readClientFile(db: SupabaseClient, caller: PortalCaller): 
     );
   }
 
-  const { data: scripts } = await db.from('portal_scripts').select('id, title, kind, status').eq('client_id', caller.clientId).order('sort_order').limit(40);
+  const { data: scripts } = await db.from('portal_scripts').select('id, title, kind, status').eq('client_id', caller.clientId).is('held_for', null).order('sort_order').limit(40);
   if (scripts?.length) L.push(`Scripts (read one with read_script):\n${scripts.map((s) => `- id=${s.id} "${s.title}" (${s.kind ?? 'script'}, ${s.status})`).join('\n')}`);
 
   const { data: products } = await db.from('portal_client_products').select('product').eq('client_id', caller.clientId);
@@ -119,7 +119,7 @@ export async function readClientFile(db: SupabaseClient, caller: PortalCaller): 
 }
 
 export async function readScript(db: SupabaseClient, clientId: string, id: string): Promise<{ title: string; kind: string | null; status: string; version: number; body: string } | null> {
-  const { data: s } = await db.from('portal_scripts').select('id, title, kind, status, current_version, client_id').eq('id', id).maybeSingle();
+  const { data: s } = await db.from('portal_scripts').select('id, title, kind, status, current_version, client_id').eq('id', id).is('held_for', null).maybeSingle();
   if (!s || s.client_id !== clientId) return null;
   const { data: v } = await db.from('portal_script_versions').select('body').eq('script_id', id).eq('version_no', s.current_version).maybeSingle();
   return { title: s.title, kind: s.kind, status: s.status, version: s.current_version, body: (v?.body ?? '').slice(0, 14000) };

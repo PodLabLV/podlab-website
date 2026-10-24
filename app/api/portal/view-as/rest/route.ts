@@ -49,6 +49,10 @@ export async function GET(req: Request) {
   if (!TABLES.has(table)) return NextResponse.json({ message: 'Not available in view-as mode' }, { status: 400 });
   const q = new URLSearchParams(u.searchParams.get('q') ?? '');
   q.append(table === 'portal_clients' ? 'id' : 'client_id', `eq.${clientId}`);
+  // Internal staff notes (Hiram's change requests on held drafts) never render
+  // in the client's view, even in a staff preview. Held rows DO come through so
+  // the preview can badge them "Awaiting Hiram".
+  if (table === 'portal_script_comments' || table === 'portal_asset_comments') q.append('internal', 'eq.false');
 
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
   const headers: Record<string, string> = { apikey: key, Authorization: `Bearer ${key}` };

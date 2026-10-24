@@ -90,12 +90,12 @@ async function resolveRevisionTarget(
     return { ok: true, title: card.title, where: 'Your Videos' };
   }
   if (input.target === 'script') {
-    const { data: s } = await db.from('portal_scripts').select('title, status, client_id').eq('id', input.id).maybeSingle();
+    const { data: s } = await db.from('portal_scripts').select('title, status, client_id').eq('id', input.id).is('held_for', null).maybeSingle();
     if (!s || s.client_id !== caller.clientId) return { ok: false, reason: 'No script with that id for this client. Check the overview.' };
     if (['approved', 'shot', 'published'].includes((s.status || '').toLowerCase())) return { ok: false, reason: 'That script is approved and locked; reopening goes through info@podlablv.com.' };
     return { ok: true, title: s.title, where: 'Scripts' };
   }
-  const { data: a } = await db.from('portal_assets').select('title, status, client_id').eq('id', input.id).maybeSingle();
+  const { data: a } = await db.from('portal_assets').select('title, status, client_id').eq('id', input.id).is('held_for', null).maybeSingle();
   if (!a || a.client_id !== caller.clientId) return { ok: false, reason: 'No deliverable with that id for this client. Check the overview.' };
   if ((a.status || '').toLowerCase() === 'approved') return { ok: false, reason: 'That deliverable is approved; reopening goes through info@podlablv.com.' };
   return { ok: true, title: a.title, where: 'Deliverables' };

@@ -300,6 +300,7 @@ async function scriptsBlock(db: SupabaseClient, id: string): Promise<Overview['s
     .from('portal_scripts')
     .select('id, title, status, current_version, changes_requested_at')
     .eq('client_id', id)
+    .is('held_for', null)
     .order('sort_order')
     .limit(40);
   if (error) return { available: false, items: [] };
@@ -348,6 +349,7 @@ async function deliverablesBlock(db: SupabaseClient, id: string): Promise<Overvi
     .from('portal_assets')
     .select('*')
     .eq('client_id', id)
+    .is('held_for', null)
     .order('sort_order')
     .limit(60);
   if (error) return { available: false, items: [] };

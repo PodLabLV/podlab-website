@@ -43,6 +43,7 @@ export default function StaffClientPage() {
   const [flash, setFlash] = useState<string | null>(null);
   const [gen, setGen] = useState<{ generated: number; published: number } | null>(null);
   const [driveDraft, setDriveDraft] = useState<string | null>(null);
+  const [heldNote, setHeldNote] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     if (!accessToken) return;
@@ -58,7 +59,7 @@ export default function StaffClientPage() {
     load();
   }, [load]);
 
-  async function call(key: string, url: string, method: string, body: object, ok: string) {
+  async function call(key: string, url: string, method: string, body: object, ok: string): Promise<boolean> {
     setBusy(key);
     setFlash(null);
     try {
@@ -71,8 +72,35 @@ export default function StaffClientPage() {
       if (!res.ok) throw new Error(json.error || 'Could not save that.');
       await load();
       setFlash(ok);
+      return true;
     } catch (e) {
       setFlash(e instanceof Error ? e.message : 'Could not save that.');
+      return false;
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  /** Open a held deliverable as staff, through the same signed-URL route the client uses. */
+  async function openHeldFile(key: string, versionId: string) {
+    // Open the tab inside the click so a popup blocker doesn't eat it.
+    const tab = window.open('', '_blank');
+    setBusy(key);
+    setFlash(null);
+    try {
+      const res = await fetch(`/api/portal/deliverables?versionId=${encodeURIComponent(versionId)}`, {
+        headers: { Authorization: `Bearer ${accessToken ?? ''}` },
+        cache: 'no-store',
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.url) throw new Error(json.error || 'Could not open that file.');
+      // A Drive cut comes back as a stream-proxy url plus the Drive link; a new tab wants the Drive link.
+      const url: string = json.fallback || json.url;
+      if (tab) tab.location.href = url;
+      else window.open(url, '_blank', 'noopener');
+    } catch (e) {
+      tab?.close();
+      setFlash(e instanceof Error ? e.message : 'Could not open that file.');
     } finally {
       setBusy(null);
     }
@@ -338,6 +366,83 @@ export default function StaffClientPage() {
               {gen.published} of {gen.generated} already in their portal
             </span>
           </div>
+        </Section>
+      )}
+
+      {d.held && d.held.length > 0 && (
+        <Section title="Awaiting Hiram" hint="Published by the automation. The client can't see these until you approve.">
+          <ul className="divide-y divide-p-line border border-p-line">
+            {d.held.map((h) => {
+              const key = `${h.type}-${h.id}`;
+              const revising = (h.status || '').toLowerCase() === 'changes requested';
+              return (
+                <li key={key} className="bg-p-paper p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="portal-label inline-block border border-p-warn/50 px-2 py-1 !text-[11px] text-p-warn">Awaiting Hiram</span>
+                    <span className="text-base font-semibold text-p-ink">{h.title}</span>
+                    <span className="text-sm text-p-ink/70">
+                      {[h.type === 'script' ? 'Script' : h.fileType ? `Deliverable · ${h.fileType}` : 'Deliverable', `v${h.version}`, h.words ? `${h.words} words` : null].filter(Boolean).join(' · ')}
+                    </span>
+                  </div>
+                  {revising && <p className="portal-label mt-2 !text-[11px] text-p-ink/70">Revising — waiting on a new version</p>}
+                  {h.notes.length > 0 && (
+                    <ul className="mt-2 space-y-1">
+                      {h.notes.map((n) => (
+                        <li key={n.id} className="border-l-2 border-p-warn/50 pl-3 text-sm text-p-ink/80">
+                          <span className="font-semibold">{n.author}</span> (internal): {n.body}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {h.type === 'script' ? (
+                    <details className="mt-3">
+                      <summary className="portal-label cursor-pointer !text-[12px] text-p-ink/75 hover:text-p-brandink">Read the script</summary>
+                      <p className="mt-3 max-h-80 overflow-y-auto whitespace-pre-wrap border-l border-p-line pl-3 text-base leading-relaxed text-p-ink/90">{h.body}</p>
+                    </details>
+                  ) : h.versionId && (h.hasFile || h.externalUrl) ? (
+                    <button
+                      disabled={busy !== null}
+                      onClick={() => openHeldFile(`open-${key}`, h.versionId!)}
+                      className="portal-label mt-3 inline-flex border border-p-line px-4 py-2.5 !text-[12px] text-p-ink/85 transition hover:border-p-brandink hover:text-p-brandink disabled:opacity-40"
+                    >
+                      {(h.mimeType || '').includes('pdf') || (h.fileType || '').toUpperCase() === 'PDF' ? 'Open the PDF ↗' : 'Open it ↗'}
+                    </button>
+                  ) : (
+                    <p className="mt-3 text-sm text-p-ink/70">No file on this version yet.</p>
+                  )}
+                  <div className="mt-3 flex flex-col gap-2">
+                    <textarea
+                      value={heldNote[key] ?? ''}
+                      onChange={(e) => setHeldNote((m) => ({ ...m, [key]: e.target.value }))}
+                      rows={2}
+                      placeholder="What should change? Internal: the client never sees this."
+                      aria-label={`Changes for ${h.title}`}
+                      className="w-full border border-p-line bg-p-paper px-3 py-2.5 text-base text-p-ink placeholder:text-p-ink/50 focus:border-p-brandink focus:outline-none"
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        disabled={busy !== null}
+                        onClick={() => call(`rel-${key}`, '/api/portal/admin/release', 'POST', { type: h.type, id: h.id, decision: 'release' }, `"${h.title}" is now in the client's review.`)}
+                        className="portal-label bg-p-brand px-4 py-2.5 !text-[12px] text-black transition hover:bg-p-pop disabled:opacity-40"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        disabled={busy !== null || !(heldNote[key] ?? '').trim()}
+                        onClick={async () => {
+                          const ok = await call(`chg-${key}`, '/api/portal/admin/release', 'POST', { type: h.type, id: h.id, decision: 'changes', note: heldNote[key] ?? '' }, `Changes requested on "${h.title}". It stays hidden from the client.`);
+                          if (ok) setHeldNote((m) => ({ ...m, [key]: '' }));
+                        }}
+                        className="portal-label border border-p-line px-4 py-2.5 !text-[12px] text-p-ink/85 transition hover:border-p-brandink hover:text-p-brandink disabled:opacity-40"
+                      >
+                        Request changes
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         </Section>
       )}
 

@@ -43,7 +43,7 @@ export async function deliveredFor(db: SupabaseClient, clientId: string): Promis
   }
 
   const [assets, approvals, phases] = await Promise.all([
-    db.from('portal_assets').select('*').eq('client_id', clientId).eq('status', 'approved'),
+    db.from('portal_assets').select('*').eq('client_id', clientId).eq('status', 'approved').is('held_for', null),
     db.from('portal_script_approvals').select('script_id, approved_at, version_id').eq('client_id', clientId),
     db.from('portal_delivery_phases').select('title, status, updated_at').eq('client_id', clientId).eq('status', 'done'),
   ]);
@@ -54,9 +54,11 @@ export async function deliveredFor(db: SupabaseClient, clientId: string): Promis
 
   const approvalRows = (approvals.data ?? []) as Array<{ script_id: string; approved_at: string }>;
   if (approvalRows.length) {
-    const { data: scripts } = await db.from('portal_scripts').select('id, title').in('id', approvalRows.map((r) => r.script_id));
+    const { data: scripts } = await db.from('portal_scripts').select('id, title').is('held_for', null).in('id', approvalRows.map((r) => r.script_id));
     const title = new Map((scripts ?? []).map((s: { id: string; title: string }) => [s.id, s.title]));
     for (const r of approvalRows) {
+      // Not in the map = held for Hiram (or gone): not the client's to see.
+      if (!title.has(r.script_id)) continue;
       items.push({ kind: 'script', title: String(title.get(r.script_id) ?? 'Script'), detail: 'Script approved', at: r.approved_at, href: `/portal/scripts/${r.script_id}` });
     }
   }

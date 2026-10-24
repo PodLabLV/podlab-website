@@ -1,6 +1,6 @@
 import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
-import { admin } from '@/lib/portal-server';
+import { admin, notifySlack } from '@/lib/portal-server';
 import {
   resolvePublisher,
   resolveClientId,
@@ -24,6 +24,10 @@ export const dynamic = 'force-dynamic';
  *
  * Staff or PORTAL_PUBLISH_KEY only. Clients read through RLS, and comment and
  * approve through their own routes.
+ *
+ * held: true parks the script for Hiram (held_for = 'hiram'): the client can't
+ * see it until staff approves it via /api/portal/admin/release. A new version
+ * of a held script stays held; POST never clears a hold.
  */
 
 interface PostPayload {
@@ -38,6 +42,8 @@ interface PostPayload {
   shootDate?: string;
   body?: string;
   note?: string;
+  /** Park it for Hiram's review before the client can see it. */
+  held?: boolean;
 }
 
 const MAX_BODY = 60_000;
@@ -64,10 +70,14 @@ export async function POST(req: Request) {
   if (p.scriptId) {
     const { data: script } = await db
       .from('portal_scripts')
-      .select('id, client_id, title, current_version')
+      .select('id, client_id, title, current_version, held_for')
       .eq('id', p.scriptId)
       .maybeSingle();
     if (!script) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (p.held && !script.held_for && script.current_version > 0) {
+      return NextResponse.json({ error: "Already visible to the client; can't hold it now" }, { status: 409 });
+    }
+    const held = Boolean(p.held || script.held_for);
 
     const versionNo = await nextVersionNo(db, 'portal_script_versions', 'script_id', script.id);
     const { data: version, error: vErr } = await db
@@ -105,14 +115,20 @@ export async function POST(req: Request) {
 
     await db
       .from('portal_scripts')
-      .update({ current_version: versionNo, status: 'in review', updated_at: new Date().toISOString() })
+      .update({
+        current_version: versionNo,
+        status: 'in review',
+        updated_at: new Date().toISOString(),
+        ...(p.held ? { held_for: 'hiram', held_released_at: null, held_released_by: null } : {}),
+      })
       .eq('id', script.id);
 
     if (previous) await carryNotesForward(db, script.id, previous.id, version.id, body);
 
-    await recordActivity(db, script.client_id, 'update', `Script v${versionNo} ready for your review: ${script.title}`);
+    if (held) await pingHeld(db, script.client_id, script.title, versionNo);
+    else await recordActivity(db, script.client_id, 'update', `Script v${versionNo} ready for your review: ${script.title}`);
 
-    return NextResponse.json({ scriptId: script.id, versionId: version.id, versionNo });
+    return NextResponse.json({ scriptId: script.id, versionId: version.id, versionNo, held });
   }
 
   // ── brand new script ───────────────────────────────────────────────
@@ -137,6 +153,7 @@ export async function POST(req: Request) {
       shoot_date: p.shootDate ?? null,
       status: 'in review',
       current_version: 1,
+      ...(p.held ? { held_for: 'hiram' } : {}),
     })
     .select('id, client_id, title')
     .single();
@@ -169,9 +186,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
   }
 
-  await recordActivity(db, clientId, 'update', `New script ready for your review: ${script.title}`);
+  if (p.held) await pingHeld(db, clientId, script.title, 1);
+  else await recordActivity(db, clientId, 'update', `New script ready for your review: ${script.title}`);
 
-  return NextResponse.json({ scriptId: script.id, versionId: version.id, versionNo: 1 });
+  return NextResponse.json({ scriptId: script.id, versionId: version.id, versionNo: 1, held: Boolean(p.held) });
+}
+
+/** Held for Hiram: no client activity, one Slack line so he knows it's waiting. */
+async function pingHeld(db: ReturnType<typeof admin>, clientId: string, title: string, versionNo: number): Promise<void> {
+  const { data: client } = await db.from('portal_clients').select('business_name').eq('id', clientId).maybeSingle();
+  await notifySlack(`*Awaiting Hiram* — ${client?.business_name ?? 'Client'} · ${title} v${versionNo}`);
 }
 
 interface PatchPayload {
@@ -214,7 +238,7 @@ export async function PATCH(req: Request) {
     .from('portal_scripts')
     .update(patch)
     .eq('id', p.scriptId)
-    .select('id, client_id, title, status')
+    .select('id, client_id, title, status, held_for')
     .maybeSingle();
 
   if (error) {
@@ -222,6 +246,9 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Could not save that.' }, { status: 500 });
   }
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  // Held for Hiram: the client can't see it, so nothing goes on their feed.
+  if (data.held_for) return NextResponse.json({ script: data });
 
   if (p.status === 'in review') await recordActivity(db, data.client_id, 'update', `New script ready for your review: ${data.title}`);
   if (p.status === 'shot') await recordActivity(db, data.client_id, 'update', `Filmed: ${data.title}`);
@@ -246,7 +273,7 @@ async function carryNotesForward(
 ): Promise<void> {
   const { data: open } = await db
     .from('portal_script_comments')
-    .select('id, client_id, quoted_text, body, author_name, author_kind, block_index, created_at')
+    .select('id, client_id, quoted_text, body, author_name, author_kind, block_index, internal, created_at')
     .eq('version_id', fromVersionId)
     .eq('status', 'open')
     .is('parent_id', null);
@@ -268,6 +295,8 @@ async function carryNotesForward(
       author_kind: c.author_kind,
       status: 'open',
       orphaned: Boolean(c.quoted_text) && idx === null,
+      // Hiram's internal change request stays internal on the new version.
+      internal: Boolean(c.internal),
       // Keep the original time so a carried note doesn't read as newly unsent.
       created_at: c.created_at,
     };

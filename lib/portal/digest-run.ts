@@ -151,30 +151,75 @@ export async function loadLiveState(
     const svRows = must(sv, 'script versions') as Array<{ id: string; script_id: string; version_no: number; created_at: string }>;
     const avRows = must(av, 'asset versions') as Array<{ id: string; asset_id: string; version_no: number; created_at: string }>;
 
+    // Held-for-Hiram parents are invisible to the client, so their versions
+    // don't count. A parent released inside the window counts as new: its
+    // current version reaches the client at held_released_at, not created_at.
+    const [relS, relA] = await Promise.all([
+      db
+        .from('portal_scripts')
+        .select('id, title, status, current_version, held_released_at')
+        .eq('client_id', clientId)
+        .is('held_for', null)
+        .gt('held_released_at', window.since)
+        .lte('held_released_at', window.until),
+      db
+        .from('portal_assets')
+        .select('id, title, current_version, held_released_at')
+        .eq('client_id', clientId)
+        .is('held_for', null)
+        .gt('held_released_at', window.since)
+        .lte('held_released_at', window.until),
+    ]);
+    const releasedScripts = must(relS, 'released scripts') as Array<{ id: string; title: string; status: string | null; current_version: number; held_released_at: string }>;
+    const releasedAssets = must(relA, 'released assets') as Array<{ id: string; title: string; current_version: number | null; held_released_at: string }>;
+
+    const seen = new Set<string>();
+    const once = (v: LiveVersion) => {
+      const k = `${v.parentId}:${v.versionNo}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    };
+
     if (svRows.length) {
       const scripts = must(
-        await db.from('portal_scripts').select('id, title, status').in('id', [...new Set(svRows.map((v) => v.script_id))]),
+        await db.from('portal_scripts').select('id, title, status').is('held_for', null).in('id', [...new Set(svRows.map((v) => v.script_id))]),
         'scripts',
       ) as Array<{ id: string; title: string; status: string | null }>;
       const byId = new Map(scripts.map((s) => [s.id, s]));
       scriptVersions = svRows
         .filter((v) => byId.has(v.script_id) && (byId.get(v.script_id)!.status ?? '').toLowerCase() !== 'draft')
-        .map((v) => ({ id: v.id, parentId: v.script_id, title: byId.get(v.script_id)!.title, versionNo: v.version_no, createdAt: v.created_at }));
+        .map((v) => ({ id: v.id, parentId: v.script_id, title: byId.get(v.script_id)!.title, versionNo: v.version_no, createdAt: v.created_at }))
+        .filter(once);
+    }
+    for (const r of releasedScripts) {
+      if ((r.status ?? '').toLowerCase() === 'draft' || !r.current_version) continue;
+      const v = { id: `released:${r.id}:${r.current_version}`, parentId: r.id, title: r.title, versionNo: r.current_version, createdAt: r.held_released_at };
+      if (once(v)) scriptVersions.push(v);
     }
     if (avRows.length) {
       const assets = must(
-        await db.from('portal_assets').select('id, title').in('id', [...new Set(avRows.map((v) => v.asset_id))]),
+        await db.from('portal_assets').select('id, title').is('held_for', null).in('id', [...new Set(avRows.map((v) => v.asset_id))]),
         'assets',
       ) as Array<{ id: string; title: string }>;
       const byId = new Map(assets.map((a) => [a.id, a.title]));
       assetVersions = avRows
         .filter((v) => byId.has(v.asset_id))
-        .map((v) => ({ id: v.id, parentId: v.asset_id, title: byId.get(v.asset_id)!, versionNo: v.version_no, createdAt: v.created_at }));
+        .map((v) => ({ id: v.id, parentId: v.asset_id, title: byId.get(v.asset_id)!, versionNo: v.version_no, createdAt: v.created_at }))
+        .filter(once);
+    }
+    for (const r of releasedAssets) {
+      if (!r.current_version) continue;
+      const v = { id: `released:${r.id}:${r.current_version}`, parentId: r.id, title: r.title, versionNo: r.current_version, createdAt: r.held_released_at };
+      if (once(v)) assetVersions.push(v);
     }
   }
 
   const count = async (table: string, status: string) => {
-    const { count: n, error } = await db.from(table).select('id', { count: 'exact', head: true }).eq('client_id', clientId).eq('status', status);
+    let q = db.from(table).select('id', { count: 'exact', head: true }).eq('client_id', clientId).eq('status', status);
+    // Held rows aren't the client's to review yet.
+    if (table === 'portal_scripts' || table === 'portal_assets') q = q.is('held_for', null);
+    const { count: n, error } = await q;
     if (error) throw new Error(`${table} count: ${error.message}`);
     return n ?? 0;
   };

@@ -165,7 +165,7 @@ export async function sendToEditors(db: SupabaseClient, itemId: string, by: stri
 
   let script = '';
   if (item.scriptId) {
-    const { data: s } = await db.from('portal_scripts').select('current_version').eq('id', item.scriptId).maybeSingle();
+    const { data: s } = await db.from('portal_scripts').select('current_version').eq('id', item.scriptId).is('held_for', null).maybeSingle();
     if (s) {
       const { data: v } = await db.from('portal_script_versions').select('body').eq('script_id', item.scriptId).eq('version_no', s.current_version).maybeSingle();
       script = v?.body ?? '';

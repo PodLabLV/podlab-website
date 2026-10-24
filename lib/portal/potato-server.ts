@@ -44,7 +44,7 @@ const warn = (what: string) => (err: unknown) => reportError(`[potato] ${what} f
 
 async function scripts(db: SupabaseClient, id: string, you: string, add: Add) {
   const [s, v] = await Promise.all([
-    db.from('portal_scripts').select('id, title, status, current_version, changes_requested_at').eq('client_id', id),
+    db.from('portal_scripts').select('id, title, status, current_version, changes_requested_at').eq('client_id', id).is('held_for', null),
     db.from('portal_script_versions').select('script_id, version_no, created_at').eq('client_id', id),
   ]);
   if (s.error) return;
@@ -58,7 +58,7 @@ async function scripts(db: SupabaseClient, id: string, you: string, add: Add) {
 
 async function deliverables(db: SupabaseClient, id: string, you: string, add: Add) {
   const [a, v] = await Promise.all([
-    db.from('portal_assets').select('id, title, status, current_version, changes_requested_at').eq('client_id', id),
+    db.from('portal_assets').select('id, title, status, current_version, changes_requested_at').eq('client_id', id).is('held_for', null),
     db.from('portal_asset_versions').select('asset_id, version_no, created_at').eq('client_id', id),
   ]);
   if (a.error) return;

@@ -24,6 +24,10 @@ export interface PortalScript {
   sort_order: number;
   created_at: string;
   updated_at: string | null;
+  /** 'hiram' = published by the automation, not visible to the client yet. Absent before 20261024. */
+  held_for?: 'hiram' | null;
+  held_released_at?: string | null;
+  held_released_by?: string | null;
 }
 
 export interface PortalScriptVersion {
@@ -51,6 +55,8 @@ export interface PortalScriptComment {
   author_kind: 'client' | 'staff' | string;
   status: 'open' | 'resolved' | 'carried' | string;
   orphaned: boolean;
+  /** Staff-only note (e.g. Hiram's change request on a held draft). Never shown to a client. */
+  internal?: boolean;
   created_at: string;
 }
 
@@ -86,6 +92,8 @@ export interface PortalAssetComment {
   author_name: string;
   author_kind: string;
   status: string;
+  /** Staff-only note. Never shown to a client. */
+  internal?: boolean;
   created_at: string;
 }
 
@@ -96,6 +104,9 @@ export interface AssetReviewFields {
   approved_at?: string | null;
   approved_by?: string | null;
   changes_requested_at?: string | null;
+  held_for?: 'hiram' | null;
+  held_released_at?: string | null;
+  held_released_by?: string | null;
 }
 
 // ── status ──────────────────────────────────────────────────────────────

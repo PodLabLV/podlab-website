@@ -37,7 +37,7 @@ function useWaitingOnClient(clientId: string | undefined, token: string | null):
       const found: NextStep[] = [];
       try {
         const { scripts } = await loadScriptIndex();
-        for (const sc of scripts.filter((x) => isWaitingOnClient(x.status)).slice(0, 2)) {
+        for (const sc of scripts.filter((x) => !x.held_for && isWaitingOnClient(x.status)).slice(0, 2)) {
           found.push({ href: `/portal/scripts/${sc.id}`, kicker: 'Waiting on your approval', title: sc.title, detail: 'Read it, leave notes, or approve it so we can shoot.' });
         }
       } catch {
@@ -151,7 +151,7 @@ export default function PortalDashboard() {
 
   // What the client should do next, most important first.
   const steps: NextStep[] = [...waiting];
-  for (const a of assets.filter((x) => (x.status || '').toLowerCase() === 'in review').slice(0, 2)) {
+  for (const a of assets.filter((x) => !x.held_for && (x.status || '').toLowerCase() === 'in review').slice(0, 2)) {
     steps.push({ href: '/portal/deliverables', kicker: 'Ready for your review', title: a.title, detail: 'Approve it, or leave notes on what should change.' });
   }
   if (chain.answered === 0) {
