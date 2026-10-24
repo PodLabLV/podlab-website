@@ -241,7 +241,7 @@ export default function ScriptReviewPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <PageHeader eyebrow={[script.kind?.toUpperCase(), script.lab].filter(Boolean).join('  ·  ') || 'Script'} title={script.title} />
         <div className="-mt-6 mb-8 sm:mt-1 sm:mb-0">
-          <ScriptStatusBadge status={script.status} showPlain align="start" />
+          <ScriptStatusBadge status={script.status} showPlain align="start" held={Boolean(script.held_for)} />
         </div>
       </div>
 

@@ -375,7 +375,7 @@ function AssetCard({ asset, versions, comments, expanded, onToggle, onChanged }:
               {meta.length > 0 && <p className="portal-label !text-[12px] text-p-ink/70">{meta.join('  ·  ')}</p>}
               <p className="mt-1.5 text-lg font-semibold leading-snug text-p-ink">{asset.title}</p>
             </div>
-            <ScriptStatusBadge status={asset.status} />
+            <ScriptStatusBadge status={asset.status} held={Boolean(asset.held_for)} />
           </div>
           {asset.description && <p className="mt-2 text-base leading-relaxed text-p-ink/75">{asset.description}</p>}
 
@@ -474,7 +474,8 @@ export default function DeliverablesPage() {
 
   const labs = ['All', ...Array.from(new Set(assets.map((a) => a.lab).filter(Boolean) as string[]))];
   const shown = lab === 'All' ? assets : assets.filter((a) => a.lab === lab);
-  const waiting = shown.filter((a) => (a.status || '').toLowerCase() === 'in review' && versionsByAsset.has(a.id));
+  // Held rows only reach this page in staff view-as; they aren't waiting on the client.
+  const waiting = shown.filter((a) => !a.held_for && (a.status || '').toLowerCase() === 'in review' && versionsByAsset.has(a.id));
   const rest = shown.filter((a) => !waiting.includes(a));
 
   const card = (a: Asset) => (

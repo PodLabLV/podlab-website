@@ -45,9 +45,11 @@ export async function POST(req: Request) {
   if (caller) {
     const { data: asset } = await db
       .from('portal_assets')
-      .select('status, current_version')
+      .select('status, current_version, held_for')
       .eq('id', version.asset_id)
       .maybeSingle();
+    // Held for Hiram: invisible to the client, so nothing to note.
+    if (!asset || asset.held_for) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     if (asset?.current_version !== version.version_no) {
       return NextResponse.json({ error: 'There is a newer version. Refresh to see it.' }, { status: 409 });
     }
@@ -74,6 +76,8 @@ export async function POST(req: Request) {
       body,
       author_name: caller?.displayName ?? staff?.name ?? 'PodLab',
       author_kind: caller ? 'client' : 'staff',
+      // Internal notes come only from the staff release route.
+      internal: false,
     })
     .select('*')
     .single();

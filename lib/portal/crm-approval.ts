@@ -29,7 +29,7 @@ export async function stampCrmIfAllApproved(
 ): Promise<'stamped' | 'waiting' | 'no-lead' | 'error'> {
   if (!crmLeadId) return 'no-lead';
   try {
-    const { data: scripts, error } = await db.from('portal_scripts').select('status').eq('client_id', clientId);
+    const { data: scripts, error } = await db.from('portal_scripts').select('status').eq('client_id', clientId).is('held_for', null);
     if (error) throw new Error(error.message);
     if (!allApproved((scripts ?? []).map((s) => s.status as string | null))) return 'waiting';
 

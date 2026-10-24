@@ -45,8 +45,8 @@ function ScriptRow({ script, data }: ScriptRowProps) {
             </span>
           )}
         </span>
-        <span className="sm:hidden"><ScriptStatusBadge status={script.status} showPlain /></span>
-        <span className="hidden sm:block"><ScriptStatusBadge status={script.status} showPlain align="end" /></span>
+        <span className="sm:hidden"><ScriptStatusBadge status={script.status} showPlain held={Boolean(script.held_for)} /></span>
+        <span className="hidden sm:block"><ScriptStatusBadge status={script.status} showPlain align="end" held={Boolean(script.held_for)} /></span>
         <span className="hidden shrink-0 text-p-ink/65 transition group-hover:translate-x-1 group-hover:text-p-brandink sm:block" aria-hidden="true">
           →
         </span>
@@ -87,8 +87,9 @@ export default function ScriptsPage() {
     );
   }
 
-  const waiting = data.scripts.filter((s) => isWaitingOnClient(s.status));
-  const rest = data.scripts.filter((s) => !isWaitingOnClient(s.status));
+  // Held rows only reach this page in staff view-as; they aren't waiting on the client.
+  const waiting = data.scripts.filter((s) => !s.held_for && isWaitingOnClient(s.status));
+  const rest = data.scripts.filter((s) => !waiting.includes(s));
 
   return (
     <>

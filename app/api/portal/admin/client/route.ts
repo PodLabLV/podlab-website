@@ -27,8 +27,30 @@ export interface StaffClientDetail {
   cards: Array<{ id: string; title: string; board: string }>;
   /** Scripts TipTop drafted with the client, waiting on PodLab review. */
   drafts: Array<{ id: string; title: string; kind: string | null; createdAt: string; body: string; note: string | null; words: number | null }>;
+  /** Published by the automation with held: true. The client can't see these until staff releases them. */
+  held: HeldItem[];
   /** Tables whose migration hasn't run yet; the page says so instead of failing. */
   missing: string[];
+}
+
+export interface HeldItem {
+  id: string;
+  type: 'script' | 'asset';
+  title: string;
+  status: string | null;
+  version: number;
+  updatedAt: string | null;
+  /** Script: the current version's text. */
+  body: string | null;
+  words: number | null;
+  /** Asset: the current version, opened through GET /api/portal/deliverables?versionId=. */
+  versionId: string | null;
+  fileType: string | null;
+  mimeType: string | null;
+  externalUrl: string | null;
+  hasFile: boolean;
+  /** Open internal notes (Hiram's change requests). Never shown to the client. */
+  notes: Array<{ id: string; body: string; author: string; createdAt: string }>;
 }
 
 /**
@@ -72,6 +94,8 @@ export async function GET(req: Request) {
   const { data: draftVersions } = draftList.length
     ? await db.from('portal_script_versions').select('script_id, body, note, word_count').in('script_id', draftList.map((d) => d.id)).eq('version_no', 1)
     : { data: [] as Array<{ script_id: string; body: string; note: string | null; word_count: number | null }> };
+  const held = await loadHeld(db, id);
+  if (held === null) missing.push('held_for (20261024)');
   const boardName = new Map((boards.data ?? []).map((b: { id: string; name: string }) => [b.id, b.name]));
   const detail: StaffClientDetail = {
     client: {
@@ -94,6 +118,7 @@ export async function GET(req: Request) {
       linked: linked.has(b.id),
     })),
     missing,
+    held: held ?? [],
     drafts: draftList.map((d) => {
       const v = (draftVersions ?? []).find((x: { script_id: string }) => x.script_id === d.id) as { body: string; note: string | null; word_count: number | null } | undefined;
       return { id: d.id, title: d.title, kind: d.kind, createdAt: d.created_at, body: v?.body ?? '', note: v?.note ?? null, words: v?.word_count ?? null };
@@ -108,6 +133,65 @@ export async function GET(req: Request) {
     })),
   };
   return NextResponse.json(detail);
+}
+
+/** Held scripts and assets for one client. null = the 20261024 migration hasn't run. */
+async function loadHeld(db: ReturnType<typeof admin>, clientId: string): Promise<HeldItem[] | null> {
+  const [s, a] = await Promise.all([
+    db.from('portal_scripts').select('id, title, status, current_version, updated_at').eq('client_id', clientId).not('held_for', 'is', null).order('created_at'),
+    db.from('portal_assets').select('id, title, status, current_version, file_type, updated_at').eq('client_id', clientId).not('held_for', 'is', null).order('created_at'),
+  ]);
+  if (s.error || a.error) {
+    const msg = s.error?.message ?? a.error?.message ?? '';
+    if (!/held_for/.test(msg)) reportError('[portal] held load failed', msg);
+    return null;
+  }
+  type S = { id: string; title: string; status: string | null; current_version: number; updated_at: string | null };
+  type A = S & { file_type: string | null };
+  const scripts = (s.data ?? []) as S[];
+  const assets = (a.data ?? []) as A[];
+  if (!scripts.length && !assets.length) return [];
+
+  const [sv, av, sn, an] = await Promise.all([
+    scripts.length
+      ? db.from('portal_script_versions').select('script_id, version_no, body, word_count').in('script_id', scripts.map((r) => r.id))
+      : Promise.resolve({ data: [] }),
+    assets.length
+      ? db.from('portal_asset_versions').select('id, asset_id, version_no, external_url, storage_path, mime_type').in('asset_id', assets.map((r) => r.id))
+      : Promise.resolve({ data: [] }),
+    scripts.length
+      ? db.from('portal_script_comments').select('id, script_id, body, author_name, created_at').in('script_id', scripts.map((r) => r.id)).eq('internal', true).eq('status', 'open').order('created_at')
+      : Promise.resolve({ data: [] }),
+    assets.length
+      ? db.from('portal_asset_comments').select('id, asset_id, body, author_name, created_at').in('asset_id', assets.map((r) => r.id)).eq('internal', true).eq('status', 'open').order('created_at')
+      : Promise.resolve({ data: [] }),
+  ]);
+  type N = { id: string; body: string; author_name: string; created_at: string; script_id?: string; asset_id?: string };
+  const notes = (rows: N[] | null, key: 'script_id' | 'asset_id', id: string) =>
+    (rows ?? []).filter((n) => n[key] === id).map((n) => ({ id: n.id, body: n.body, author: n.author_name, createdAt: n.created_at }));
+  const sVers = (sv.data ?? []) as Array<{ script_id: string; version_no: number; body: string; word_count: number | null }>;
+  const aVers = (av.data ?? []) as Array<{ id: string; asset_id: string; version_no: number; external_url: string | null; storage_path: string | null; mime_type: string | null }>;
+
+  return [
+    ...scripts.map((r): HeldItem => {
+      const v = sVers.find((x) => x.script_id === r.id && x.version_no === r.current_version);
+      return {
+        id: r.id, type: 'script', title: r.title, status: r.status, version: r.current_version, updatedAt: r.updated_at,
+        body: v?.body ?? '', words: v?.word_count ?? null,
+        versionId: null, fileType: null, mimeType: null, externalUrl: null, hasFile: false,
+        notes: notes(sn.data as N[] | null, 'script_id', r.id),
+      };
+    }),
+    ...assets.map((r): HeldItem => {
+      const v = aVers.find((x) => x.asset_id === r.id && x.version_no === r.current_version);
+      return {
+        id: r.id, type: 'asset', title: r.title, status: r.status, version: r.current_version ?? 0, updatedAt: r.updated_at,
+        body: null, words: null,
+        versionId: v?.id ?? null, fileType: r.file_type, mimeType: v?.mime_type ?? null, externalUrl: v?.external_url ?? null, hasFile: Boolean(v?.storage_path),
+        notes: notes(an.data as N[] | null, 'asset_id', r.id),
+      };
+    }),
+  ];
 }
 
 const DRIVE_URL = /^https:\/\/drive\.google\.com\/(drive\/(u\/\d+\/)?folders\/|open\?id=)[\w-]{10,}/;

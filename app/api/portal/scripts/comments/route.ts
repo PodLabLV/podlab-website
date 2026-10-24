@@ -58,11 +58,13 @@ export async function POST(req: Request) {
 
   const { data: script } = await db
     .from('portal_scripts')
-    .select('id, status, current_version')
+    .select('id, status, current_version, held_for')
     .eq('id', version.script_id)
     .maybeSingle();
 
   if (caller) {
+    // Held for Hiram: the client can't see it, so they can't note it. Staff still can.
+    if (!script || script.held_for) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     if (script?.current_version !== version.version_no) {
       return NextResponse.json(
         { error: 'There is a newer version of this script. Refresh to see it.' },
@@ -80,10 +82,11 @@ export async function POST(req: Request) {
   if (p.parentId) {
     const { data: parent } = await db
       .from('portal_script_comments')
-      .select('id, version_id')
+      .select('id, version_id, internal')
       .eq('id', p.parentId)
       .maybeSingle();
-    if (!parent || parent.version_id !== version.id) {
+    // A client can't reply to (and so learn of) an internal staff note.
+    if (!parent || parent.version_id !== version.id || (caller && parent.internal)) {
       return NextResponse.json({ error: 'Bad request' }, { status: 400 });
     }
   }
@@ -106,6 +109,8 @@ export async function POST(req: Request) {
       body,
       author_name: caller?.displayName ?? staff?.name ?? 'PodLab',
       author_kind: caller ? 'client' : 'staff',
+      // Internal notes come only from the staff release route, never from here.
+      internal: false,
     })
     .select('*')
     .single();

@@ -39,10 +39,11 @@ export async function POST(req: Request) {
 
   const { data: script } = await db
     .from('portal_scripts')
-    .select('id, title, status, current_version')
+    .select('id, title, status, current_version, held_for')
     .eq('id', version.script_id)
     .maybeSingle();
-  if (!script) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  // Held for Hiram: not visible to the client, so nothing to approve.
+  if (!script || script.held_for) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   // Evidence must point at the text that will actually be shot.
   if (script.current_version !== version.version_no) {

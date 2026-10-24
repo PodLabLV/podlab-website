@@ -34,6 +34,7 @@ export async function POST(req: Request) {
     .from('portal_scripts')
     .select('id, client_id, title, status, current_version, changes_requested_at')
     .eq('id', p.scriptId)
+    .is('held_for', null)
     .maybeSingle();
   if (!script) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   if (script.client_id !== caller.clientId) {

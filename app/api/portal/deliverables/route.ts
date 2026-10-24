@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 import { driveFileId, parseChapters } from '@/lib/chapters';
 import { driveConfigured, streamUrl } from '@/lib/portal/drive';
 import { mirrorNotesToCard } from '@/lib/production-server';
-import { admin, resolveCaller, notifySlack, logToCrm } from '@/lib/portal-server';
+import { admin, resolveCaller, notifySlack, logToCrm, viewAsId } from '@/lib/portal-server';
 import {
   resolveActor,
   resolvePublisher,
@@ -48,12 +48,17 @@ export async function GET(req: Request) {
 
   const { data: version } = await db
     .from('portal_asset_versions')
-    .select('id, client_id, storage_path, external_url')
+    .select('id, client_id, asset_id, storage_path, external_url')
     .eq('id', versionId)
     .maybeSingle();
   if (!version) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   if (caller && version.client_id !== caller.clientId) {
     return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  }
+  // Held for Hiram: a real client can't open it. Staff (and staff previewing as the client) can.
+  if (caller && !viewAsId(req)) {
+    const { data: parent } = await db.from('portal_assets').select('held_for').eq('id', version.asset_id).maybeSingle();
+    if (!parent || parent.held_for) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
   if (!version.storage_path) {
@@ -91,6 +96,8 @@ interface PostPayload {
   sizeBytes?: number;
   mimeType?: string;
   note?: string;
+  /** register: park it for Hiram's review before the client can see it. */
+  held?: boolean;
 }
 
 const FILE_TYPES = ['PDF', 'VIDEO', 'FOLDER', 'LINK'];
@@ -170,14 +177,22 @@ export async function POST(req: Request) {
   let assetId = p.assetId ?? null;
   let clientId: string | null = null;
   let title = '';
+  // Held for Hiram (held_for = 'hiram'): invisible to the client until staff
+  // releases it. A new version of a held asset stays held; this never clears a hold.
+  let held = Boolean(p.held);
 
   if (assetId) {
     const { data: asset } = await db
       .from('portal_assets')
-      .select('id, client_id, title')
+      .select('id, client_id, title, url, current_version, held_for')
       .eq('id', assetId)
       .maybeSingle();
     if (!asset) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    // A legacy row (url, no versions) is already on the client's page too.
+    if (p.held && !asset.held_for && ((asset.current_version ?? 0) > 0 || asset.url)) {
+      return NextResponse.json({ error: "Already visible to the client; can't hold it now" }, { status: 409 });
+    }
+    held = held || Boolean(asset.held_for);
     clientId = asset.client_id;
     title = asset.title;
   } else {
@@ -197,6 +212,7 @@ export async function POST(req: Request) {
         file_type: FILE_TYPES.includes(fileType) ? fileType : 'LINK',
         status: 'in review',
         current_version: 0,
+        ...(p.held ? { held_for: 'hiram' } : {}),
         ...(p.crmCardId ? { crm_card_id: p.crmCardId } : {}),
       })
       .select('id')
@@ -254,12 +270,18 @@ export async function POST(req: Request) {
       approved_ip: null,
       approved_user_agent: null,
       updated_at: new Date().toISOString(),
+      ...(p.held ? { held_for: 'hiram', held_released_at: null, held_released_by: null } : {}),
     })
     .eq('id', assetId);
 
-  await recordActivity(db, clientId as string, 'deliverable', `${title} v${versionNo} is ready for your review`);
+  if (held) {
+    const { data: client } = await db.from('portal_clients').select('business_name').eq('id', clientId as string).maybeSingle();
+    await notifySlack(`*Awaiting Hiram* — ${client?.business_name ?? 'Client'} · ${title} v${versionNo}`);
+  } else {
+    await recordActivity(db, clientId as string, 'deliverable', `${title} v${versionNo} is ready for your review`);
+  }
 
-  return NextResponse.json({ assetId, versionId: version.id, versionNo });
+  return NextResponse.json({ assetId, versionId: version.id, versionNo, held });
 }
 
 async function clientOfAsset(db: ReturnType<typeof admin>, assetId: string): Promise<string | null> {
@@ -288,7 +310,9 @@ export async function PATCH(req: Request) {
     .from('portal_assets')
     .select('*')
     .eq('id', p.assetId)
+    .is('held_for', null)
     .maybeSingle();
+  // A held asset doesn't exist as far as the client is concerned.
   if (!asset) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   if (asset.client_id !== caller.clientId) {
     return NextResponse.json({ error: 'Not authorized' }, { status: 403 });

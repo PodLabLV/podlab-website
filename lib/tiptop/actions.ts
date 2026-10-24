@@ -63,6 +63,7 @@ export async function sendScriptRevision(
     .from('portal_scripts')
     .select('id, client_id, title, status, current_version, changes_requested_at')
     .eq('id', scriptId)
+    .is('held_for', null)
     .maybeSingle();
   if (missingTable(sErr)) return { ok: false, message: 'Scripts are not switched on for your account yet.' };
   if (!script || script.client_id !== caller.clientId) return { ok: false, message: 'I could not find that script.' };
@@ -151,6 +152,7 @@ export async function sendDeliverableRevision(
     .from('portal_assets')
     .select('id, client_id, title, status, current_version, changes_requested_at')
     .eq('id', assetId)
+    .is('held_for', null)
     .maybeSingle();
   if (aErr && /current_version|changes_requested_at/.test(aErr.message)) {
     return { ok: false, message: 'Deliverable reviews are not switched on yet. I can flag your note for the team instead.' };
