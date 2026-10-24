@@ -2,6 +2,7 @@ import { reportError } from '@/lib/alerts';
 import { NextResponse } from 'next/server';
 import { admin, resolveCaller, notifySlack, logToCrm } from '@/lib/portal-server';
 import { recordActivity, clientIp } from '@/lib/portal/server';
+import { stampCrmIfAllApproved } from '@/lib/portal/crm-approval';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -90,9 +91,18 @@ export async function POST(req: Request) {
     .eq('status', 'open');
 
   const label = `${script.title} v${version.version_no}`;
+  // Every visible script approved? Then the CRM card says so too, which is
+  // what the seat check reads 48 hours before the shoot.
+  const crmStamp = await stampCrmIfAllApproved(db, caller.clientId, caller.crmLeadId);
   await Promise.all([
     notifySlack(`*Script approved* — ${caller.businessName}\n${label}, approved by ${caller.displayName}. Ready to shoot.`),
-    logToCrm(db, caller, `Approved script in portal: ${label}`),
+    logToCrm(
+      db,
+      caller,
+      crmStamp === 'stamped'
+        ? `Approved script in portal: ${label}. All scripts approved, card marked Scripts approved.`
+        : `Approved script in portal: ${label}`,
+    ),
     recordActivity(db, caller.clientId, 'update', `You approved ${label}`),
   ]);
 
