@@ -28,12 +28,15 @@ interface Payload {
   bookingUrl?: string;
   /** site_ready: the preview site. */
   previewUrl?: string;
+  /** reminder: which step the client is holding up, and which nudge (1 = day 2, 2 = day 5). */
+  step?: 'intake' | 'assetslab' | 'scripts' | 'storyboard' | 'site';
+  nudge?: number;
   dryRun?: boolean;
   /** false = create/link the client only, no login and no email (publish first, then call again). */
   send?: boolean;
 }
 
-type Kind = 'new' | 'revised' | 'el_welcome' | 'assetslab_ready' | 'assets_ready' | 'storyboard_ready' | 'site_ready';
+type Kind = 'new' | 'revised' | 'reminder' | 'el_welcome' | 'assetslab_ready' | 'assets_ready' | 'storyboard_ready' | 'site_ready';
 
 interface Copy {
   subject: string;
@@ -47,7 +50,7 @@ interface Copy {
   primary?: 'intakeUrl' | 'previewUrl';
 }
 
-const COPY: Record<Exclude<Kind, 'revised'>, Copy> = {
+const COPY: Record<Exclude<Kind, 'revised' | 'reminder'>, Copy> = {
   new: {
     subject: 'Your video scripts are ready to review',
     kicker: 'Scripts ready',
@@ -106,6 +109,30 @@ const COPY: Record<Exclude<Kind, 'revised'>, Copy> = {
   },
 };
 
+const REMINDER_STEP = {
+  intake: { thing: 'your intake', action: 'fill it in', path: '/portal', primary: 'intakeUrl' as const, button: 'Finish your intake' },
+  assetslab: { thing: 'your AssetsLab', action: 'approve it or leave a note on what to change', path: '/portal/deliverables', primary: undefined, button: 'Review your AssetsLab' },
+  scripts: { thing: 'your scripts', action: 'approve them or leave a note on any line', path: '/portal/scripts', primary: undefined, button: 'Review your scripts' },
+  storyboard: { thing: 'your website storyboard', action: 'approve it or leave notes', path: '/portal/deliverables', primary: undefined, button: 'Review the storyboard' },
+  site: { thing: 'your website preview', action: 'approve it or leave notes', path: '/portal/deliverables', primary: 'previewUrl' as const, button: 'Open the preview' },
+};
+
+function reminderCopy(step: keyof typeof REMINDER_STEP, nudge: number): Copy {
+  const r = REMINDER_STEP[step];
+  const second = nudge >= 2;
+  return {
+    subject: second ? `Still waiting on ${r.thing}` : `A quick reminder: ${r.thing} is ready for you`,
+    kicker: second ? 'Second reminder' : 'Reminder',
+    lead: second
+      ? `Everything after this step waits on ${r.thing}. When you have a few minutes, ${r.action}. If something is in the way, reply to this email and we will help.`
+      : `${r.thing.charAt(0).toUpperCase() + r.thing.slice(1)} is ready and waiting in your portal. When you have a few minutes, ${r.action}, and we will take it from there.`,
+    button: r.button,
+    path: r.path,
+    activity: second ? `Second reminder: ${r.thing}` : `Reminder: ${r.thing}`,
+    primary: r.primary,
+  };
+}
+
 function revisedCopy(label: string): Copy {
   const what = label.trim().slice(0, 40) || 'scripts';
   return {
@@ -153,9 +180,15 @@ export async function POST(req: Request) {
   if (!EMAIL_OK.test(email) || email.endsWith('.invalid')) {
     return NextResponse.json({ error: 'A real email address is required.' }, { status: 400 });
   }
-  const kinds: Kind[] = ['new', 'revised', 'el_welcome', 'assetslab_ready', 'assets_ready', 'storyboard_ready', 'site_ready'];
+  const kinds: Kind[] = ['new', 'revised', 'reminder', 'el_welcome', 'assetslab_ready', 'assets_ready', 'storyboard_ready', 'site_ready'];
   const kind: Kind = p.kind && kinds.includes(p.kind) ? p.kind : 'new';
-  const c = kind === 'revised' ? revisedCopy(p.label ?? 'scripts') : COPY[kind];
+  if (kind === 'reminder' && !(p.step && p.step in REMINDER_STEP)) {
+    return NextResponse.json({ error: 'reminder needs step: intake | assetslab | scripts | storyboard | site' }, { status: 400 });
+  }
+  const c =
+    kind === 'revised' ? revisedCopy(p.label ?? 'scripts')
+    : kind === 'reminder' ? reminderCopy(p.step as keyof typeof REMINDER_STEP, Number(p.nudge) || 1)
+    : COPY[kind];
   for (const k of ['intakeUrl', 'bookingUrl', 'previewUrl'] as const) {
     if (p[k] && !HTTPS.test(p[k]!)) return NextResponse.json({ error: `${k} must be an https URL.` }, { status: 400 });
   }
@@ -208,7 +241,7 @@ export async function POST(req: Request) {
   if (p.dryRun) return NextResponse.json({ dryRun: true, clientId: client.id, kind, hasLogin: Boolean(client.user_id) });
   if (p.send === false) return NextResponse.json({ clientId: client.id, created, emailed: false });
 
-  if (kind === 'revised' && client.notify_email === false) {
+  if ((kind === 'revised' || kind === 'reminder') && client.notify_email === false) {
     return NextResponse.json({ clientId: client.id, created, emailed: false, skipped: 'notify_email is off' });
   }
 
