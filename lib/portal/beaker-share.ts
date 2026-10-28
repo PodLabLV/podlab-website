@@ -54,7 +54,7 @@ export function referralStep(
 const DISCLOSURE = "(Full disclosure: I may earn a referral fee if you work with them.)";
 
 export function shareText(url: string): string {
-  return `PodLab is a video studio in Las Vegas. They film owners once and turn it into sales videos that do the explaining for you. Their free Business Diagnostic takes about 4 minutes: ${url} ${DISCLOSURE}`;
+  return `PodLab is a video studio in Las Vegas. They film a free sales video (VSL) plus FAQ videos for Nevada owners who are already making sales. It takes about an hour and you keep the footage. Apply here: ${url} ${DISCLOSURE}`;
 }
 
 export function smsHref(url: string): string {
@@ -62,13 +62,13 @@ export function smsHref(url: string): string {
 }
 
 export function mailtoHref(url: string, firstName = ""): string {
-  const subject = "Worth 5 minutes";
+  const subject = "A free sales video for your business";
   const body = [
     "Hi,",
     "",
-    "PodLab is a studio in Las Vegas. They record you once and build the videos and pages that sell for you.",
+    "PodLab is a video studio in Las Vegas. They're filming free sales videos for Nevada business owners who are already making sales: a VSL plus FAQ videos, about an hour in their studio, and the footage is yours.",
     "",
-    "Their free Business Diagnostic takes about 4 minutes and names the one thing holding the business back:",
+    "They write the scripts and you read them off a teleprompter. Apply here:",
     url,
     "",
     "Happy to introduce you to Hiram, the founder, if you'd rather talk first.",
@@ -79,9 +79,10 @@ export function mailtoHref(url: string, firstName = ""): string {
   return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
-// The one link the big button copies: the Diagnostic, as the starter kit uses.
+// The one link the big button copies: the free VSL application, because a
+// referral earns points when they film.
 export function primaryLink(links: Array<{ label: string; url: string }>): string | null {
-  return links.find((l) => /diagnostic/i.test(l.label))?.url || links[0]?.url || null;
+  return links.find((l) => /apply for a free vsl/i.test(l.label))?.url || links[0]?.url || null;
 }
 
 // Quick refer takes one contact box. An @ makes it an email, anything else a phone.
