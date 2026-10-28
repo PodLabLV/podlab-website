@@ -38,19 +38,19 @@ t("points events move a lagging card forward, never back", () => {
 });
 
 t("share links carry the link and the disclosure", () => {
-  const url = "https://podlablv.com/diagnostic?ref=BK-1";
+  const url = "https://freevsl.podlablv.com/apply?ref=BK-1";
   assert.match(shareText(url), /BK-1/);
   assert.match(shareText(url), /referral fee/);
   assert.ok(smsHref(url).startsWith("sms:?&body="));
   assert.ok(decodeURIComponent(smsHref(url)).includes(url));
   const m = mailtoHref(url, "Dana");
-  assert.ok(m.startsWith("mailto:?subject=Worth%205%20minutes&body="));
+  assert.ok(m.startsWith("mailto:?subject=A%20free%20sales%20video%20for%20your%20business&body="));
   assert.ok(decodeURIComponent(m).endsWith("\n\nDana"));
   assert.ok(!/[—–]/.test(shareText(url) + decodeURIComponent(m)), "no dashes in share copy");
 });
 
 t("primary link prefers the Diagnostic", () => {
-  assert.equal(primaryLink([{ label: "Homepage", url: "a" }, { label: "Free Business Diagnostic", url: "b" }]), "b");
+  assert.equal(primaryLink([{ label: "Homepage", url: "a" }, { label: "Apply for a free VSL", url: "b" }]), "b");
   assert.equal(primaryLink([{ label: "Homepage", url: "a" }]), "a");
   assert.equal(primaryLink([]), null);
 });
