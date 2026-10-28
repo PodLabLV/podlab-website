@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { usePortal, formatDate } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState, StatusBadge } from '@/components/portal/Shared';
+import StudioDayCard from '@/components/portal/StudioDayCard';
 
 const STATUSES = ['not started', 'in progress', 'blocked', 'done'];
 
@@ -17,6 +18,7 @@ export default function DeliveryPage() {
     return (
       <>
         <PageHeader title="Delivery" />
+        <StudioDayCard className="mb-10" />
         <EmptyState
           title="No build in flight"
           body="Once a Lab is underway, every phase appears here with its status, who owns it, and what has shipped."
@@ -58,6 +60,8 @@ export default function DeliveryPage() {
         title="Delivery"
         subtitle={`${client.plan_label ?? 'Your build'}. Every phase, who owns it, and where it stands.`}
       />
+
+      <StudioDayCard className="mb-6" />
 
       <Card className="mb-6 p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
