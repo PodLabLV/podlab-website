@@ -1,8 +1,15 @@
 'use client';
 
+// The client's Beaker page. Five blocks, top to bottom: refer someone (copy,
+// text, email, or a two-field quick refer), points toward the next reward,
+// what they've earned, where each referral is, and getting paid (payout setup,
+// credit, and the statement behind a disclosure).
+
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowUpRight, Check, ChevronDown, Clapperboard, Copy, Layers, Lock, Magnet, Mail, MessageSquare, Scissors, Upload, type LucideIcon } from 'lucide-react';
 import { usePortal } from '@/lib/portal-data';
 import { PageHeader, EmptyState } from '@/components/portal/Shared';
+import { TRACK, contactField, lockedText, mailtoHref, nextGoal, payoutSetup, primaryLink, referralStep, smsHref } from '@/lib/portal/beaker-share';
 
 interface LedgerRow {
   id: string;
@@ -41,39 +48,127 @@ interface Points {
   recent: Array<{ name: string; kind: 'filmed' | 'bought'; points: number; at: string }>;
 }
 
-// The CRM's reasons are written for the team ("Needs 6 points, has 4"); say it to the client.
-function missing(r: Points['rewards'][number], p: Points): string {
-  if (p.balance < r.points) return `${r.points - p.balance} more point${r.points - p.balance === 1 ? '' : 's'} to go`;
-  if (r.key === 'funnel' && p.buyers < 2) return `Needs ${2 - p.buyers} more referral${2 - p.buyers === 1 ? '' : 's'} who bought`;
-  if (r.key === 'funnel' && p.funnelLockedUntil) return `Available again ${day(p.funnelLockedUntil.slice(0, 10))}`;
-  return r.reason ?? 'Not unlocked yet';
-}
+type Where = 'refer' | 'points' | 'pay' | 'credit';
+
+const BADGES: Record<string, { label: string; need: string; Icon: LucideIcon }> = {
+  edit: { label: 'Free Standard Edit', need: '3 points', Icon: Scissors },
+  lead_magnet: { label: 'Free lead magnet', need: '3 points', Icon: Magnet },
+  session: { label: 'Second studio session', need: '6 points', Icon: Clapperboard },
+  funnel: { label: 'Full funnel', need: '12 points + 2 buyers', Icon: Layers },
+};
 
 const usd = (c: number) => `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: c % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
 const day = (d: string) => new Date(d.length === 10 ? `${d}T12:00:00Z` : d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: d.length === 10 ? 'UTC' : undefined });
+const STROKE = 1.5;
 
-const FIELD = 'w-full border border-p-line bg-p-paper px-4 py-3 text-base text-p-ink placeholder:text-p-ink/50 focus:border-p-brandink focus:outline-none';
-const BTN = 'portal-label bg-p-brand px-5 py-3 !text-[13px] text-black transition hover:bg-p-pop disabled:opacity-40';
+function useInView<T extends Element>() {
+  const ref = useRef<T>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setInView(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.12 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return { ref, inView };
+}
 
-function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+function Reveal({ children }: { children: React.ReactNode }) {
+  const { ref, inView } = useInView<HTMLDivElement>();
   return (
-    <section className="mt-12">
-      <span className="portal-label block text-p-brandink">{title}</span>
-      {hint && <p className="mt-2 max-w-2xl text-base text-p-ink/75">{hint}</p>}
-      <div className="mt-4">{children}</div>
-    </section>
+    <div ref={ref} className={`bkp-reveal mt-8 ${inView ? 'is-in' : ''}`}>
+      {children}
+    </div>
   );
 }
 
-function Step({ done, title, children }: { done: boolean; title: string; children?: React.ReactNode }) {
+function Card({ children }: { children: React.ReactNode }) {
   return (
-    <li className="bg-p-paper px-4 py-4">
-      <p className="flex items-center gap-3 text-base text-p-ink">
-        <span className={`portal-label inline-flex h-6 w-6 shrink-0 items-center justify-center border !text-[11px] ${done ? 'border-p-brandink bg-p-brand text-black' : 'border-p-ink/30 text-p-ink/70'}`}>{done ? '✓' : ''}</span>
-        {title}
-      </p>
-      {!done && children && <div className="mt-3 pl-9">{children}</div>}
+    <Reveal>
+      <div className="bkp-shell">
+        <div className="bkp-core">{children}</div>
+      </div>
+    </Reveal>
+  );
+}
+
+type PillProps = { children: React.ReactNode; icon?: LucideIcon; ghost?: boolean };
+function PillButton({ children, icon: Icon = ArrowUpRight, ghost, className = '', ...rest }: PillProps & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button {...rest} className={`bkp-pill ${ghost ? 'bkp-ghost' : 'bkp-sig'} ${className}`}>
+      {children}
+      <span className="bkp-ico">
+        <Icon size={16} strokeWidth={STROKE} />
+      </span>
+    </button>
+  );
+}
+function PillLink({ children, icon: Icon = ArrowUpRight, ghost, ...rest }: PillProps & React.AnchorHTMLAttributes<HTMLAnchorElement>) {
+  return (
+    <a {...rest} className={`bkp-pill ${ghost ? 'bkp-ghost' : 'bkp-sig'}`}>
+      {children}
+      <span className="bkp-ico">
+        <Icon size={16} strokeWidth={STROKE} />
+      </span>
+    </a>
+  );
+}
+
+function Meter({ value }: { value: number }) {
+  const { ref, inView } = useInView<HTMLDivElement>();
+  return (
+    <div ref={ref} className="bkp-meter" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(value * 100)}>
+      <span style={{ transform: `scaleX(${inView ? value : 0})` }} />
+    </div>
+  );
+}
+
+function Label({ children }: { children: React.ReactNode }) {
+  return <span className="portal-label block !text-[12px] text-p-ink/65">{children}</span>;
+}
+
+function Note({ note }: { note: { ok: boolean; text: string } | null }) {
+  if (!note) return null;
+  return <p className={`mt-4 text-base ${note.ok ? 'text-p-brandink' : 'text-p-bad'}`}>{note.text}</p>;
+}
+
+function Step({ done, n, title, children }: { done: boolean; n: number; title: string; children?: React.ReactNode }) {
+  return (
+    <li className="flex gap-4 border-t border-p-line py-5">
+      <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-[13px] font-bold ${done ? 'bg-p-brand text-black' : 'border border-p-line text-p-ink/70'}`}>
+        {done ? <Check size={14} strokeWidth={2} /> : n}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-base font-semibold text-p-ink">{title}</p>
+        {!done && children && <div className="mt-2">{children}</div>}
+      </div>
     </li>
+  );
+}
+
+function Track({ step }: { step: number }) {
+  return (
+    <ol className="mt-3 grid grid-cols-4 gap-1.5" aria-label={`${TRACK[step]}, step ${step + 1} of 4`}>
+      {TRACK.map((t, i) => (
+        <li key={t}>
+          <span className={`block h-1 rounded-full ${i <= step ? 'bg-p-brand' : 'bg-p-line'}`} />
+          <span className={`mt-1.5 block text-[12px] ${i <= step ? 'text-p-ink' : 'text-p-ink/50'}`}>{t}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -82,13 +177,15 @@ export default function ReferralsPage() {
   const [s, setS] = useState<Summary | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'not' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
-  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+  const [note, setNote] = useState<{ where: Where; ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [whop, setWhop] = useState('');
   const [acceptPayout, setAcceptPayout] = useState(false);
   const [acceptCredit, setAcceptCredit] = useState(false);
-  const [ref, setRef] = useState({ name: '', company: '', referralEmail: '', phone: '', notes: '' });
+  const [ref, setRef] = useState({ name: '', contact: '' });
+  const [referred, setReferred] = useState<string | null>(null);
+  const [requested, setRequested] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -110,7 +207,7 @@ export default function ReferralsPage() {
     load();
   }, [load]);
 
-  async function act(body: Record<string, unknown> | FormData, ok: (j: Record<string, unknown>) => string) {
+  async function act(where: Where, body: Record<string, unknown> | FormData, ok: (j: Record<string, unknown>) => string) {
     setBusy(true);
     setNote(null);
     try {
@@ -122,16 +219,17 @@ export default function ReferralsPage() {
       });
       const j = await r.json();
       if (!r.ok || j.ok === false) throw new Error(j.error || 'Could not save that.');
-      setNote({ ok: true, text: ok(j) });
+      setNote({ where, ok: true, text: ok(j) });
       await load();
       return true;
     } catch (e) {
-      setNote({ ok: false, text: e instanceof Error ? e.message : 'Could not save that.' });
+      setNote({ where, ok: false, text: e instanceof Error ? e.message : 'Could not save that.' });
       return false;
     } finally {
       setBusy(false);
     }
   }
+  const noteAt = (w: Where) => (note?.where === w ? note : null);
 
   function copy(url: string) {
     navigator.clipboard?.writeText(url).then(() => {
@@ -152,252 +250,352 @@ export default function ReferralsPage() {
   if (state === 'error' || !s) return <EmptyState title="Could not load your referrals" body={error ?? 'Try again in a minute.'} />;
 
   const a = s.affiliate;
+  const p = s.points ?? null;
   const held = s.ledger.filter((r) => r.effective_status === 'held').reduce((t, r) => t + r.amount_cents, 0);
-  const paid = s.payouts.reduce((t, p) => t + p.amount_cents, 0);
-  const setupDone = a.whopLinked && a.termsCurrent && a.w9 !== 'missing';
-  const willPay = setupDone && s.payableCents >= s.minimumPayoutCents;
+  const earned = s.ledger.filter((r) => r.effective_status !== 'void').reduce((t, r) => t + r.amount_cents, 0);
+  const setup = payoutSetup(a);
+  const willPay = setup.complete && s.payableCents >= s.minimumPayoutCents;
+  const myLink = primaryLink(s.links);
+  const firstName = a.name.split(' ')[0];
+  const goal = p ? nextGoal(p) : null;
+  const payOpen = earned > 0 && (!setup.complete || s.payableCents > 0);
 
   return (
-    <div>
-      <PageHeader
-        eyebrow="Beaker"
-        title="Send a founder,"
-        accent="earn 10%."
-        subtitle={`You're Beaker ${a.beakerId}. When someone you send becomes a PodLab client, you earn 10% of what they pay, on up to 12 payments. Earnings become available 45 days after each payment: cash them out, or use them on your own PodLab work.`}
-      />
+    <div className="mx-auto max-w-3xl pb-16">
+      <PageHeader eyebrow={`Beaker ${a.beakerId}`} title="Send a founder," accent="earn 10%." subtitle="Anyone who opens your link is yours for 90 days." />
 
-      {note && (
-        <p className={`mb-6 border-l-2 px-4 py-3 text-base ${note.ok ? 'border-p-brandink bg-p-brand/5 text-p-ink/90' : 'border-p-bad bg-p-bad/5 text-p-ink/90'}`}>{note.text}</p>
-      )}
+      {/* ── refer ── */}
+      <div className="bkp-shell">
+        <div className="bkp-core">
+          {myLink && (
+            <>
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <PillButton onClick={() => copy(myLink)} icon={copied === myLink ? Check : Copy} aria-live="polite">
+                  {copied === myLink ? 'Copied' : 'Copy my link'}
+                </PillButton>
+                <PillLink ghost href={smsHref(myLink)} icon={MessageSquare}>
+                  Text it
+                </PillLink>
+                <PillLink ghost href={mailtoHref(myLink, firstName)} icon={Mail}>
+                  Email it
+                </PillLink>
+              </div>
+              <p className="mt-3 truncate font-mono text-[13px] text-p-ink/55">{myLink}</p>
+            </>
+          )}
 
-      <div className="grid grid-cols-2 gap-px border border-p-line bg-p-line sm:grid-cols-4">
-        {[
-          { label: 'Available now', value: s.payableCents, sub: 'cash out or credit' },
-          { label: 'On hold', value: held, sub: '45-day hold' },
-          { label: 'Paid to you', value: paid, sub: 'cash + credit' },
-          { label: 'Your credit', value: s.creditCents, sub: 'off your next invoice' },
-        ].map((m) => (
-          <div key={m.label} className="bg-p-card p-5">
-            <p className="portal-label !text-[12px] text-p-ink/70">{m.label}</p>
-            <p className="mt-3 text-3xl font-bold tracking-tight text-p-ink">{usd(Math.max(0, m.value))}</p>
-            <p className="mt-1 text-sm text-p-ink/65">{m.sub}</p>
+          <div className="mt-10 border-t border-p-line pt-8">
+            <Label>Or send us their details</Label>
+            {referred ? (
+              <div className="mt-4 flex items-start gap-3">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-p-brand text-black">
+                  <Check size={14} strokeWidth={2} />
+                </span>
+                <div>
+                  <p className="text-base text-p-ink">{referred}</p>
+                  <button onClick={() => setReferred(null)} className="mt-2 text-sm text-p-ink/70 underline underline-offset-4">
+                    Send another
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const c = contactField(ref.contact);
+                  let sent = 'Sent.';
+                  act('refer', { action: 'refer', name: ref.name, company: '', notes: '', referralEmail: c.email, phone: c.phone }, (j) => (sent = String(j.message ?? 'Sent.'))).then((ok) => {
+                    if (!ok) return;
+                    setReferred(sent);
+                    setRef({ name: '', contact: '' });
+                  });
+                }}
+                className="mt-4 grid items-center gap-3 sm:grid-cols-[1fr_1fr_auto]"
+              >
+                <input required value={ref.name} onChange={(e) => setRef({ ...ref, name: e.target.value })} placeholder="Their name" aria-label="Their name" className="bkp-field" />
+                <input value={ref.contact} onChange={(e) => setRef({ ...ref, contact: e.target.value })} placeholder="Phone or email" aria-label="Their phone or email" className="bkp-field" />
+                <PillButton type="submit" disabled={busy || !ref.name.trim()}>
+                  Send
+                </PillButton>
+              </form>
+            )}
+            {!referred && noteAt('refer') && !noteAt('refer')!.ok && <Note note={noteAt('refer')} />}
           </div>
-        ))}
+
+          {s.links.length > 1 && (
+            <details className="bkp-details mt-8">
+              <summary className="flex items-center gap-2 text-sm text-p-ink/70">
+                More links <ChevronDown size={14} strokeWidth={STROKE} />
+              </summary>
+              <ul className="mt-4 space-y-3">
+                {s.links.map((l) => (
+                  <li key={l.url} className="flex items-center gap-3">
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-base text-p-ink">{l.label.replace(/\s+[—–]\s+/, ', ')}</span>
+                      <span className="block truncate font-mono text-[12px] text-p-ink/55">{l.url}</span>
+                    </span>
+                    <button onClick={() => copy(l.url)} className={`flex shrink-0 items-center gap-1.5 text-sm ${copied === l.url ? 'text-p-brandink' : 'text-p-ink/70'}`}>
+                      {copied === l.url ? <Check size={14} strokeWidth={STROKE} /> : <Copy size={14} strokeWidth={STROKE} />}
+                      {copied === l.url ? 'Copied' : 'Copy'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
       </div>
 
-      <Section title="Your links" hint="Anyone who clicks one is yours for 90 days, on any page they visit after.">
-        <ul className="divide-y divide-p-line border border-p-line">
-          {s.links.map((l) => (
-            <li key={l.url} className="flex flex-wrap items-center justify-between gap-3 bg-p-paper px-4 py-3">
-              <span className="min-w-0">
-                <span className="block text-base text-p-ink">{l.label}</span>
-                <span className="block break-all text-sm text-p-ink/65">{l.url}</span>
-              </span>
-              <button onClick={() => copy(l.url)} className="portal-label shrink-0 border border-p-brandink px-3 py-2 !text-[11px] text-p-brandink transition hover:bg-p-brand hover:text-black">
-                {copied === l.url ? 'Copied' : 'Copy'}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </Section>
-
-      <Section title="Cash out" hint={`Payouts go out on the 1st and the 14th, by Whop transfer, once you have at least ${usd(s.minimumPayoutCents)} available. Next: ${day(s.nextRun)}.`}>
-        {willPay && <p className="mb-4 border-l-2 border-p-brandink bg-p-brand/5 px-4 py-3 text-base text-p-ink/90">{usd(s.payableCents)} goes to @{a.whopUsername} on {day(s.nextRun)}.</p>}
-        {setupDone && !willPay && s.payableCents > 0 && (
-          <p className="mb-4 text-base text-p-ink/75">You have {usd(s.payableCents)} available. It goes out once it reaches {usd(s.minimumPayoutCents)}, or use it as credit below.</p>
-        )}
-        <ul className="divide-y divide-p-line border border-p-line">
-          <Step done={a.whopLinked} title={a.whopLinked ? `Whop account linked: @${a.whopUsername}` : 'Link your Whop account'}>
-            <p className="mb-2 text-base text-p-ink/75">Payouts land in your Whop balance. No bank details are collected. Your username is on your Whop profile.</p>
-            <div className="flex flex-wrap gap-2">
-              <input value={whop} onChange={(e) => setWhop(e.target.value)} placeholder="@yourname" aria-label="Whop username" className={`${FIELD} max-w-xs`} />
-              <button disabled={busy || !whop.trim()} onClick={() => act({ action: 'linkWhop', username: whop }, () => 'Whop account linked.')} className={BTN}>
-                Link
-              </button>
+      {/* ── points ── */}
+      {p && (
+        <Card>
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <Label>Points</Label>
+              <p className={`mt-2 font-mono text-[44px] font-bold leading-none ${p.balance > 0 ? 'text-p-brandink' : 'text-p-ink'}`}>{p.balance}</p>
             </div>
-          </Step>
-          <Step done={a.termsCurrent} title={`Accept the payout terms (${a.termsVersion})`}>
-            <p className="mb-2 text-base text-p-ink/75">
-              Commissions are paid by Whop transfer to your Whop account. PodLab doesn&apos;t collect bank details. A W-9 is required before your first payout. Everything else in your Beaker
-              agreement stays the same.
-            </p>
-            <label className="flex items-center gap-2 text-base text-p-ink">
-              <input type="checkbox" checked={acceptPayout} onChange={(e) => setAcceptPayout(e.target.checked)} />I agree to the payout terms ({a.termsVersion}).
-            </label>
-            <button disabled={busy || !acceptPayout} onClick={() => act({ action: 'acceptTerms', accept: true }, () => 'Payout terms accepted.')} className={`${BTN} mt-3`}>
-              Accept
-            </button>
-          </Step>
-          <Step done={a.w9 !== 'missing'} title={a.w9 === 'missing' ? 'Upload your W-9' : `W-9 ${a.w9 === 'verified' ? 'verified' : 'received'}`}>
-            <p className="mb-2 text-base text-p-ink/75">
-              Fill in the{' '}
-              <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener noreferrer" className="text-p-brandink underline">
-                IRS W-9
-              </a>{' '}
-              and upload it (PDF or photo). Only PodLab&apos;s owner can open it.
-            </p>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/pdf,image/png,image/jpeg,image/heic"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (!f) return;
-                const fd = new FormData();
-                fd.set('file', f);
-                act(fd, () => 'W-9 uploaded. Thank you.');
-                e.target.value = '';
-              }}
-            />
-            <button disabled={busy} onClick={() => fileRef.current?.click()} className={BTN}>
-              Upload W-9
-            </button>
-          </Step>
-        </ul>
-      </Section>
-
-      <Section title="Use it on PodLab" hint="Turn what's available into credit, dollar for dollar. It comes off your next PodLab invoice or checkout link.">
-        {s.payableCents > 0 && s.canRedeem ? (
-          <div className="border border-p-line bg-p-paper p-5">
-            <p className="text-lg text-p-ink">Turn {usd(s.payableCents)} into PodLab credit</p>
-            <p className="mt-3 text-base text-p-ink/80">{s.creditTerms}</p>
-            <label className="mt-4 flex items-center gap-2 text-base text-p-ink">
-              <input type="checkbox" checked={acceptCredit} onChange={(e) => setAcceptCredit(e.target.checked)} />I agree to the credit terms.
-            </label>
-            <button
-              disabled={busy || !acceptCredit}
-              onClick={() =>
-                act({ action: 'redeem', accept: true, termsVersion: s.creditTermsVersion }, (j) => `${usd(Number(j.amountCents) || 0)} is now PodLab credit. It comes off your next invoice.`).then((ok) => ok && setAcceptCredit(false))
-              }
-              className={`${BTN} mt-4`}
-            >
-              Use as credit
-            </button>
-            {a.w9 === 'missing' && <p className="mt-3 text-sm text-p-ink/70">Credit counts as paid commission for taxes, so it needs your W-9 too.</p>}
-          </div>
-        ) : (
-          <p className="text-base text-p-ink/75">
-            {s.creditCents > 0 ? `You have ${usd(s.creditCents)} of credit. PodLab takes it off your next invoice. ` : ''}
-            {s.payableCents > 0 ? 'Credit needs your portal linked to your PodLab deal; ask PodLab.' : held > 0 ? `Nothing available yet. ${usd(held)} is on its 45-day hold.` : 'Nothing available yet.'}
-          </p>
-        )}
-      </Section>
-
-      <Section title="Refer someone" hint="Know a founder who should talk to PodLab? Send them here and PodLab reaches out. Someone already in our system isn't credited (Beaker agreement §2.4), and we'll tell you.">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            act({ action: 'refer', ...ref }, (j) => String(j.message ?? 'Sent.')).then((ok) => ok && setRef({ name: '', company: '', referralEmail: '', phone: '', notes: '' }));
-          }}
-          className="grid gap-3 sm:grid-cols-2"
-        >
-          <input required value={ref.name} onChange={(e) => setRef({ ...ref, name: e.target.value })} placeholder="Their name" aria-label="Their name" className={FIELD} />
-          <input value={ref.company} onChange={(e) => setRef({ ...ref, company: e.target.value })} placeholder="Business" aria-label="Business" className={FIELD} />
-          <input type="email" value={ref.referralEmail} onChange={(e) => setRef({ ...ref, referralEmail: e.target.value })} placeholder="Email" aria-label="Their email" className={FIELD} />
-          <input value={ref.phone} onChange={(e) => setRef({ ...ref, phone: e.target.value })} placeholder="Phone" aria-label="Their phone" className={FIELD} />
-          <textarea value={ref.notes} onChange={(e) => setRef({ ...ref, notes: e.target.value })} placeholder="What they need, and how you know them" aria-label="Notes" rows={3} className={`${FIELD} sm:col-span-2`} />
-          <button disabled={busy || !ref.name.trim()} className={`${BTN} sm:col-span-2 sm:justify-self-start`}>
-            Send referral
-          </button>
-        </form>
-      </Section>
-
-      <Section title={`Your referrals · ${s.referrals.length}`}>
-        {s.referrals.length ? (
-          <ul className="divide-y divide-p-line border border-p-line">
-            {s.referrals.map((r) => (
-              <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 bg-p-paper px-4 py-3">
-                <span className="min-w-0">
-                  <span className="block break-words text-base text-p-ink">{r.name}</span>
-                  <span className="portal-label mt-1 block !text-[11px] text-p-ink/65">
-                    {r.stage} · since {day(r.created_at)}
-                  </span>
-                </span>
-                <span className="text-base font-semibold text-p-ink">{r.earnedCents ? usd(r.earnedCents) : '—'}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-base text-p-ink/75">No referrals yet. Share a link above.</p>
-        )}
-      </Section>
-
-      {s.ledger.length > 0 && (
-        <Section title="Earnings">
-          <ul className="divide-y divide-p-line border border-p-line">
-            {s.ledger.slice(0, 30).map((r) => (
-              <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 bg-p-paper px-4 py-3">
-                <span className="min-w-0">
-                  <span className="block break-words text-base text-p-ink">{r.lead_name?.split('—')[0].trim() || 'Client payment'}</span>
-                  <span className="portal-label mt-1 block !text-[11px] text-p-ink/65">
-                    {r.kind === 'commission' ? 'Commission' : r.kind === 'clawback' ? 'Refund clawback' : 'Adjustment'} · paid {day(r.paid_at_source)}
-                    {r.effective_status === 'held' ? ` · available ${day(r.hold_until)}` : ''}
-                  </span>
-                </span>
-                <span className="flex items-center gap-3">
-                  <span className={`portal-label border px-2 py-1 !text-[11px] ${r.effective_status === 'payable' ? 'border-p-brandink text-p-brandink' : 'border-p-ink/20 text-p-ink/70'}`}>
-                    {r.effective_status === 'payable' ? 'available' : r.effective_status}
-                  </span>
-                  <span className="text-base font-semibold text-p-ink">{usd(r.amount_cents)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Section>
-      )}
-
-      {s.points && (
-        <Section title="Points" hint="Earn 1 point when someone you send films their free VSL, 3 more when they buy.">
-          <div className="border border-p-line bg-p-card p-5">
-            <p className="portal-label !text-[12px] text-p-ink/70">Your points</p>
-            <p className="mt-3 text-3xl font-bold tracking-tight text-p-ink">{s.points.balance}</p>
-            <p className="mt-1 text-sm text-p-ink/65">
-              {s.points.referrals} referral{s.points.referrals === 1 ? '' : 's'} · {s.points.buyers} bought
-              {s.points.nextExpiry ? ` · ${s.points.nextExpiry.points} expire ${day(s.points.nextExpiry.at.slice(0, 10))}` : ''}
+            <p className="text-right text-sm text-p-ink/70">
+              {goal ? (
+                <>
+                  {goal.toGo} more to
+                  <br />
+                  <span className="text-p-ink">{BADGES[p.rewards.find((r) => r.label === goal.label)?.key ?? '']?.label ?? goal.label}</span>
+                </>
+              ) : (
+                'Enough for every reward'
+              )}
             </p>
           </div>
-          <ul className="mt-px divide-y divide-p-line border border-p-line border-t-0">
-            {s.points.rewards.map((r) => (
-              <li key={r.key} className="flex flex-wrap items-center justify-between gap-3 bg-p-paper px-4 py-3">
-                <span className="min-w-0">
-                  <span className="block text-base text-p-ink">{r.label}</span>
-                  <span className="portal-label mt-1 block !text-[11px] text-p-ink/65">
-                    {r.points} points{r.key === 'funnel' ? ', with 2 referrals who bought' : ''} · {usd(r.valueCents)} value
+          <div className="mt-5">
+            <Meter value={goal ? goal.pct : 1} />
+          </div>
+          <p className="mt-4 text-sm text-p-ink/70">1 point when someone you send films their free VSL. 3 more when they buy.</p>
+
+          <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {p.rewards.map((r) => {
+              const b = BADGES[r.key] ?? { label: r.label, need: `${r.points} points`, Icon: Layers };
+              const asked = requested.includes(r.key);
+              return (
+                <li key={r.key} className={`flex flex-col rounded-[18px] border bg-p-paper p-4 ${r.ok ? 'border-p-brandink/50' : 'border-p-line opacity-75'}`}>
+                  <span className={`grid h-10 w-10 place-items-center rounded-full ${r.ok ? 'bg-p-brand/15 text-p-brandink' : 'bg-p-ink/5 text-p-ink/50'}`}>
+                    {r.ok ? <b.Icon size={18} strokeWidth={STROKE} /> : <Lock size={16} strokeWidth={STROKE} />}
                   </span>
-                </span>
-                {r.ok ? (
-                  <button
-                    disabled={busy}
-                    onClick={() => act({ action: 'requestPoints', reward: r.key }, (j) => (j.already ? "You already asked for this one. We'll reach out to set it up." : "We'll reach out to set it up."))}
-                    className="portal-label shrink-0 border border-p-brandink px-3 py-2 !text-[11px] text-p-brandink transition hover:bg-p-brand hover:text-black disabled:opacity-40"
-                  >
-                    Request this
-                  </button>
-                ) : (
-                  <span className="text-sm text-p-ink/65">{missing(r, s.points!)}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-          {s.points.recent.length > 0 && (
-            <ul className="mt-4 divide-y divide-p-line border border-p-line">
-              {s.points.recent.map((e, i) => (
-                <li key={`${e.at}-${i}`} className="flex flex-wrap items-center justify-between gap-3 bg-p-paper px-4 py-3">
-                  <span className="min-w-0">
-                    <span className="block text-base text-p-ink">{e.name}</span>
-                    <span className="portal-label mt-1 block !text-[11px] text-p-ink/65">
-                      {e.kind === 'bought' ? 'Became a client' : 'Filmed their free VSL'} · {day(e.at.slice(0, 10))}
-                    </span>
+                  <span className="mt-4 text-sm font-semibold leading-snug text-p-ink">{b.label}</span>
+                  <span className="mt-1 text-[12px] text-p-ink/55">{b.need}</span>
+                  <span className="mt-auto pt-4">
+                    {asked ? (
+                      <span className="inline-flex items-center gap-1.5 text-[13px] text-p-brandink">
+                        <Check size={14} strokeWidth={STROKE} /> Requested
+                      </span>
+                    ) : r.ok ? (
+                      <button
+                        disabled={busy}
+                        onClick={() =>
+                          act('points', { action: 'requestPoints', reward: r.key }, (j) => (j.already ? "You already asked for this one. We'll reach out to set it up." : "We'll reach out to set it up.")).then(
+                            (ok) => ok && setRequested((q) => [...q, r.key]),
+                          )
+                        }
+                        className="rounded-full bg-p-brand px-3.5 py-1.5 text-[13px] font-semibold text-black disabled:opacity-40"
+                      >
+                        Request this
+                      </button>
+                    ) : (
+                      <span className="text-[13px] text-p-ink/70">{lockedText(r, p)}</span>
+                    )}
                   </span>
-                  <span className="text-base font-semibold text-p-ink">+{e.points}</span>
                 </li>
-              ))}
-            </ul>
-          )}
-          <p className="mt-3 text-sm text-p-ink/65">Points expire 12 months after you earn them and have no cash value. One free funnel every 12 months.</p>
-        </Section>
+              );
+            })}
+          </ul>
+          <Note note={noteAt('points')} />
+          <p className="mt-6 text-[12px] text-p-ink/55">
+            Points expire 12 months after you earn them and have no cash value. One free funnel every 12 months.
+            {p.nextExpiry ? ` ${p.nextExpiry.points} expire ${day(p.nextExpiry.at.slice(0, 10))}.` : ''}
+          </p>
+        </Card>
       )}
+
+      {/* ── earnings ── */}
+      <Reveal>
+        <div className="bkp-shell">
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[20px] bg-p-line sm:grid-cols-4">
+            {[
+              { label: 'Earned', value: usd(Math.max(0, earned)), sig: false },
+              { label: 'On hold', value: usd(Math.max(0, held)), sig: false },
+              { label: 'Ready', value: usd(Math.max(0, s.payableCents)), sig: true },
+              { label: 'Rate', value: '10%', sig: false },
+            ].map((m) => (
+              <div key={m.label} className="bg-p-card px-5 py-5">
+                <Label>{m.label}</Label>
+                <p className={`mt-2 font-mono text-2xl font-bold ${m.sig ? 'text-p-brandink' : 'text-p-ink'}`}>{m.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Reveal>
+
+      {/* ── your people ── */}
+      <Card>
+        <div className="flex items-baseline justify-between">
+          <Label>Your people</Label>
+          <span className="font-mono text-sm text-p-ink/55">{s.referrals.length}</span>
+        </div>
+        {s.referrals.length ? (
+          <ul className="mt-2">
+            {s.referrals.map((r) => (
+              <li key={r.id} className="border-t border-p-line py-5">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="min-w-0 truncate text-base text-p-ink">{r.name}</span>
+                  <span className={`shrink-0 font-mono text-sm ${r.earnedCents ? 'text-p-brandink' : 'text-p-ink/55'}`}>{r.earnedCents ? usd(r.earnedCents) : day(r.created_at)}</span>
+                </div>
+                <Track step={referralStep(r, p?.recent)} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-4 text-base text-p-ink/70">No one yet. Your link is at the top.</p>
+        )}
+      </Card>
+
+      {/* ── get paid ── */}
+      <Reveal>
+        <div className={`bkp-shell ${earned > 0 ? '' : 'opacity-80'}`}>
+          <details className="bkp-details bkp-core" open={payOpen}>
+            <summary className="flex items-center justify-between gap-3">
+              <span className="font-display text-lg text-p-ink">Get paid</span>
+              <span className={`flex items-center gap-2 text-sm ${setup.complete ? 'text-p-brandink' : earned > 0 ? 'text-amber-500' : 'text-p-ink/65'}`}>
+                {setup.done} of {setup.total} done <ChevronDown size={14} strokeWidth={STROKE} />
+              </span>
+            </summary>
+
+            <div className="mt-5">
+              <p className="text-base text-p-ink/75">
+                Payouts go out on the 1st and the 14th, by Whop transfer, once you have at least {usd(s.minimumPayoutCents)} ready. Next: {day(s.nextRun)}.
+              </p>
+              {willPay && (
+                <p className="mt-3 text-base text-p-brandink">
+                  {usd(s.payableCents)} goes to @{a.whopUsername} on {day(s.nextRun)}.
+                </p>
+              )}
+              {setup.complete && !willPay && s.payableCents > 0 && (
+                <p className="mt-3 text-base text-p-ink/75">
+                  You have {usd(s.payableCents)} ready. It goes out once it reaches {usd(s.minimumPayoutCents)}, or use it as credit below.
+                </p>
+              )}
+
+              <ul className="mt-4">
+                <Step n={1} done={a.termsCurrent} title={a.termsCurrent ? 'Payout terms accepted' : `Accept the payout terms (${a.termsVersion})`}>
+                  <p className="mb-3 text-base text-p-ink/75">
+                    Commissions are paid by Whop transfer to your Whop account. PodLab doesn&apos;t collect bank details. A W-9 is required before your first payout. Everything else in your Beaker
+                    agreement stays the same.
+                  </p>
+                  <label className="flex items-center gap-2 text-base text-p-ink">
+                    <input type="checkbox" checked={acceptPayout} onChange={(e) => setAcceptPayout(e.target.checked)} />I agree to the payout terms ({a.termsVersion}).
+                  </label>
+                  <PillButton className="mt-4" icon={Check} disabled={busy || !acceptPayout} onClick={() => act('pay', { action: 'acceptTerms', accept: true }, () => 'Payout terms accepted.')}>
+                    Accept
+                  </PillButton>
+                </Step>
+                <Step n={2} done={a.w9 !== 'missing'} title={a.w9 === 'missing' ? 'Upload your W-9' : `W-9 ${a.w9 === 'verified' ? 'verified' : 'received'}`}>
+                  <p className="mb-3 text-base text-p-ink/75">
+                    Fill in the{' '}
+                    <a href="https://www.irs.gov/pub/irs-pdf/fw9.pdf" target="_blank" rel="noopener noreferrer" className="text-p-brandink underline underline-offset-4">
+                      IRS W-9
+                    </a>{' '}
+                    and upload it (PDF or photo). Only PodLab&apos;s owner can open it.
+                  </p>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="application/pdf,image/png,image/jpeg,image/heic"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return;
+                      const fd = new FormData();
+                      fd.set('file', f);
+                      act('pay', fd, () => 'W-9 uploaded. Thank you.');
+                      e.target.value = '';
+                    }}
+                  />
+                  <PillButton icon={Upload} disabled={busy} onClick={() => fileRef.current?.click()}>
+                    Upload W-9
+                  </PillButton>
+                </Step>
+                <Step n={3} done={a.whopLinked} title={a.whopLinked ? `Whop account linked: @${a.whopUsername}` : 'Add your Whop username'}>
+                  <p className="mb-3 text-base text-p-ink/75">Payouts land in your Whop balance. No bank details are collected. Your username is on your Whop profile.</p>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <input value={whop} onChange={(e) => setWhop(e.target.value)} placeholder="@yourname" aria-label="Whop username" className="bkp-field sm:max-w-xs" />
+                    <PillButton disabled={busy || !whop.trim()} onClick={() => act('pay', { action: 'linkWhop', username: whop }, () => 'Whop account linked.')}>
+                      Save
+                    </PillButton>
+                  </div>
+                </Step>
+              </ul>
+              <Note note={noteAt('pay')} />
+
+              <div className="mt-6 border-t border-p-line pt-6">
+                <Label>Use it on PodLab</Label>
+                {s.payableCents > 0 && s.canRedeem ? (
+                  <div className="mt-3">
+                    <p className="text-base text-p-ink">Turn {usd(s.payableCents)} into PodLab credit, dollar for dollar. It comes off your next PodLab invoice or checkout link.</p>
+                    <p className="mt-3 text-base text-p-ink/75">{s.creditTerms}</p>
+                    <label className="mt-4 flex items-center gap-2 text-base text-p-ink">
+                      <input type="checkbox" checked={acceptCredit} onChange={(e) => setAcceptCredit(e.target.checked)} />I agree to the credit terms.
+                    </label>
+                    <PillButton
+                      className="mt-4"
+                      disabled={busy || !acceptCredit}
+                      onClick={() =>
+                        act('credit', { action: 'redeem', accept: true, termsVersion: s.creditTermsVersion }, (j) => `${usd(Number(j.amountCents) || 0)} is now PodLab credit. It comes off your next invoice.`).then(
+                          (ok) => ok && setAcceptCredit(false),
+                        )
+                      }
+                    >
+                      Use as credit
+                    </PillButton>
+                    {a.w9 === 'missing' && <p className="mt-3 text-sm text-p-ink/70">Credit counts as paid commission for taxes, so it needs your W-9 too.</p>}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-base text-p-ink/75">
+                    {s.creditCents > 0 ? `You have ${usd(s.creditCents)} of credit. PodLab takes it off your next invoice. ` : ''}
+                    {s.payableCents > 0 ? 'Credit needs your portal linked to your PodLab deal. Ask PodLab.' : held > 0 ? `Nothing ready yet. ${usd(held)} is on its 45-day hold.` : 'Nothing ready yet.'}
+                  </p>
+                )}
+                <Note note={noteAt('credit')} />
+              </div>
+
+              {s.ledger.length > 0 && (
+                <details className="bkp-details mt-6 border-t border-p-line pt-5">
+                  <summary className="flex items-center gap-2 text-sm text-p-ink/70">
+                    View statement <ChevronDown size={14} strokeWidth={STROKE} />
+                  </summary>
+                  <ul className="mt-3">
+                    {s.ledger.slice(0, 30).map((r) => (
+                      <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 border-t border-p-line py-3">
+                        <span className="min-w-0">
+                          <span className="block break-words text-base text-p-ink">{r.lead_name?.split('—')[0].trim() || 'Client payment'}</span>
+                          <span className="mt-1 block text-[13px] text-p-ink/60">
+                            {r.kind === 'commission' ? 'Commission' : r.kind === 'clawback' ? 'Refund clawback' : 'Adjustment'} · paid {day(r.paid_at_source)}
+                            {r.effective_status === 'held' ? ` · ready ${day(r.hold_until)}` : ''}
+                          </span>
+                        </span>
+                        <span className="flex items-center gap-3">
+                          <span className={`rounded-full border px-2.5 py-0.5 text-[12px] ${r.effective_status === 'payable' ? 'border-p-brandink text-p-brandink' : 'border-p-line text-p-ink/70'}`}>
+                            {r.effective_status === 'payable' ? 'ready' : r.effective_status === 'held' ? 'on hold' : r.effective_status}
+                          </span>
+                          <span className="font-mono text-base font-semibold text-p-ink">{usd(r.amount_cents)}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  {s.payouts.length > 0 && <p className="mt-4 text-sm text-p-ink/70">Payouts: {s.payouts.map((x) => `${x.period_label} ${usd(x.amount_cents)} (${day(x.sent_at)})`).join(' · ')}</p>}
+                </details>
+              )}
+            </div>
+          </details>
+        </div>
+      </Reveal>
     </div>
   );
 }

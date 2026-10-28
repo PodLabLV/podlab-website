@@ -17,6 +17,7 @@
     "test:cards": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-cards.test.ts",
     "test:team": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-team.test.ts",
     "test:crmapproval": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/portal-crm-approval.test.ts",
+    "test:beaker": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs --test scripts/beaker-share.test.ts",
     "test:docsec": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/doc-edit-security.test.ts"
   },
   "dependencies": {
