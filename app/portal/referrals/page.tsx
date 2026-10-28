@@ -28,6 +28,25 @@ interface Summary {
   canRedeem: boolean;
   creditTerms: string;
   creditTermsVersion: string;
+  points?: Points | null;
+}
+
+interface Points {
+  balance: number;
+  buyers: number;
+  referrals: number;
+  nextExpiry: { at: string; points: number } | null;
+  funnelLockedUntil: string | null;
+  rewards: Array<{ key: string; label: string; points: number; valueCents: number; ok: boolean; reason?: string }>;
+  recent: Array<{ name: string; kind: 'filmed' | 'bought'; points: number; at: string }>;
+}
+
+// The CRM's reasons are written for the team ("Needs 6 points, has 4"); say it to the client.
+function missing(r: Points['rewards'][number], p: Points): string {
+  if (p.balance < r.points) return `${r.points - p.balance} more point${r.points - p.balance === 1 ? '' : 's'} to go`;
+  if (r.key === 'funnel' && p.buyers < 2) return `Needs ${2 - p.buyers} more referral${2 - p.buyers === 1 ? '' : 's'} who bought`;
+  if (r.key === 'funnel' && p.funnelLockedUntil) return `Available again ${day(p.funnelLockedUntil.slice(0, 10))}`;
+  return r.reason ?? 'Not unlocked yet';
 }
 
 const usd = (c: number) => `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: c % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
@@ -325,6 +344,58 @@ export default function ReferralsPage() {
               </li>
             ))}
           </ul>
+        </Section>
+      )}
+
+      {s.points && (
+        <Section title="Points" hint="Earn 1 point when someone you send films their free VSL, 3 more when they buy.">
+          <div className="border border-p-line bg-p-card p-5">
+            <p className="portal-label !text-[12px] text-p-ink/70">Your points</p>
+            <p className="mt-3 text-3xl font-bold tracking-tight text-p-ink">{s.points.balance}</p>
+            <p className="mt-1 text-sm text-p-ink/65">
+              {s.points.referrals} referral{s.points.referrals === 1 ? '' : 's'} · {s.points.buyers} bought
+              {s.points.nextExpiry ? ` · ${s.points.nextExpiry.points} expire ${day(s.points.nextExpiry.at.slice(0, 10))}` : ''}
+            </p>
+          </div>
+          <ul className="mt-px divide-y divide-p-line border border-p-line border-t-0">
+            {s.points.rewards.map((r) => (
+              <li key={r.key} className="flex flex-wrap items-center justify-between gap-3 bg-p-paper px-4 py-3">
+                <span className="min-w-0">
+                  <span className="block text-base text-p-ink">{r.label}</span>
+                  <span className="portal-label mt-1 block !text-[11px] text-p-ink/65">
+                    {r.points} points{r.key === 'funnel' ? ', with 2 referrals who bought' : ''} · {usd(r.valueCents)} value
+                  </span>
+                </span>
+                {r.ok ? (
+                  <button
+                    disabled={busy}
+                    onClick={() => act({ action: 'requestPoints', reward: r.key }, (j) => (j.already ? "You already asked for this one. We'll reach out to set it up." : "We'll reach out to set it up."))}
+                    className="portal-label shrink-0 border border-p-brandink px-3 py-2 !text-[11px] text-p-brandink transition hover:bg-p-brand hover:text-black disabled:opacity-40"
+                  >
+                    Request this
+                  </button>
+                ) : (
+                  <span className="text-sm text-p-ink/65">{missing(r, s.points!)}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+          {s.points.recent.length > 0 && (
+            <ul className="mt-4 divide-y divide-p-line border border-p-line">
+              {s.points.recent.map((e, i) => (
+                <li key={`${e.at}-${i}`} className="flex flex-wrap items-center justify-between gap-3 bg-p-paper px-4 py-3">
+                  <span className="min-w-0">
+                    <span className="block text-base text-p-ink">{e.name}</span>
+                    <span className="portal-label mt-1 block !text-[11px] text-p-ink/65">
+                      {e.kind === 'bought' ? 'Became a client' : 'Filmed their free VSL'} · {day(e.at.slice(0, 10))}
+                    </span>
+                  </span>
+                  <span className="text-base font-semibold text-p-ink">+{e.points}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-3 text-sm text-p-ink/65">Points expire 12 months after you earn them and have no cash value. One free funnel every 12 months.</p>
         </Section>
       )}
     </div>

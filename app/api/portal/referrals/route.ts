@@ -9,7 +9,8 @@ export const dynamic = 'force-dynamic';
 /**
  * The client's Beaker page. GET: their link, money and referrals (from the
  * CRM). POST: payout setup (Whop username, payout terms, W-9), refer someone,
- * or turn available earnings into PodLab credit. Owner only.
+ * turn available earnings into PodLab credit, or ask for a referral points
+ * reward (PodLab redeems it). Owner only.
  */
 async function who(req: Request) {
   const db = admin();
@@ -62,11 +63,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Bad request' }, { status: 400 });
     }
     const action = String(p.action ?? '');
-    if (!['linkWhop', 'acceptTerms', 'refer', 'redeem'].includes(action)) return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+    if (!['linkWhop', 'acceptTerms', 'refer', 'redeem', 'requestPoints'].includes(action)) return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
     const body: Record<string, unknown> = { action, email: w.email, leadId: w.leadId, ...evidence(req) };
     if (action === 'linkWhop') body.username = String(p.username ?? '').slice(0, 80);
     if (action === 'acceptTerms') body.accept = p.accept === true;
     if (action === 'redeem') Object.assign(body, { accept: p.accept === true, termsVersion: String(p.termsVersion ?? '') });
+    // Asking for a points reward is the client's call; staff viewing as the client can't.
+    if (action === 'requestPoints') {
+      if (viewAsId(req)) return NextResponse.json({ error: 'Only the client can ask for a reward.' }, { status: 403 });
+      body.reward = String(p.reward ?? '').slice(0, 40);
+    }
     if (action === 'refer') {
       Object.assign(body, {
         name: String(p.name ?? '').slice(0, 120),
