@@ -15,6 +15,7 @@ import { usePortal, formatDate, type PortalAsset } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState, FileMark } from '@/components/portal/Shared';
 import ScriptStatusBadge from '@/components/portal/ScriptStatusBadge';
 import VideoReview from '@/components/portal/VideoReview';
+import ReferralNudge from '@/components/portal/ReferralNudge';
 import { driveFileId, parseChapters, videoSource } from '@/lib/chapters';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { loadAssetReview, portalCall, type AssetReviewData } from '@/lib/portal/browser';
@@ -61,9 +62,12 @@ interface ReviewPanelProps {
   versions: PortalAssetVersion[];
   comments: PortalAssetComment[];
   onChanged: () => Promise<void>;
+  /** True right after the client approved this asset in this visit. */
+  justApproved: boolean;
+  onApproved: () => void;
 }
 
-function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps) {
+function ReviewPanel({ asset, versions, comments, onChanged, justApproved, onApproved }: ReviewPanelProps) {
   const current = versions[0];
   const isVideo = (asset.file_type || '').toUpperCase() === 'VIDEO';
   // Uploaded files, and Drive cuts (streamed through our proxy), play inline.
@@ -263,15 +267,22 @@ function ReviewPanel({ asset, versions, comments, onChanged }: ReviewPanelProps)
 
       <div className="mt-6 border-t border-p-line pt-5">
         {approved ? (
-          <p className="text-base leading-relaxed text-p-ink/85">
-            <span className="portal-label mr-2 !text-[12px] text-p-brandink">Approved</span>
-            {asset.approved_by ? `${asset.approved_by} approved v${asset.approved_version ?? current.version_no}` : `v${current.version_no} approved`}
-            {asset.approved_at ? ` on ${formatDate(asset.approved_at)}` : ''}.
-          </p>
+          <>
+            <p className="text-base leading-relaxed text-p-ink/85">
+              <span className="portal-label mr-2 !text-[12px] text-p-brandink">Approved</span>
+              {asset.approved_by ? `${asset.approved_by} approved v${asset.approved_version ?? current.version_no}` : `v${current.version_no} approved`}
+              {asset.approved_at ? ` on ${formatDate(asset.approved_at)}` : ''}.
+            </p>
+            {/* An approved video edit is the happiest moment to ask for a referral. */}
+            {justApproved && isVideo && <ReferralNudge className="mt-4" />}
+          </>
         ) : (
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
-              onClick={() => run(() => portalCall('/api/portal/deliverables', 'PATCH', { assetId: asset.id, decision: 'approved' }), `v${current.version_no} approved.`)}
+              onClick={async () => {
+                const ok = await run(() => portalCall('/api/portal/deliverables', 'PATCH', { assetId: asset.id, decision: 'approved' }), `v${current.version_no} approved.`);
+                if (ok) onApproved();
+              }}
               disabled={busy}
               className={unsent.length ? ghostBtn : primaryBtn}
             >
@@ -330,9 +341,11 @@ interface AssetCardProps {
   expanded: boolean;
   onToggle: () => void;
   onChanged: () => Promise<void>;
+  justApproved: boolean;
+  onApproved: () => void;
 }
 
-function AssetCard({ asset, versions, comments, expanded, onToggle, onChanged }: AssetCardProps) {
+function AssetCard({ asset, versions, comments, expanded, onToggle, onChanged, justApproved, onApproved }: AssetCardProps) {
   const current = versions[0] ?? null;
   const isVideo = (asset.file_type || '').toUpperCase() === 'VIDEO';
   const [openErr, setOpenErr] = useState<string | null>(null);
@@ -404,7 +417,9 @@ function AssetCard({ asset, versions, comments, expanded, onToggle, onChanged }:
           {openErr && <p role="alert" className="mt-3 text-base text-red-300">{openErr}</p>}
         </div>
       </div>
-      {expanded && current && <ReviewPanel asset={asset} versions={versions} comments={comments} onChanged={onChanged} />}
+      {expanded && current && (
+        <ReviewPanel asset={asset} versions={versions} comments={comments} onChanged={onChanged} justApproved={justApproved} onApproved={onApproved} />
+      )}
     </Card>
   );
 }
@@ -418,6 +433,9 @@ export default function DeliverablesPage() {
   const [assetOverride, setAssetOverride] = useState<Asset[] | null>(null);
   const [lab, setLab] = useState('All');
   const [openId, setOpenId] = useState<string | null>(null);
+  // Kept up here: an approved asset moves from "Waiting on your review" to the
+  // rest of the list, which remounts its card and would drop panel state.
+  const [approvedNow, setApprovedNow] = useState<string | null>(null);
 
   const assets: Asset[] = assetOverride ?? (baseAssets as Asset[]);
 
@@ -487,6 +505,8 @@ export default function DeliverablesPage() {
       expanded={openId === a.id}
       onToggle={() => setOpenId(openId === a.id ? null : a.id)}
       onChanged={refresh}
+      justApproved={approvedNow === a.id}
+      onApproved={() => setApprovedNow(a.id)}
     />
   );
 
