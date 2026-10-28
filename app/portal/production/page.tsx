@@ -5,6 +5,7 @@ import { usePortal, formatDate } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState } from '@/components/portal/Shared';
 import { stageFor, type ProductionBoard, type ProductionCard, type ProductionComment, type ProductionPayload, type VslTrack } from '@/lib/production';
 import VideoReview, { type ReviewNote } from '@/components/portal/VideoReview';
+import ReferralNudge from '@/components/portal/ReferralNudge';
 import { videoSource } from '@/lib/chapters';
 
 function StepBar({ card }: { card: ProductionCard }) {
@@ -50,6 +51,8 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
   const approvedAt = card.comments.filter((c) => c.approval).map((c) => c.createdAt).sort().pop() ?? null;
   const [approving, setApproving] = useState(false);
   const [approveErr, setApproveErr] = useState<string | null>(null);
+  // True only right after the client taps Looks good in this visit.
+  const [justApproved, setJustApproved] = useState(false);
   async function looksGood() {
     setApproving(true);
     setApproveErr(null);
@@ -61,6 +64,7 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Could not send that.');
+      setJustApproved(true);
       onNote(card.id, { id: `approval-${Date.now()}`, author: 'You', t: null, body: 'Looks good. Approved in the portal.', createdAt: new Date().toISOString(), fromClient: true, resolved: false, approval: true });
       window.dispatchEvent(new Event('portal:refresh'));
     } catch (e) {
@@ -132,6 +136,7 @@ function CardRow({ card, onNote }: { card: ProductionCard; onNote: (cardId: stri
               {approveErr && <span className="text-sm text-p-bad">{approveErr}</span>}
             </div>
           )}
+          {justApproved && <ReferralNudge className="mt-4" />}
           <p className="mt-3 text-sm text-p-ink/65">
             {card.done
               ? card.stage === 'Posted'
