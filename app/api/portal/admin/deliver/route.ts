@@ -4,6 +4,8 @@ import { admin } from '@/lib/portal-server';
 import { resolvePublisher, recordActivity } from '@/lib/portal/server';
 import { createAccessLink } from '@/lib/portal-invite';
 import { emailLayout, EMAIL_STYLE, escapeHtml, sendPortalEmail, SITE_URL } from '@/lib/portal-email';
+import { isElite, studioDayUrl } from '@/lib/portal/studio-day';
+import { EL_WELCOME_ON_FILE, studioDayEmailBlock } from '@/lib/portal/studio-day-email';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,6 +28,15 @@ interface Payload {
   intakeUrl?: string;
   /** assetslab_ready: where they book their studio day. */
   bookingUrl?: string;
+  /**
+   * el_welcome: "core" | "elite". ELITE adds the Studio Day booking button. When
+   * missing, the plan label decides ("EssentialsLab ELITE ..."), payload first.
+   */
+  tier?: string;
+  /** el_welcome, ELITE: the Studio Day link. Default: ELITE_STUDIO_DAY_URL. Name and email are prefilled. */
+  studioUrl?: string;
+  /** el_welcome: the intake is already on file, so no intake request (intakeUrl not needed). */
+  intakeOnFile?: boolean;
   /** site_ready: the preview site. */
   previewUrl?: string;
   /** reminder: which step the client is holding up, and which nudge (1 = day 2, 2 = day 5). */
@@ -185,11 +196,13 @@ export async function POST(req: Request) {
   if (kind === 'reminder' && !(p.step && p.step in REMINDER_STEP)) {
     return NextResponse.json({ error: 'reminder needs step: intake | assetslab | scripts | storyboard | site' }, { status: 400 });
   }
-  const c =
+  const onFile = kind === 'el_welcome' && p.intakeOnFile === true;
+  const c: Copy =
     kind === 'revised' ? revisedCopy(p.label ?? 'scripts')
     : kind === 'reminder' ? reminderCopy(p.step as keyof typeof REMINDER_STEP, Number(p.nudge) || 1)
+    : onFile ? EL_WELCOME_ON_FILE
     : COPY[kind];
-  for (const k of ['intakeUrl', 'bookingUrl', 'previewUrl'] as const) {
+  for (const k of ['intakeUrl', 'bookingUrl', 'previewUrl', 'studioUrl'] as const) {
     if (p[k] && !HTTPS.test(p[k]!)) return NextResponse.json({ error: `${k} must be an https URL.` }, { status: 400 });
   }
   if (c.primary && !p[c.primary]) return NextResponse.json({ error: `${c.primary} is required for ${kind}.` }, { status: 400 });
@@ -198,7 +211,7 @@ export async function POST(req: Request) {
   // ── find or create the client ───────────────────────────────────────
   const { data: found } = await db
     .from('portal_clients')
-    .select('id, email, first_name, last_name, business_name, user_id, notify_email')
+    .select('id, email, first_name, last_name, business_name, user_id, notify_email, plan_label')
     .ilike('email', email)
     .limit(1)
     .maybeSingle();
@@ -207,7 +220,7 @@ export async function POST(req: Request) {
   let created = false;
   if (!client) {
     if (!businessName) return NextResponse.json({ error: 'businessName is required for a new client.' }, { status: 400 });
-    if (p.dryRun) return NextResponse.json({ dryRun: true, wouldCreate: true, email, kind });
+    if (p.dryRun) return NextResponse.json({ dryRun: true, wouldCreate: true, email, kind, studioDay: true });
     const { data: row, error } = await db
       .from('portal_clients')
       .insert({
@@ -220,7 +233,7 @@ export async function POST(req: Request) {
         crm_lead_id: p.crmLeadId || null,
         plan_label: p.planLabel?.trim() || null,
       })
-      .select('id, email, first_name, last_name, business_name, user_id, notify_email')
+      .select('id, email, first_name, last_name, business_name, user_id, notify_email, plan_label')
       .single();
     if (error || !row) {
       reportError('[portal] deliver: client insert failed', error?.message);
@@ -238,7 +251,8 @@ export async function POST(req: Request) {
     }
   }
 
-  if (p.dryRun) return NextResponse.json({ dryRun: true, clientId: client.id, kind, hasLogin: Boolean(client.user_id) });
+  // studioDay: tells the automation this route takes tier / studioUrl / intakeOnFile.
+  if (p.dryRun) return NextResponse.json({ dryRun: true, clientId: client.id, kind, hasLogin: Boolean(client.user_id), studioDay: true });
   if (p.send === false) return NextResponse.json({ clientId: client.id, created, emailed: false });
 
   if ((kind === 'revised' || kind === 'reminder') && client.notify_email === false) {
@@ -279,7 +293,19 @@ export async function POST(req: Request) {
   // ── the email ───────────────────────────────────────────────────────
   const hello = client.first_name ? `Hi ${escapeHtml(client.first_name)},` : 'Hi there,';
   const portalUrl = url;
-  const buttonUrl = c.primary ? (p[c.primary] as string) : portalUrl;
+  // ELITE welcome: the Studio Day link goes out now, not with the AssetsLab.
+  const tier = (p.tier ?? '').trim().toLowerCase();
+  const elite =
+    kind === 'el_welcome' &&
+    (tier === 'elite' || (tier !== 'core' && isElite({ planLabel: p.planLabel?.trim() || client.plan_label })));
+  const studioUrl = elite
+    ? studioDayUrl([client.first_name, client.last_name].filter(Boolean).join(' '), email, p.studioUrl || undefined)
+    : null;
+  // On file + ELITE: booking the Studio Day is the one thing to do, so it is the button.
+  const studioIsButton = Boolean(studioUrl && onFile);
+  const button = studioIsButton ? 'Book your Studio Day' : c.button;
+  const buttonUrl = studioIsButton ? studioUrl! : c.primary ? (p[c.primary] as string) : portalUrl;
+  const external = Boolean(c.primary) || studioIsButton;
   const small = 'margin:28px 0 0;font-size:12px;line-height:1.6;color:#777777;';
   const extra: string[] = [];
   const extraText: string[] = [];
@@ -287,8 +313,13 @@ export async function POST(req: Request) {
     extra.push(`        <p style="${EMAIL_STYLE.lead}margin-top:28px;">While you review, pick your studio day: <a href="${p.bookingUrl}" style="${EMAIL_STYLE.link}">book your studio session</a>.</p>`);
     extraText.push(`Pick your studio day: ${p.bookingUrl}`);
   }
+  if (studioUrl && !studioIsButton) {
+    const block = studioDayEmailBlock(studioUrl);
+    extra.push(...block.html);
+    extraText.push(...block.text);
+  }
   let foot: string;
-  if (c.primary) {
+  if (external) {
     foot = needsPassword
       ? `Your client portal is set up too. <a href="${portalUrl}" style="${EMAIL_STYLE.link}">Set your password here</a>, then sign in any time at podlablv.com/login.`
       : `Everything we make for you will appear in <a href="${portalUrl}" style="${EMAIL_STYLE.link}">your portal</a>.`;
@@ -303,14 +334,14 @@ export async function POST(req: Request) {
       `        <p style="${EMAIL_STYLE.kicker}">${c.kicker}</p>`,
       `        <p style="${EMAIL_STYLE.hello}">${hello}</p>`,
       `        <p style="${EMAIL_STYLE.lead}">${c.lead}</p>`,
-      `        <a href="${buttonUrl}" style="${EMAIL_STYLE.button}">${c.button} &rarr;</a>`,
+      `        <a href="${escapeHtml(buttonUrl)}" style="${EMAIL_STYLE.button}">${button} &rarr;</a>`,
       ...extra,
       `        <p style="${small}">${foot}</p>`,
-      `        <p style="margin:16px 0 0;font-size:11px;line-height:1.6;color:#555555;word-break:break-all;">Button not working? Paste this into your browser:<br><a href="${buttonUrl}" style="${EMAIL_STYLE.link}">${buttonUrl}</a></p>`,
+      `        <p style="margin:16px 0 0;font-size:11px;line-height:1.6;color:#555555;word-break:break-all;">Button not working? Paste this into your browser:<br><a href="${escapeHtml(buttonUrl)}" style="${EMAIL_STYLE.link}">${escapeHtml(buttonUrl)}</a></p>`,
     ].join('\n'),
   });
   const plainFoot = foot.replace(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/g, '$2 ($1)');
-  const text = [hello.replace(/&#39;/g, "'"), c.lead, `${c.button}: ${buttonUrl}`, ...extraText, plainFoot].join('\n\n');
+  const text = [hello.replace(/&#39;/g, "'"), c.lead, `${button}: ${buttonUrl}`, ...extraText, plainFoot].join('\n\n');
   const sent = await sendPortalEmail({ to: email, subject: c.subject, html, text });
   if (!sent.ok) reportError('[portal] deliver: email failed', sent.error);
 
@@ -323,5 +354,6 @@ export async function POST(req: Request) {
     needsPassword,
     // Returned so the automation can text it if the email bounces.
     link: url,
+    ...(studioUrl ? { studioUrl } : {}),
   });
 }

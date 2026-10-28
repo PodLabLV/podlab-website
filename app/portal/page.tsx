@@ -6,6 +6,7 @@ import { usePortal, formatDate, type PortalPhase } from '@/lib/portal-data';
 import { PageHeader, Card, EmptyState, StatusBadge } from '@/components/portal/Shared';
 import { chainStatus } from '@/lib/growth-chain';
 import DeliveredList from '@/components/portal/DeliveredList';
+import StudioDayCard from '@/components/portal/StudioDayCard';
 import { loadScriptIndex } from '@/lib/portal/browser';
 import { isWaitingOnClient } from '@/lib/portal/scripts';
 import type { ProductionPayload } from '@/lib/production';
@@ -257,6 +258,9 @@ export default function PortalDashboard() {
           {chain.unlocked} of 8 unlocked{constraint ? ` · constraint: ${constraint.element.name}` : ''}
         </span>
       </Link>
+
+      {/* ELITE only, until the Studio Day is booked; renders nothing otherwise. */}
+      <StudioDayCard className="mt-12" />
 
       {steps.length > 0 && (
         <section className="mt-12">
