@@ -44,12 +44,12 @@ export async function POST(req: Request) {
     if (taken) return NextResponse.json({ error: 'Another client already uses that email.' }, { status: 409 });
   }
 
-  const link = await createAccessLink(db, {
-    email,
-    firstName: client.first_name,
-    lastName: client.last_name,
-    forceRecovery: Boolean(client.user_id),
-  });
+  const opts = { email, firstName: client.first_name, lastName: client.last_name };
+  // A client linked to a login under a different email has no auth user at this
+  // address, so recovery fails; invite this address and relink below.
+  const link =
+    (await createAccessLink(db, { ...opts, forceRecovery: Boolean(client.user_id) })) ??
+    (client.user_id ? await createAccessLink(db, opts) : null);
   if (!link) return NextResponse.json({ error: 'Could not create the sign-in link.' }, { status: 500 });
 
   // One login, one client: refuse to attach a login that already opens someone else's portal.
