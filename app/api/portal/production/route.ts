@@ -86,11 +86,16 @@ export async function GET(req: Request) {
           .map((c) => {
             const col = cols.find((l) => l.id === c.list_id);
             const column = col?.name ?? '';
+            // Boards without a Revising column send a client's notes back to
+            // Editing. Still "Revising" to the client while one is open.
+            const clientNoteOpen = commentRows.some((m) => m.card_id === c.id && !m.resolved
+              && (m.author_name ?? '').endsWith(PORTAL_COMMENT_SUFFIX) && m.body.trim() !== LOOKS_GOOD_NOTE);
+            const stage = stageFor(column);
             return {
               id: c.id,
               title: c.title,
               column,
-              stage: stageFor(column),
+              stage: stage === 'In the edit' && clientNoteOpen ? 'Revising' : stage,
               step: Math.max(0, cols.findIndex((l) => l.id === c.list_id)),
               steps: cols.length,
               dueOn: c.due_on,
