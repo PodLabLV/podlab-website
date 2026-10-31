@@ -11,8 +11,9 @@ import { LOOKS_GOOD_NOTE } from '@/lib/portal/potato';
  *
  *  1. The note lands on the editor's CRM card, tagged "[0:42 · Hook] …".
  *  2. A note on a card that already passed review (Quality check / Approved)
- *     moves it back to Revising. The CRM won't let a card leave Revising until
- *     every comment is resolved, so the note cannot be skipped.
+ *     moves it back to Revising, or to Editing on boards without one (the CRM
+ *     retired Revising on Oct 30 2026). The CRM won't let a card into quality
+ *     control while any comment is unresolved, so the note cannot be skipped.
  *     Posted videos are not moved (they're live); the team is told instead.
  *  3. Slack (#revisions when configured) names the card's editor.
  */
@@ -139,27 +140,28 @@ export function scopeBoardIds(scope: CardScope, cards: Array<{ board_id: string 
 
 interface CardRef { id: string; board_id: string; list_id: string }
 
-/** Sends a card that already passed review back to Revising. Posted cards stay put. */
+/** Sends a card that already passed review back to Revising (else Editing). Posted cards stay put. */
 export async function reopenIfPastReview(
   db: SupabaseClient,
   card: CardRef,
-): Promise<{ reopened: boolean; postedAlready: boolean; column: string }> {
+): Promise<{ reopened: boolean; postedAlready: boolean; column: string; movedTo: string | null }> {
   const crm = db.schema('crm');
   const { data: lists } = await crm.from('content_lists').select('id, name').eq('board_id', card.board_id).eq('archived', false);
   const column = (lists ?? []).find((l: { id: string }) => l.id === card.list_id)?.name ?? '';
-  const revising = (lists ?? []).find((l: { name: string }) => l.name.trim().toLowerCase() === 'revising');
+  const named = (n: string) => (lists ?? []).find((l: { name: string }) => l.name.trim().toLowerCase() === n);
+  const back = named('revising') ?? named('editing');
   const key = column.trim().toLowerCase();
   let reopened = false;
-  if (REOPEN_FROM.has(key) && revising) {
-    const { error } = await crm.from('content_cards').update({ list_id: revising.id }).eq('id', card.id);
+  if (REOPEN_FROM.has(key) && back) {
+    const { error } = await crm.from('content_cards').update({ list_id: back.id }).eq('id', card.id);
     if (error) reportError('[portal] reopen failed', error.message);
     else reopened = true;
   }
-  return { reopened, postedAlready: LIVE.has(key), column };
+  return { reopened, postedAlready: LIVE.has(key), column, movedTo: reopened && back ? back.name : null };
 }
 
-function statusLine(r: { reopened: boolean; postedAlready: boolean; column: string }): string {
-  if (r.reopened) return `Moved from ${r.column} back to *Revising*.`;
+function statusLine(r: { reopened: boolean; postedAlready: boolean; column: string; movedTo?: string | null }): string {
+  if (r.reopened) return `Moved from ${r.column} back to *${r.movedTo || 'Revising'}*.`;
   if (r.postedAlready) return `:warning: This video is already *${r.column}*. It was not moved; decide whether to re-cut.`;
   return r.column ? `In *${r.column}*.` : '';
 }
@@ -231,16 +233,16 @@ export async function postClientNote(
     return { ok: false, status: 500, message: 'Could not send that.' };
   }
 
-  const { reopened, postedAlready, column } = await reopenIfPastReview(db, card);
+  const { reopened, postedAlready, column, movedTo } = await reopenIfPastReview(db, card);
 
   const who = card.editor || card.assignee_name;
-  const status = statusLine({ reopened, postedAlready, column });
+  const status = statusLine({ reopened, postedAlready, column, movedTo });
   await Promise.all([
     notifySlack(
       `*Client revision* — ${caller.businessName} on "${card.title}"${who ? ` · editor: *${who}*` : ''}\n> ${comment.body.slice(0, 500)}${status ? `\n${status}` : ''}`,
       'revisions',
     ),
-    logToCrm(db, caller, `Revision note on "${card.title}": ${comment.body.slice(0, 200)}${reopened ? ' (reopened to Revising)' : ''}`),
+    logToCrm(db, caller, `Revision note on "${card.title}": ${comment.body.slice(0, 200)}${reopened ? ' (reopened for revisions)' : ''}`),
   ]);
 
   return { ok: true, comment, title: card.title, reopened, postedAlready };
