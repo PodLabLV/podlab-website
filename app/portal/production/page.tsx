@@ -227,21 +227,54 @@ function VslStrip({ vsl }: { vsl: VslTrack }) {
   );
 }
 
+/** Stream links carry `exp` (unix seconds); treat one inside 10 minutes of it as stale. */
+function expiringSoon(url: string): boolean {
+  const exp = Number(new URL(url, 'https://portal.invalid').searchParams.get('exp'));
+  return !Number.isFinite(exp) || exp * 1000 - Date.now() < 10 * 60 * 1000;
+}
+
+/**
+ * A refetch (say, after the session token refreshes) mints new signed stream
+ * links. Keep the link a card already has while its cut is unchanged, so a
+ * video that's playing doesn't jump back to the start.
+ */
+function keepStreams(prev: ProductionPayload | null, next: ProductionPayload): ProductionPayload {
+  if (!prev) return next;
+  const had = new Map<string, { videoUrl: string | null; streamUrl: string | null }>();
+  for (const b of prev.boards) for (const c of b.cards) had.set(c.id, { videoUrl: c.videoUrl ?? null, streamUrl: c.streamUrl ?? null });
+  return {
+    ...next,
+    boards: next.boards.map((b) => ({
+      ...b,
+      cards: b.cards.map((c) => {
+        const old = had.get(c.id);
+        return old && old.streamUrl && old.videoUrl === (c.videoUrl ?? null) && !expiringSoon(old.streamUrl)
+          ? { ...c, streamUrl: old.streamUrl }
+          : c;
+      }),
+    })),
+  };
+}
+
 export default function ProductionPage() {
   const { loading, client, accessToken } = usePortal();
   const [data, setData] = useState<ProductionPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Keyed on the client's id, not the object: every portal:refresh (fired after
+  // a note) rebuilds `client`, and refetching here re-signed every streamUrl,
+  // which swapped the <video> src and restarted playback mid-review.
+  const clientId = client?.id ?? null;
   useEffect(() => {
-    if (!accessToken || !client) return;
+    if (!accessToken || !clientId) return;
     fetch('/api/portal/production', { headers: { Authorization: `Bearer ${accessToken}` }, cache: 'no-store' })
       .then(async (r) => {
         const json = await r.json();
         if (!r.ok) throw new Error(json.error || 'Could not load production.');
-        setData(json as ProductionPayload);
+        setData((prev) => keepStreams(prev, json as ProductionPayload));
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Could not load production.'));
-  }, [accessToken, client]);
+  }, [accessToken, clientId]);
 
   // A note on a video past review sends it back to Revising; mirror that here.
   const onNote = (cardId: string, c: ProductionComment, movedTo?: string) =>
